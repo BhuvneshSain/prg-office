@@ -1,0 +1,5 @@
+<svg xmlns="http://www.svgrepo.com/show/530182/settings.svg" viewBox="0 0 24 24" fill="none" class="w-24 h-24" xmlns:v="https://vecta.io/nano">
+  <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" fill="#4f46e5"/>
+  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="#ffffff"/>
+  <path d="M12 7v2m0 6v2m4.24-9.24l-1.41 1.41m-5.66 5.66l-1.41 1.41M19 12h-2m-6 0H7m9.24 4.24l-1.41-1.41M9.17 9.17L7.76 7.76" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+</svg>

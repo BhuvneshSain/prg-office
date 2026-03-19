@@ -4,6 +4,8 @@
 import { Dropbox } from 'dropbox';
 import type { RegisterEntry, SettingsData } from '../types';
 
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'my-documents';
+
 const CLIENT_ID = import.meta.env.VITE_DROPBOX_CLIENT_ID || '';
 const CLIENT_SECRET = import.meta.env.VITE_DROPBOX_CLIENT_SECRET || '';
 const REFRESH_TOKEN = import.meta.env.VITE_DROPBOX_REFRESH_TOKEN || '';
@@ -15,7 +17,7 @@ export const dbx = new Dropbox({
 });
 
 // Read data from JSON file in Dropbox
-export const getRegisterData = async (type: 'inward' | 'outward' | 'orders'): Promise<RegisterEntry[]> => {
+export const getRegisterData = async (type: RegisterType): Promise<RegisterEntry[]> => {
   if (!REFRESH_TOKEN) return [];
   const path = `/data/${type}.json`;
   
@@ -39,7 +41,7 @@ export const getRegisterData = async (type: 'inward' | 'outward' | 'orders'): Pr
 };
 
 // Save fully appended array back to Dropbox
-export const saveRegisterData = async (type: 'inward' | 'outward' | 'orders', data: RegisterEntry[]): Promise<boolean> => {
+export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]): Promise<boolean> => {
   if (!REFRESH_TOKEN) return false;
   const path = `/data/${type}.json`;
   const content = JSON.stringify(data, null, 2);
@@ -74,7 +76,7 @@ export const updateRegisterEntry = async (entry: RegisterEntry): Promise<boolean
 };
 
 // Delete an entry by ID
-export const deleteRegisterEntry = async (id: string, type: 'inward' | 'outward' | 'orders'): Promise<boolean> => {
+export const deleteRegisterEntry = async (id: string, type: RegisterType): Promise<boolean> => {
   const existingData = await getRegisterData(type);
   const filtered = existingData.filter(e => e.id !== id);
   if (filtered.length === existingData.length) return false; // Not found
@@ -135,7 +137,7 @@ export const getFileBlobUrl = async (filename: string): Promise<string | null> =
 
 // Fetch settings
 export const getSettings = async (): Promise<SettingsData> => {
-  if (!REFRESH_TOKEN) return { departments: ['Finance', 'HR', 'IT'], projects: ['Alpha', 'Beta'] };
+  if (!REFRESH_TOKEN) return { departments: ['Finance', 'HR', 'IT'], projects: ['Alpha', 'Beta'], posts: ['Manager', 'Developer'] };
   try {
     const response = await dbx.filesDownload({ path: '/data/settings.json' });
     const blob = (response.result as any).fileBlob as Blob;
@@ -143,10 +145,10 @@ export const getSettings = async (): Promise<SettingsData> => {
     return JSON.parse(text) as SettingsData;
   } catch (error: any) {
     if (error?.status === 409 || error?.error?.error_summary?.includes('not_found')) {
-      return { departments: [], projects: [] };
+      return { departments: [], projects: [], posts: [] };
     }
     console.error("Error fetching settings", error);
-    return { departments: [], projects: [] };
+    return { departments: [], projects: [], posts: [] };
   }
 };
 

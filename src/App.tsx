@@ -8,14 +8,20 @@ import Reports from './components/Reports';
 import OrderForm from './components/OrderForm';
 import OrdersTable from './components/OrdersTable';
 import Settings from './components/Settings';
+import StaffForm from './components/StaffForm';
+import StaffTable from './components/StaffTable';
+import MyDocuments from './components/MyDocuments';
+import { Users, FileText } from 'lucide-react';
 
-type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'reports' | 'settings';
+type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'my-documents' | 'reports' | 'settings';
 
 const TAB_LABELS: Record<Tab, string> = {
   dashboard: 'Dashboard',
   inward: 'Inward Register',
   outward: 'Outward Register',
   orders: 'Important Orders',
+  staff: 'Staff Management',
+  'my-documents': 'My Documents',
   reports: 'Reports',
   settings: 'Settings',
 };
@@ -31,6 +37,8 @@ export default function App() {
   const [inwardData, setInwardData] = useState<RegisterEntry[]>([]);
   const [outwardData, setOutwardData] = useState<RegisterEntry[]>([]);
   const [ordersData, setOrdersData] = useState<RegisterEntry[]>([]);
+  const [staffData, setStaffData] = useState<RegisterEntry[]>([]);
+  const [myDocsData, setMyDocsData] = useState<RegisterEntry[]>([]);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,15 +49,19 @@ export default function App() {
     setRefreshing(true);
     setErrorHeader(null);
     try {
-      const [inData, outData, ordData, setData] = await Promise.all([
+      const [inData, outData, ordData, stfData, docData, setData] = await Promise.all([
         getRegisterData('inward'),
         getRegisterData('outward'),
         getRegisterData('orders'),
+        getRegisterData('staff'),
+        getRegisterData('my-documents'),
         getSettings()
       ]);
       setInwardData(inData);
       setOutwardData(outData);
       setOrdersData(ordData);
+      setStaffData(stfData);
+      setMyDocsData(docData);
       setSettings(setData);
     } catch (err: any) {
       setErrorHeader(err.message);
@@ -89,10 +101,19 @@ export default function App() {
             <OrdersTable data={ordersData} loading={loading} projects={settings?.projects || []} onRefresh={fetchData} />
           </div>
         );
+      case 'staff':
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <StaffForm existingProjects={settings?.projects || []} existingPosts={settings?.posts || []} onSuccess={fetchData} />
+            <StaffTable data={staffData} loading={loading} projects={settings?.projects || []} posts={settings?.posts || []} onRefresh={fetchData} />
+          </div>
+        );
+      case 'my-documents':
+        return <MyDocuments data={myDocsData} onRefresh={fetchData} />;
       case 'reports':
         return (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Reports inward={inwardData} outward={outwardData} orders={ordersData} />
+            <Reports inward={inwardData} outward={outwardData} orders={ordersData} myDocs={myDocsData} />
           </div>
         );
       case 'settings':
@@ -105,7 +126,7 @@ export default function App() {
           </div>
         );
       default:
-        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} />;
+        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} myDocsCount={myDocsData.length} />;
     }
   };
 
@@ -161,6 +182,8 @@ export default function App() {
           <NavItem icon={<Inbox className="w-[18px] h-[18px]" />} label="Inward Register" active={activeTab === 'inward'} isOpen={sidebarOpen} onClick={() => handleNavClick('inward')} badge={inwardData.length} />
           <NavItem icon={<Send className="w-[18px] h-[18px]" />} label="Outward Register" active={activeTab === 'outward'} isOpen={sidebarOpen} onClick={() => handleNavClick('outward')} badge={outwardData.length} />
           <NavItem icon={<AlertOctagon className="w-[18px] h-[18px]" />} label="Important Orders" active={activeTab === 'orders'} isOpen={sidebarOpen} onClick={() => handleNavClick('orders')} badge={ordersData.length} />
+          <NavItem icon={<Users className="w-[18px] h-[18px]" />} label="Staff Management" active={activeTab === 'staff'} isOpen={sidebarOpen} onClick={() => handleNavClick('staff')} badge={staffData.length} />
+          <NavItem icon={<FileText className="w-[18px] h-[18px]" />} label="My Documents" active={activeTab === 'my-documents'} isOpen={sidebarOpen} onClick={() => handleNavClick('my-documents')} badge={myDocsData.length} />
           <NavItem icon={<BarChart className="w-[18px] h-[18px]" />} label="Reports" active={activeTab === 'reports'} isOpen={sidebarOpen} onClick={() => handleNavClick('reports')} />
 
           <div className="my-1 border-t border-slate-100 mx-1" />
@@ -253,6 +276,8 @@ export default function App() {
               { tab: 'inward', icon: <Inbox className="w-5 h-5" />, label: 'Inward' },
               { tab: 'outward', icon: <Send className="w-5 h-5" />, label: 'Outward' },
               { tab: 'orders', icon: <AlertOctagon className="w-5 h-5" />, label: 'Orders' },
+              { tab: 'staff', icon: <Users className="w-5 h-5" />, label: 'Staff' },
+              { tab: 'my-documents', icon: <FileText className="w-5 h-5" />, label: 'Docs' },
               { tab: 'reports', icon: <BarChart className="w-5 h-5" />, label: 'Reports' },
               { tab: 'settings', icon: <SettingsIcon className="w-5 h-5" />, label: 'Settings' },
             ] as const
@@ -305,7 +330,7 @@ function NavItem({ icon, label, isOpen, active = false, onClick, badge }: any) {
   );
 }
 
-function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number }) {
+function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number }) {
   return (
     <div className="max-w-4xl mx-auto w-full space-y-6">
       <header className="mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -315,11 +340,13 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount }: { onN
       </header>
 
       {/* Quick stats row */}
-      <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
         {[
           { label: 'Inward', count: inwardCount, color: 'bg-blue-50 border-blue-100 text-blue-700' },
           { label: 'Outward', count: outwardCount, color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
           { label: 'Orders', count: ordersCount, color: 'bg-amber-50 border-amber-100 text-amber-700' },
+          { label: 'Staff', count: staffCount, color: 'bg-violet-50 border-violet-100 text-violet-700' },
+          { label: 'Docs', count: myDocsCount, color: 'bg-indigo-50 border-indigo-100 text-indigo-700' },
         ].map(({ label, count, color }) => (
           <div key={label} className={`${color} border rounded-2xl p-3 sm:p-4 text-center`}>
             <p className="text-2xl sm:text-3xl font-black">{count}</p>
@@ -332,8 +359,10 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount }: { onN
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ToolCard title="Inward Register" icon={<Inbox className="w-6 h-6 text-blue-500" />} desc="Log incoming documents and attach scanned copies." gradient="from-blue-500 to-indigo-500" delay="0" onClick={() => onNavigate('inward')} />
         <ToolCard title="Outward Register" icon={<Send className="w-6 h-6 text-emerald-500" />} desc="Record dispatched documents and track recipient references." gradient="from-emerald-500 to-teal-500" delay="50" onClick={() => onNavigate('outward')} />
-        <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6 text-amber-500" />} desc="Log and track urgent assignments and directives." gradient="from-amber-400 to-orange-500" delay="100" onClick={() => onNavigate('orders')} />
-        <ToolCard title="Analytics & Reports" icon={<BarChart className="w-6 h-6 text-purple-500" />} desc="View aggregated statistics and timelines of all records." gradient="from-purple-500 to-fuchsia-500" delay="150" onClick={() => onNavigate('reports')} />
+        <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6 text-amber-50" />} desc="Log and track urgent assignments and directives." gradient="from-amber-400 to-orange-500" delay="100" onClick={() => onNavigate('orders')} />
+        <ToolCard title="Staff Management" icon={<Users className="w-6 h-6 text-violet-500" />} desc="Manage personnel, designations and project allocations." gradient="from-violet-500 to-purple-500" delay="125" onClick={() => onNavigate('staff')} />
+        <ToolCard title="My Documents" icon={<FileText className="w-6 h-6 text-indigo-500" />} desc="Personal storage for your private PDFs and documents." gradient="from-indigo-500 to-purple-500" delay="140" onClick={() => onNavigate('my-documents')} />
+        <ToolCard title="Analytics & Reports" icon={<BarChart className="w-6 h-6 text-purple-500" />} desc="View aggregated statistics and timelines of all records." gradient="from-purple-500 to-fuchsia-500" delay="160" onClick={() => onNavigate('reports')} />
       </div>
     </div>
   );

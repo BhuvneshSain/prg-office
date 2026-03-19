@@ -1,28 +1,31 @@
 import { useState, useMemo } from 'react';
 import type { RegisterEntry } from '../types';
-import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, ChevronDown } from 'lucide-react';
+import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, ChevronDown, Files } from 'lucide-react';
 import DocumentModal from './DocumentModal';
 
-type FilterType = 'all' | 'inward' | 'outward' | 'orders';
+type FilterType = 'all' | 'inward' | 'outward' | 'orders' | 'my-documents';
 
 export default function Reports({
-  inward, outward, orders
+  inward, outward, orders, myDocs
 }: {
   inward: RegisterEntry[],
   outward: RegisterEntry[],
-  orders: RegisterEntry[]
+  orders: RegisterEntry[],
+  myDocs: RegisterEntry[]
 }) {
-  const allEntries = useMemo(() => [...inward, ...outward, ...orders], [inward, outward, orders]);
+  const allEntries = useMemo(() => [...inward, ...outward, ...orders, ...myDocs], [inward, outward, orders, myDocs]);
 
   // Stat totals
   const currentMonth = new Date().toISOString().slice(0, 7);
   const totalInward = inward.length;
   const totalOutward = outward.length;
   const totalOrders = orders.length;
-  const totalDocs = totalInward + totalOutward + totalOrders;
+  const totalMyDocs = myDocs.length;
+  const totalDocs = totalInward + totalOutward + totalOrders + totalMyDocs;
   const thisMonthInward = inward.filter(i => i.date.startsWith(currentMonth)).length;
   const thisMonthOutward = outward.filter(o => o.date.startsWith(currentMonth)).length;
   const thisMonthOrders = orders.filter(o => o.date.startsWith(currentMonth)).length;
+  const thisMonthMyDocs = myDocs.filter(m => m.date.startsWith(currentMonth)).length;
 
   // Filter state
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
@@ -76,7 +79,8 @@ export default function Reports({
   const typeColors: Record<string, string> = {
     inward: 'bg-blue-100 text-blue-700',
     outward: 'bg-emerald-100 text-emerald-700',
-    orders: 'bg-amber-100 text-amber-700'
+    orders: 'bg-amber-100 text-amber-600',
+    'my-documents': 'bg-violet-100 text-violet-700'
   };
 
   return (
@@ -90,11 +94,12 @@ export default function Reports({
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard title="Total Documents" value={totalDocs} icon={<Hash className="w-6 h-6 text-indigo-500" />} subtitle="All time records" colorClass="bg-indigo-50/50 border-indigo-100/60" />
         <StatCard title="Inward Received" value={totalInward} icon={<TrendingUp className="w-6 h-6 text-blue-500 translate-y-0.5" />} subtitle={`${thisMonthInward} this month`} colorClass="bg-blue-50/50 border-blue-100/60" />
         <StatCard title="Outward Dispatched" value={totalOutward} icon={<TrendingUp className="w-6 h-6 text-emerald-500 -translate-y-0.5 scale-y-[-1]" />} subtitle={`${thisMonthOutward} this month`} colorClass="bg-emerald-50/50 border-emerald-100/60" />
         <StatCard title="Important Orders" value={totalOrders} icon={<AlertOctagon className="w-6 h-6 text-amber-500" />} subtitle={`${thisMonthOrders} this month`} colorClass="bg-amber-50/50 border-amber-100/60" />
+        <StatCard title="My Documents" value={totalMyDocs} icon={<Files className="w-6 h-6 text-violet-500" />} subtitle={`${thisMonthMyDocs} this month`} colorClass="bg-violet-50/50 border-violet-100/60" />
       </div>
 
       {/* Activity Log with Filters */}
@@ -143,12 +148,14 @@ export default function Reports({
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</label>
                 <div className="flex gap-1 flex-wrap">
-                  {(['all', 'inward', 'outward', 'orders'] as FilterType[]).map(t => (
+                  {(['all', 'inward', 'outward', 'orders', 'my-documents'] as FilterType[]).map(t => (
                     <button
                       key={t}
                       onClick={() => setTypeFilter(t)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${typeFilter === t ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                    >{t}</button>
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${typeFilter === t ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                    >
+                      {t.replace('-', ' ')}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -209,8 +216,8 @@ export default function Reports({
                 className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50/80 transition-colors group"
               >
                 {/* Type Icon */}
-                <div className={`mt-0.5 p-2 rounded-full flex-shrink-0 ${item.type === 'inward' ? 'bg-blue-100 text-blue-600' : item.type === 'orders' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                  {item.type === 'inward' ? <TrendingUp className="w-4 h-4" /> : item.type === 'orders' ? <AlertOctagon className="w-4 h-4" /> : <TrendingUp className="w-4 h-4 scale-y-[-1]" />}
+                <div className={`mt-0.5 p-2 rounded-full flex-shrink-0 ${item.type === 'inward' ? 'bg-blue-100 text-blue-600' : item.type === 'orders' ? 'bg-amber-100 text-amber-600' : item.type === 'my-documents' ? 'bg-violet-100 text-violet-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                  {item.type === 'inward' ? <TrendingUp className="w-4 h-4" /> : item.type === 'orders' ? <AlertOctagon className="w-4 h-4" /> : item.type === 'my-documents' ? <Files className="w-4 h-4" /> : <TrendingUp className="w-4 h-4 scale-y-[-1]" />}
                 </div>
 
                 {/* Content */}

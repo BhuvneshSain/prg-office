@@ -3,7 +3,7 @@ import type { RegisterEntry } from '../types';
 import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, ChevronDown, Files } from 'lucide-react';
 import DocumentModal from './DocumentModal';
 
-type FilterType = 'all' | 'inward' | 'outward' | 'orders' | 'my-documents';
+type FilterType = 'all' | 'inward' | 'outward' | 'orders' | 'essential-docs';
 
 export default function Reports({
   inward, outward, orders, myDocs
@@ -80,7 +80,7 @@ export default function Reports({
     inward: 'bg-blue-100 text-blue-700',
     outward: 'bg-emerald-100 text-emerald-700',
     orders: 'bg-amber-100 text-amber-600',
-    'my-documents': 'bg-violet-100 text-violet-700'
+    'essential-docs': 'bg-violet-100 text-violet-700'
   };
 
   return (
@@ -99,7 +99,7 @@ export default function Reports({
         <StatCard title="Inward Received" value={totalInward} icon={<TrendingUp className="w-6 h-6 text-blue-500 translate-y-0.5" />} subtitle={`${thisMonthInward} this month`} colorClass="bg-blue-50/50 border-blue-100/60" />
         <StatCard title="Outward Dispatched" value={totalOutward} icon={<TrendingUp className="w-6 h-6 text-emerald-500 -translate-y-0.5 scale-y-[-1]" />} subtitle={`${thisMonthOutward} this month`} colorClass="bg-emerald-50/50 border-emerald-100/60" />
         <StatCard title="Important Orders" value={totalOrders} icon={<AlertOctagon className="w-6 h-6 text-amber-500" />} subtitle={`${thisMonthOrders} this month`} colorClass="bg-amber-50/50 border-amber-100/60" />
-        <StatCard title="My Documents" value={totalMyDocs} icon={<Files className="w-6 h-6 text-violet-500" />} subtitle={`${thisMonthMyDocs} this month`} colorClass="bg-violet-50/50 border-violet-100/60" />
+        <StatCard title="Essential Tools/Docs" value={totalMyDocs} icon={<Files className="w-6 h-6 text-violet-500" />} subtitle={`${thisMonthMyDocs} this month`} colorClass="bg-violet-50/50 border-violet-100/60" />
       </div>
 
       {/* Activity Log with Filters */}
@@ -148,7 +148,7 @@ export default function Reports({
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</label>
                 <div className="flex gap-1 flex-wrap">
-                  {(['all', 'inward', 'outward', 'orders', 'my-documents'] as FilterType[]).map(t => (
+                  {(['all', 'inward', 'outward', 'orders', 'essential-docs'] as FilterType[]).map(t => (
                     <button
                       key={t}
                       onClick={() => setTypeFilter(t)}
@@ -216,8 +216,8 @@ export default function Reports({
                 className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50/80 transition-colors group"
               >
                 {/* Type Icon */}
-                <div className={`mt-0.5 p-2 rounded-full flex-shrink-0 ${item.type === 'inward' ? 'bg-blue-100 text-blue-600' : item.type === 'orders' ? 'bg-amber-100 text-amber-600' : item.type === 'my-documents' ? 'bg-violet-100 text-violet-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                  {item.type === 'inward' ? <TrendingUp className="w-4 h-4" /> : item.type === 'orders' ? <AlertOctagon className="w-4 h-4" /> : item.type === 'my-documents' ? <Files className="w-4 h-4" /> : <TrendingUp className="w-4 h-4 scale-y-[-1]" />}
+                <div className={`mt-0.5 p-2 rounded-full flex-shrink-0 ${item.type === 'inward' ? 'bg-blue-100 text-blue-600' : item.type === 'orders' ? 'bg-amber-100 text-amber-600' : item.type === 'essential-docs' ? 'bg-violet-100 text-violet-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                  {item.type === 'inward' ? <TrendingUp className="w-4 h-4" /> : item.type === 'orders' ? <AlertOctagon className="w-4 h-4" /> : item.type === 'essential-docs' ? <Files className="w-4 h-4" /> : <TrendingUp className="w-4 h-4 scale-y-[-1]" />}
                 </div>
 
                 {/* Content */}

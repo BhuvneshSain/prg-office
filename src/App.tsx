@@ -10,10 +10,10 @@ import OrdersTable from './components/OrdersTable';
 import Settings from './components/Settings';
 import StaffForm from './components/StaffForm';
 import StaffTable from './components/StaffTable';
-import MyDocuments from './components/MyDocuments';
+import EssentialDocs from './components/EssentialDocs';
 import { Users, FileText } from 'lucide-react';
 
-type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'my-documents' | 'reports' | 'settings';
+type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'reports' | 'settings';
 
 const TAB_LABELS: Record<Tab, string> = {
   dashboard: 'Dashboard',
@@ -21,7 +21,7 @@ const TAB_LABELS: Record<Tab, string> = {
   outward: 'Outward Register',
   orders: 'Important Orders',
   staff: 'Staff Management',
-  'my-documents': 'My Documents',
+  'essential-docs': 'Essential Tools / Docs',
   reports: 'Reports',
   settings: 'Settings',
 };
@@ -54,7 +54,7 @@ export default function App() {
         getRegisterData('outward'),
         getRegisterData('orders'),
         getRegisterData('staff'),
-        getRegisterData('my-documents'),
+        getRegisterData('essential-docs'),
         getSettings()
       ]);
       setInwardData(inData);
@@ -108,8 +108,8 @@ export default function App() {
             <StaffTable data={staffData} loading={loading} projects={settings?.projects || []} posts={settings?.posts || []} onRefresh={fetchData} />
           </div>
         );
-      case 'my-documents':
-        return <MyDocuments data={myDocsData} onRefresh={fetchData} />;
+      case 'essential-docs':
+        return <EssentialDocs data={myDocsData} onRefresh={fetchData} />;
       case 'reports':
         return (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -183,7 +183,7 @@ export default function App() {
           <NavItem icon={<Send className="w-[18px] h-[18px]" />} label="Outward Register" active={activeTab === 'outward'} isOpen={sidebarOpen} onClick={() => handleNavClick('outward')} badge={outwardData.length} />
           <NavItem icon={<AlertOctagon className="w-[18px] h-[18px]" />} label="Important Orders" active={activeTab === 'orders'} isOpen={sidebarOpen} onClick={() => handleNavClick('orders')} badge={ordersData.length} />
           <NavItem icon={<Users className="w-[18px] h-[18px]" />} label="Staff Management" active={activeTab === 'staff'} isOpen={sidebarOpen} onClick={() => handleNavClick('staff')} badge={staffData.length} />
-          <NavItem icon={<FileText className="w-[18px] h-[18px]" />} label="My Documents" active={activeTab === 'my-documents'} isOpen={sidebarOpen} onClick={() => handleNavClick('my-documents')} badge={myDocsData.length} />
+          <NavItem icon={<FileText className="w-[18px] h-[18px]" />} label="Essential Tools / Docs" active={activeTab === 'essential-docs'} isOpen={sidebarOpen} onClick={() => handleNavClick('essential-docs')} badge={myDocsData.length} />
           <NavItem icon={<BarChart className="w-[18px] h-[18px]" />} label="Reports" active={activeTab === 'reports'} isOpen={sidebarOpen} onClick={() => handleNavClick('reports')} />
 
           <div className="my-1 border-t border-slate-100 mx-1" />
@@ -277,7 +277,7 @@ export default function App() {
               { tab: 'outward', icon: <Send className="w-5 h-5" />, label: 'Outward' },
               { tab: 'orders', icon: <AlertOctagon className="w-5 h-5" />, label: 'Orders' },
               { tab: 'staff', icon: <Users className="w-5 h-5" />, label: 'Staff' },
-              { tab: 'my-documents', icon: <FileText className="w-5 h-5" />, label: 'Docs' },
+              { tab: 'essential-docs', icon: <FileText className="w-5 h-5" />, label: 'Docs' },
               { tab: 'reports', icon: <BarChart className="w-5 h-5" />, label: 'Reports' },
               { tab: 'settings', icon: <SettingsIcon className="w-5 h-5" />, label: 'Settings' },
             ] as const
@@ -361,7 +361,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
         <ToolCard title="Outward Register" icon={<Send className="w-6 h-6 text-emerald-500" />} desc="Record dispatched documents and track recipient references." gradient="from-emerald-500 to-teal-500" delay="50" onClick={() => onNavigate('outward')} />
         <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6 text-amber-50" />} desc="Log and track urgent assignments and directives." gradient="from-amber-400 to-orange-500" delay="100" onClick={() => onNavigate('orders')} />
         <ToolCard title="Staff Management" icon={<Users className="w-6 h-6 text-violet-500" />} desc="Manage personnel, designations and project allocations." gradient="from-violet-500 to-purple-500" delay="125" onClick={() => onNavigate('staff')} />
-        <ToolCard title="My Documents" icon={<FileText className="w-6 h-6 text-indigo-500" />} desc="Personal storage for your private PDFs and documents." gradient="from-indigo-500 to-purple-500" delay="140" onClick={() => onNavigate('my-documents')} />
+        <ToolCard title="Essential Tools / Docs" icon={<FileText className="w-6 h-6 text-indigo-500" />} desc="Company tools, resources, and essential documents." gradient="from-indigo-500 to-purple-500" delay="140" onClick={() => onNavigate('essential-docs')} />
         <ToolCard title="Analytics & Reports" icon={<BarChart className="w-6 h-6 text-purple-500" />} desc="View aggregated statistics and timelines of all records." gradient="from-purple-500 to-fuchsia-500" delay="160" onClick={() => onNavigate('reports')} />
       </div>
     </div>

@@ -4,7 +4,7 @@
 import { Dropbox } from 'dropbox';
 import type { RegisterEntry, SettingsData } from '../types';
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'my-documents';
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs';
 
 const CLIENT_ID = import.meta.env.VITE_DROPBOX_CLIENT_ID || '';
 const CLIENT_SECRET = import.meta.env.VITE_DROPBOX_CLIENT_SECRET || '';

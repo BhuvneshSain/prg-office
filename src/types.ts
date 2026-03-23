@@ -4,9 +4,11 @@ export interface AttachmentsData {
   link?: string; // Optional temporary download link fetched from dbx
 }
 
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs';
+
 export interface RegisterEntry {
   id: string; // Unique ID (e.g. timestamp or UUID)
-  type: 'inward' | 'outward' | 'orders' | 'staff' | 'my-documents';
+  type: RegisterType;
   date: string; // YYYY-MM-DD or Entry Date
   partyName: string; // Sender, Recipient, Assigned To, OR Staff Name
   subject: string; // Subject, Title, OR Post/Designation

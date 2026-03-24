@@ -11,7 +11,8 @@ import Settings from './components/Settings';
 import StaffForm from './components/StaffForm';
 import StaffTable from './components/StaffTable';
 import EssentialDocs from './components/EssentialDocs';
-import { Users, FileText } from 'lucide-react';
+import { Users, FileText, LogOut, Loader2 } from 'lucide-react';
+import Login from './components/Login';
 
 type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'reports' | 'settings';
 
@@ -29,6 +30,34 @@ const TAB_LABELS: Record<Tab, string> = {
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const auth = localStorage.getItem('pos_auth');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  const handleLogin = async (username: string, passwordHash: string) => {
+    const expectedUser = import.meta.env.VITE_APP_USERNAME || 'admin';
+    const expectedHash = import.meta.env.VITE_APP_PASSWORD_HASH || '';
+
+    if (username === expectedUser && passwordHash === expectedHash) {
+      localStorage.setItem('pos_auth', 'true');
+      setIsAuthenticated(true);
+      return true;
+    }
+    return false;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('pos_auth');
+    setIsAuthenticated(false);
+  };
 
   useEffect(() => {
     if (window.innerWidth >= 768) setSidebarOpen(true);
@@ -130,6 +159,18 @@ export default function App() {
     }
   };
 
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="flex bg-slate-50/50 min-h-[100dvh] font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
 
@@ -189,6 +230,17 @@ export default function App() {
           <div className="my-1 border-t border-slate-100 mx-1" />
 
           <NavItem icon={<SettingsIcon className="w-[18px] h-[18px]" />} label="Settings" active={activeTab === 'settings'} isOpen={sidebarOpen} onClick={() => handleNavClick('settings')} />
+          
+          <div className="flex-1" />
+          
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full text-red-500 hover:bg-red-50 active:scale-95 ${!sidebarOpen && 'justify-center'}`}
+            title={!sidebarOpen ? 'Logout' : undefined}
+          >
+            <LogOut className="w-[18px] h-[18px] group-hover:scale-110 transition-transform" />
+            {sidebarOpen && <span className="font-bold text-sm">Logout</span>}
+          </button>
         </nav>
 
         {/* Dropbox sync badge */}

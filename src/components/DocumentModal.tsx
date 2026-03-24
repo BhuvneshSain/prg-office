@@ -12,8 +12,17 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
   const [activeAttachmentIndex, setActiveAttachmentIndex] = useState(0);
   const [fileLink, setFileLink] = useState<string | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<'image' | 'video' | 'pdf'>('pdf');
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadingLink, setLoadingLink] = useState(false);
+
+  // Helper to detect file type from name
+  const getFileType = (name: string): 'image' | 'video' | 'pdf' => {
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image';
+    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) return 'video';
+    return 'pdf'; // Default to pdf (iframe viewer)
+  };
 
   useEffect(() => {
     // Only fetch link if there's an attachment
@@ -21,11 +30,15 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
       const fetchLink = async () => {
         setLoadingLink(true);
         setIframeLoaded(false); // Reset loader for new attachment
-        const fileId = entry.attachments[activeAttachmentIndex].id;
+        const attachment = entry.attachments[activeAttachmentIndex];
+        const type = getFileType(attachment.name);
+        setFileType(type);
+        
+        const fileId = attachment.id;
         
         // Fetch both in parallel. 
         // 1. Download Link (for the button)
-        // 2. Blob URL (for the iframe viewer)
+        // 2. Blob URL (for the viewer)
         const [link, blob] = await Promise.all([
           getFileLink(fileId),
           getFileBlobUrl(fileId)
@@ -33,7 +46,8 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
         
         setFileLink(link);
         if (blob) {
-          setBlobUrl(blob + '#view=FitH&toolbar=0');
+          // Add fragment for PDF viewer if it's a PDF
+          setBlobUrl(type === 'pdf' ? blob + '#view=FitH&toolbar=0' : blob);
         } else {
           setBlobUrl(null);
         }
@@ -194,19 +208,36 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                </div>
              ) : blobUrl ? (
                <>
-                 {!iframeLoaded && (
+                 {fileType === 'pdf' && !iframeLoaded && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm z-10">
                        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
                        <p className="text-sm font-medium text-slate-600">Loading document viewer...</p>
                     </div>
                  )}
-                 {/* Secure iframe embedding of PDF */}
-                 <iframe 
-                   src={blobUrl} 
-                   className="w-full h-full border-none bg-slate-50"
-                   onLoad={() => setIframeLoaded(true)}
-                   title="PDF Document Preview"
-                 />
+                 
+                 <div className="w-full h-full flex items-center justify-center p-4">
+                    {fileType === 'image' ? (
+                      <img 
+                        src={blobUrl} 
+                        alt="Attachment" 
+                        className="max-w-full max-h-full object-contain rounded-xl shadow-lg ring-1 ring-slate-200 animate-in zoom-in-95 duration-500"
+                      />
+                    ) : fileType === 'video' ? (
+                      <video 
+                        controls 
+                        src={blobUrl} 
+                        className="max-w-full max-h-full rounded-xl shadow-2xl ring-1 ring-slate-800 animate-in zoom-in-95 duration-500"
+                        autoPlay
+                      />
+                    ) : (
+                      <iframe 
+                        src={blobUrl} 
+                        className="w-full h-full border-none bg-slate-50 rounded-xl"
+                        onLoad={() => setIframeLoaded(true)}
+                        title="PDF Document Preview"
+                      />
+                    )}
+                 </div>
                </>
              ) : (
                <div className="flex flex-col items-center justify-center h-full text-red-400 p-8 text-center">

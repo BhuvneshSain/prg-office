@@ -203,13 +203,17 @@ export default function EssentialDocs({ data, onRefresh }: { data: RegisterEntry
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={async () => {
-                        const link = await getFileLink(doc.attachments[0].id);
-                        if (link) window.open(link, '_blank');
+                        if (doc.attachments.length > 1) {
+                          setViewDoc(doc);
+                        } else {
+                          const link = await getFileLink(doc.attachments[0].id);
+                          if (link) window.open(link, '_blank');
+                        }
                       }}
                       className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600"
-                      title="Download First Attachment"
+                      title={doc.attachments.length > 1 ? "Manage Multiple Files" : "Download File"}
                     >
-                      <Download className="w-4 h-4" />
+                      {doc.attachments.length > 1 ? <Files className="w-4 h-4" /> : <Download className="w-4 h-4" />}
                     </button>
                     <button 
                       onClick={() => setViewDoc(doc)}

@@ -9,6 +9,7 @@ interface DocumentModalProps {
 }
 
 export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
+  const [activeAttachmentIndex, setActiveAttachmentIndex] = useState(0);
   const [fileLink, setFileLink] = useState<string | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -19,7 +20,8 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
     if (entry.attachments && entry.attachments.length > 0) {
       const fetchLink = async () => {
         setLoadingLink(true);
-        const fileId = entry.attachments[0].id;
+        setIframeLoaded(false); // Reset loader for new attachment
+        const fileId = entry.attachments[activeAttachmentIndex].id;
         
         // Fetch both in parallel. 
         // 1. Download Link (for the button)
@@ -32,13 +34,15 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
         setFileLink(link);
         if (blob) {
           setBlobUrl(blob + '#view=FitH&toolbar=0');
+        } else {
+          setBlobUrl(null);
         }
         
         setLoadingLink(false);
       };
       fetchLink();
     }
-  }, [entry]);
+  }, [entry, activeAttachmentIndex]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -88,7 +92,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                 className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Download Original
+                Download {entry.attachments.length > 1 ? 'Selected' : 'Original'}
               </a>
             )}
             <button 
@@ -99,6 +103,25 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
             </button>
           </div>
         </div>
+
+        {/* Multi-Attachment Selector Bar (Optional) */}
+        {entry.attachments.length > 1 && (
+          <div className="bg-white border-b border-slate-100 px-6 py-2 overflow-x-auto flex gap-2 no-scrollbar">
+            {entry.attachments.map((att, idx) => (
+              <button
+                key={att.id}
+                onClick={() => setActiveAttachmentIndex(idx)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  activeAttachmentIndex === idx 
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100 scale-105' 
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+              >
+                File {idx + 1}: {att.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Content Body */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
@@ -126,6 +149,26 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                     {entry.remarks || <span className="text-slate-400 italic">None</span>}
                   </p>
                 </div>
+
+                {/* Mobile Selector within metadata for better discoverability on small screens */}
+                {entry.attachments.length > 1 && (
+                  <div className="md:hidden pt-4 border-t border-slate-100">
+                    <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Select Attachment</p>
+                    <div className="space-y-2">
+                      {entry.attachments.map((att, idx) => (
+                        <button
+                          key={att.id + idx}
+                          onClick={() => setActiveAttachmentIndex(idx)}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                            activeAttachmentIndex === idx ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-slate-50 text-slate-600 border border-transparent'
+                          }`}
+                        >
+                          {att.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
              </div>
           </div>
 
@@ -141,8 +184,13 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                </div>
              ) : loadingLink ? (
                <div className="flex flex-col items-center justify-center h-full gap-4">
-                 <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-                 <p className="text-sm font-medium text-slate-600 animate-pulse">Retrieving secure link from Dropbox...</p>
+                 <div className="relative">
+                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                       <FileText className="w-4 h-4 text-indigo-300" />
+                    </div>
+                 </div>
+                 <p className="text-sm font-bold text-slate-600 animate-pulse uppercase tracking-wider">Fetching secure sync...</p>
                </div>
              ) : blobUrl ? (
                <>

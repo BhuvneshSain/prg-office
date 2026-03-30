@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Files, Upload, Trash2, Eye, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck } from 'lucide-react';
+import { Files, Upload, Trash2, Eye, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck, Edit } from 'lucide-react';
 import { addRegisterEntry, deleteRegisterEntry, uploadAttachment, getFileLink } from '../lib/dropbox';
 import type { RegisterEntry, AttachmentsData } from '../types';
 import DocumentModal from './DocumentModal';
+import EditModal from './EditModal';
 
-export default function EssentialDocs({ data, onRefresh }: { data: RegisterEntry[], onRefresh: () => void }) {
+export default function EssentialDocs({ data, onRefresh, departments = [], projects = [] }: { data: RegisterEntry[], onRefresh: () => void, departments?: string[], projects?: string[] }) {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [viewDoc, setViewDoc] = useState<RegisterEntry | null>(null);
@@ -15,6 +16,7 @@ export default function EssentialDocs({ data, onRefresh }: { data: RegisterEntry
     remarks: ''
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editingDoc, setEditingDoc] = useState<RegisterEntry | null>(null);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +127,7 @@ export default function EssentialDocs({ data, onRefresh }: { data: RegisterEntry
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Attachments (Any File)</label>
-                  <label className={`flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${selectedFiles.length > 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30'}`}>
+                  <label className={`flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${selectedFiles.length > 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30'}`}> 
                     <Upload className="w-4 h-4" />
                     <span className="text-xs font-bold truncate max-w-[120px]">
                       {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'Choose Files'}
@@ -215,6 +217,15 @@ export default function EssentialDocs({ data, onRefresh }: { data: RegisterEntry
                     >
                       {doc.attachments.length > 1 ? <Files className="w-4 h-4" /> : <Download className="w-4 h-4" />}
                     </button>
+
+                    <button 
+                      onClick={() => setEditingDoc(doc)}
+                      className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-amber-600"
+                      title="Edit Resource"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+
                     <button 
                       onClick={() => setViewDoc(doc)}
                       className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-sky-600"
@@ -254,6 +265,16 @@ export default function EssentialDocs({ data, onRefresh }: { data: RegisterEntry
         <DocumentModal 
           entry={viewDoc} 
           onClose={() => setViewDoc(null)} 
+        />
+      )}
+
+      {editingDoc && (
+        <EditModal
+          entry={editingDoc}
+          departments={departments}
+          projects={projects}
+          onClose={() => setEditingDoc(null)}
+          onSuccess={() => { onRefresh(); setEditingDoc(null); }}
         />
       )}
     </div>

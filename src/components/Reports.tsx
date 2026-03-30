@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { RegisterEntry } from '../types';
-import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, ChevronDown, Files } from 'lucide-react';
+import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, Files } from 'lucide-react';
 import DocumentModal from './DocumentModal';
+import { ComboBox } from './ComboBox';
 
 type FilterType = 'all' | 'inward' | 'outward' | 'orders' | 'essential-docs';
 
@@ -181,17 +182,12 @@ export default function Reports({
               {/* Project Filter */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Project</label>
-                <div className="relative">
-                  <select
-                    value={projectFilter}
-                    onChange={e => setProjectFilter(e.target.value)}
-                    className="w-full appearance-none px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all pr-8"
-                  >
-                    <option value="">All Projects</option>
-                    {allProjects.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
+                <ComboBox 
+                  value={projectFilter}
+                  onChange={(val) => setProjectFilter(val)}
+                  options={allProjects}
+                  placeholder="All Projects"
+                />
               </div>
             </div>
           )}

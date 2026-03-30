@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { UploadCloud, CheckCircle2, XCircle, Loader2, File as FileIcon, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { UploadCloud, CheckCircle2, XCircle, Loader2, File as FileIcon } from 'lucide-react';
 import type { RegisterEntry } from '../types';
 import { addRegisterEntry, uploadAttachment } from '../lib/dropbox';
+import { ComboBox } from './ComboBox';
 
 interface OrderFormProps {
   existingProjects: string[];
@@ -93,7 +94,7 @@ export default function OrderForm({ existingProjects, onSuccess }: OrderFormProp
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Date Issued</label>
             <input 
@@ -103,18 +104,19 @@ export default function OrderForm({ existingProjects, onSuccess }: OrderFormProp
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all"
             />
           </div>
-          <div className="space-y-2 relative z-50">
+          <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Project</label>
             <ComboBox 
               value={formData.project}
               onChange={(val) => setFormData({...formData, project: val})}
               options={existingProjects}
               placeholder="Select project..."
+              activeColor="amber"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-40">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
            <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">RajKaj Ref. No. (Optional)</label>
             <input 
@@ -196,54 +198,3 @@ export default function OrderForm({ existingProjects, onSuccess }: OrderFormProp
   );
 }
 
-// Custom Non-Creatable Dropdown Component
-function ComboBox({ value, onChange, options, placeholder }: { value: string, onChange: (v: string) => void, options: string[], placeholder: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
-  
-  useEffect(() => { setInputValue(value); }, [value]);
-  
-  const filtered = options.filter(o => o.toLowerCase().includes(inputValue.toLowerCase()));
-  
-  return (
-    <div className="relative z-50">
-      <div className="relative flex items-center">
-        <input 
-          type="text" required placeholder={placeholder}
-          value={inputValue}
-          onChange={(e) => { setInputValue(e.target.value); setIsOpen(true); }}
-          onFocus={() => { setInputValue(''); setIsOpen(true); }}
-          onBlur={() => setTimeout(() => {
-             setInputValue(value);
-             setIsOpen(false);
-          }, 200)}
-          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all placeholder:text-slate-400"
-        />
-        <div className="absolute right-3 text-slate-400 pointer-events-none">
-           <ChevronDown className="w-5 h-5" />
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] max-h-56 overflow-y-auto py-1 z-50 custom-scrollbar animate-in fade-in slide-in-from-top-2">
-          {filtered.length > 0 ? filtered.map(opt => (
-            <div 
-              key={opt}
-              className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer text-slate-700 text-sm font-medium transition-colors"
-              onMouseDown={(e) => { 
-                e.preventDefault();
-                onChange(opt); 
-                setInputValue(opt);
-                setIsOpen(false); 
-              }}
-            >
-              {opt}
-            </div>
-          )) : (
-            <div className="px-4 py-2.5 text-slate-400 text-sm font-medium italic">No matches. Master data only.</div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}

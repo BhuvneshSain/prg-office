@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { X, Save, Loader2, UploadCloud, File as FileIcon, ChevronDown } from 'lucide-react';
+import { X, Save, Loader2, UploadCloud, File as FileIcon } from 'lucide-react';
 import type { RegisterEntry } from '../types';
 import { updateRegisterEntry, uploadAttachment } from '../lib/dropbox';
+import { ComboBox, MultiComboBox } from './ComboBox';
 
 interface Props {
   entry: RegisterEntry;
@@ -43,17 +44,10 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
   );
 
   const [newFile, setNewFile] = useState<File | null>(null);
-  const [deptOpen, setDeptOpen] = useState(false);
-  const [deptInput, setDeptInput] = useState('');
-  const [projOpen, setProjOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  const toggle = (dept: string) =>
-    setSelectedDepts(prev => prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]);
-
-  const filteredDepts = departments.filter(d => d.toLowerCase().includes(deptInput.toLowerCase()) && !selectedDepts.includes(d));
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,64 +150,32 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
           {/* Dept field */}
           {isOutward ? (
             <Field label="Recipient Dept(s)" required>
-              <div className="relative z-40">
-                <div
-                  className="min-h-[48px] bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-wrap gap-2 cursor-text focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500"
-                  onClick={() => setDeptOpen(true)}
-                >
-                  {selectedDepts.map(d => (
-                    <div key={d} title={d} className="flex items-center gap-1 bg-white border border-slate-200 text-xs font-bold px-2.5 py-1.5 rounded-lg max-w-[200px]">
-                      <span className="truncate">{d}</span>
-                      <X className="w-3 h-3 flex-shrink-0 cursor-pointer text-slate-400 hover:text-red-500"
-                        onClick={e => { e.stopPropagation(); toggle(d); }} />
-                    </div>
-                  ))}
-                  <input
-                    value={deptInput} onChange={e => { setDeptInput(e.target.value); setDeptOpen(true); }}
-                    onFocus={() => setDeptOpen(true)}
-                    onBlur={() => setTimeout(() => { setDeptInput(''); setDeptOpen(false); }, 200)}
-                    placeholder={selectedDepts.length === 0 ? 'Select departments...' : ''}
-                    className="flex-1 min-w-[100px] bg-transparent outline-none text-sm px-1 placeholder:text-slate-400"
-                  />
-                </div>
-                {deptOpen && filteredDepts.length > 0 && (
-                  <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50">
-                    {filteredDepts.map(d => (
-                      <div key={d} onMouseDown={e => { e.preventDefault(); toggle(d); setDeptInput(''); }}
-                        className="px-4 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 cursor-pointer">{d}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <MultiComboBox 
+                values={selectedDepts}
+                onChange={(vals) => setSelectedDepts(vals)}
+                options={departments}
+                placeholder="Select departments..."
+              />
             </Field>
           ) : isInward ? (
             <Field label="Sender Dept" required>
-              <div className="relative z-30">
-                <input value={form.partyName} onChange={e => { set('partyName', e.target.value); setProjOpen(false); }}
-                  onFocus={() => setProjOpen(true)} onBlur={() => setTimeout(() => setProjOpen(false), 200)}
-                  placeholder="Select department..." className={INPUT} />
-                {projOpen && departments.filter(d => d.toLowerCase().includes(form.partyName.toLowerCase())).length > 0 && (
-                  <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50">
-                    {departments.filter(d => d.toLowerCase().includes(form.partyName.toLowerCase())).map(d => (
-                      <div key={d} onMouseDown={e => { e.preventDefault(); set('partyName', d); }}
-                        className="px-4 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 cursor-pointer">{d}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ComboBox 
+                value={form.partyName}
+                onChange={(val) => set('partyName', val)}
+                options={departments}
+                placeholder="Select department..."
+              />
             </Field>
           ) : null}
 
           {/* Project */}
           <Field label="Project">
-            <div className="relative z-20">
-              <select value={form.project} onChange={e => set('project', e.target.value)}
-                className={`${INPUT} appearance-none pr-8`}>
-                <option value="">Select project...</option>
-                {projects.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
+            <ComboBox 
+              value={form.project}
+              onChange={(val) => set('project', val)}
+              options={projects}
+              placeholder="Select project..."
+            />
           </Field>
 
           {/* RajKaj + Subject */}

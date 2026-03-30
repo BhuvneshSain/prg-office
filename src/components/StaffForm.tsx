@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
-import { Users, X, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Users, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import type { RegisterEntry } from '../types';
 import { addRegisterEntry } from '../lib/dropbox';
+import { MultiComboBox } from './ComboBox';
 
 const SEP = '|||';
 
@@ -11,23 +12,7 @@ export default function StaffForm({ existingProjects, existingPosts, onSuccess }
   const [errorMsg, setErrorMsg] = useState('');
   const [form, setForm] = useState({ name: '', empId: '', post: '', mobile: '' });
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
-  const [projOpen, setProjOpen] = useState(false);
-  const [projSearch, setProjSearch] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setProjOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
-  const toggleProject = (p: string) => setSelectedProjects(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
-  const filteredProjs = existingProjects.filter((p: string) => p.toLowerCase().includes(projSearch.toLowerCase()) && !selectedProjects.includes(p));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,16 +48,14 @@ export default function StaffForm({ existingProjects, existingPosts, onSuccess }
             {existingPosts.map((p: string) => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
-        <div className="relative" ref={dropdownRef}>
-          <div className="min-h-[44px] bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-wrap gap-2 cursor-text" onClick={() => setProjOpen(true)}>
-            {selectedProjects.map(p => <div key={p} className="bg-violet-50 text-violet-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">{p}<X className="w-3 h-3 cursor-pointer" onClick={(ev) => { ev.stopPropagation(); toggleProject(p); }} /></div>)}
-            <input placeholder="Projects..." className="flex-1 bg-transparent outline-none text-sm" value={projSearch} onChange={e => setProjSearch(e.target.value)} onFocus={() => setProjOpen(true)} />
-          </div>
-          {projOpen && filteredProjs.length > 0 && (
-            <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-40 overflow-auto">
-              {filteredProjs.map((p: string) => <div key={p} className="px-4 py-2 hover:bg-violet-50 cursor-pointer text-sm" onMouseDown={(e) => { e.preventDefault(); toggleProject(p); setProjSearch(''); }}>{p}</div>)}
-            </div>
-          )}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Assigned Projects</label>
+          <MultiComboBox 
+            values={selectedProjects}
+            onChange={(vals) => setSelectedProjects(vals)}
+            options={existingProjects}
+            placeholder="Search and select projects..."
+          />
         </div>
         {successMsg && <p className="text-xs text-emerald-600 font-medium bg-emerald-50 p-2 rounded-lg flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5" /> {successMsg}</p>}
         {errorMsg && <p className="text-xs text-red-600 font-medium bg-red-50 p-2 rounded-lg flex items-center gap-2"><XCircle className="w-3.5 h-3.5" /> {errorMsg}</p>}

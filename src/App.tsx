@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Heart } from 'lucide-react';
 import { getRegisterData, getSettings } from './lib/dropbox';
 import type { RegisterEntry, SettingsData } from './types';
 import EntryForm from './components/EntryForm';
@@ -27,6 +27,8 @@ const TAB_LABELS: Record<Tab, string> = {
   settings: 'Settings',
 };
 
+const SESSION_DURATION = (Number(import.meta.env.VITE_SESSION_DURATION_HOURS) || 8) * 60 * 60 * 1000;
+
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -35,12 +37,35 @@ export default function App() {
   // Check authentication on mount
   useEffect(() => {
     const auth = localStorage.getItem('pos_auth');
-    if (auth === 'true') {
-      setIsAuthenticated(true);
+    const authTime = localStorage.getItem('pos_auth_time');
+    
+    if (auth === 'true' && authTime) {
+      const elapsed = Date.now() - Number(authTime);
+      if (elapsed < SESSION_DURATION) {
+        setIsAuthenticated(true);
+      } else {
+        handleLogout();
+      }
     } else {
       setIsAuthenticated(false);
     }
   }, []);
+
+  // Periodic check for session expiry
+  useEffect(() => {
+    if (isAuthenticated) {
+      const interval = setInterval(() => {
+        const authTime = localStorage.getItem('pos_auth_time');
+        if (authTime) {
+          const elapsed = Date.now() - Number(authTime);
+          if (elapsed >= SESSION_DURATION) {
+            handleLogout();
+          }
+        }
+      }, 60000); // Check every minute
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
 
   const handleLogin = async (username: string, passwordHash: string) => {
     const expectedUser = import.meta.env.VITE_APP_USERNAME || 'admin';
@@ -48,6 +73,7 @@ export default function App() {
 
     if (username === expectedUser && passwordHash === expectedHash) {
       localStorage.setItem('pos_auth', 'true');
+      localStorage.setItem('pos_auth_time', Date.now().toString());
       setIsAuthenticated(true);
       return true;
     }
@@ -56,6 +82,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('pos_auth');
+    localStorage.removeItem('pos_auth_time');
     setIsAuthenticated(false);
   };
 
@@ -277,7 +304,7 @@ export default function App() {
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-base font-bold text-slate-800 leading-none">{TAB_LABELS[activeTab]}</h2>
+              <h2 className="text-base font-bold text-slate-800 leading-none">{TAB_LABELS[activeTab as Tab]}</h2>
               {activeTab !== 'dashboard' && (
                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">Programmer Office Suite</p>
               )}
@@ -316,8 +343,33 @@ export default function App() {
         )}
 
         {/* Scrollable content — with bottom padding for mobile tab bar */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 pb-24 md:pb-6 custom-scrollbar">
-          {renderContent()}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 pb-24 md:pb-6 custom-scrollbar flex flex-col">
+          <div className="flex-1">
+            {renderContent()}
+          </div>
+          
+          {/* Footer */}
+          <footer className="mt-8 pt-6 pb-2 border-t border-slate-200/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-medium text-slate-400">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                <span className="text-indigo-600 font-black text-[9px]">POS</span>
+              </div>
+              <p>© {new Date().getFullYear()} ProOffice Suite. All rights reserved.</p>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/50 px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
+              <span>Built with</span>
+              <Heart className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" />
+              <span>by</span>
+              <a 
+                href="https://github.com/BhuvneshSain" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-indigo-600 hover:text-indigo-700 font-bold transition-colors underline decoration-indigo-200 underline-offset-2"
+              >
+                Bhuvnesh Sain
+              </a>
+            </div>
+          </footer>
         </div>
 
         {/* Mobile bottom navigation tab bar */}
@@ -354,7 +406,7 @@ export default function App() {
   );
 }
 
-function NavItem({ icon, label, isOpen, active = false, onClick, badge }: any) {
+function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon: React.ReactNode; label: string; isOpen: boolean; active?: boolean; onClick: () => void; badge?: number }) {
   return (
     <button
       onClick={onClick}

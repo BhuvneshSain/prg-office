@@ -15,6 +15,14 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
   const [fileType, setFileType] = useState<'image' | 'video' | 'pdf'>('pdf');
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadingLink, setLoadingLink] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Helper to detect file type from name
   const getFileType = (name: string): 'image' | 'video' | 'pdf' => {
@@ -103,10 +111,14 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                 href={fileLink} 
                 target="_blank" 
                 rel="noreferrer"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors"
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                  isMobile 
+                    ? 'text-white bg-indigo-600 hover:bg-indigo-700' 
+                    : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100'
+                }`}
               >
                 <Download className="w-4 h-4" />
-                Download {entry.attachments.length > 1 ? 'Selected' : 'Original'}
+                <span className="hidden min-[400px]:inline">{fileType === 'pdf' ? 'Open' : 'Download'} {entry.attachments.length > 1 ? 'Selected' : ''}</span>
               </a>
             )}
             <button 
@@ -230,12 +242,45 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                         autoPlay
                       />
                     ) : (
-                      <iframe 
-                        src={blobUrl} 
-                        className="w-full h-full border-none bg-slate-50 rounded-xl"
-                        onLoad={() => setIframeLoaded(true)}
-                        title="PDF Document Preview"
-                      />
+                      <div className="w-full h-full relative group">
+                        {isMobile && fileType === 'pdf' ? (
+                          <div className="flex flex-col items-center justify-center h-full w-full bg-white rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
+                            <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6 ring-8 ring-indigo-50/50">
+                              <FileText className="w-10 h-10 text-indigo-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800 mb-2">View PDF Document</h3>
+                            <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+                              Mobile browsers works best when opening PDFs in their native viewer.
+                            </p>
+                            <div className="flex flex-col w-full gap-3">
+                              <a 
+                                href={fileLink || '#'} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-200 active:scale-95 transition-all"
+                              >
+                                <FileText className="w-6 h-6" />
+                                View Full Document
+                              </a>
+                              <a 
+                                href={fileLink || '#'} 
+                                download={entry.attachments[activeAttachmentIndex].name}
+                                className="w-full flex items-center justify-center gap-2 px-6 py-3 text-slate-500 font-semibold hover:bg-slate-50 rounded-xl transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download PDF
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <iframe 
+                            src={blobUrl} 
+                            className="w-full h-full border-none bg-slate-50 rounded-xl"
+                            onLoad={() => setIframeLoaded(true)}
+                            title="PDF Document Preview"
+                          />
+                        )}
+                      </div>
                     )}
                  </div>
                </>

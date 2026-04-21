@@ -5,32 +5,32 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 
-An advanced, serverless Office Register Management System designed for efficiency, portability, and professional tracking. Synchronized seamlessly with Dropbox for secure document storage and persistent data management.
+ An advanced, serverless Office Register Management System designed for efficiency, portability, and elite tracking. Featuring the **"Cyber Light"** design system—a premium, iOS-inspired aesthetic with state-of-the-art glassmorphism and fluid spring-based motion.
 
 ---
 
 ## ✨ Key Features
 
-### 📂 Document & Order Management
-- **Inward/Outward Registers**: Track all official correspondence with ease.
-- **Important Orders**: A dedicated module for mission-critical directives.
-- **Advanced Searching**: Instant search across subjects, dates, and projects (SEO optimized).
-- **Smart Sorting**: Default sorting by Dispatch Number for Outward records to ensure high-priority visibility.
+### 📂 "Cyber Light" Aesthetic
+- **Premium Glassmorphism**: High-fidelity translucency with deep backdrop blurs and mesh gradients.
+- **Fluid Spring Motion**: Every interaction is powered by physics-based spring animations for a tactile, responsive feel.
+- **iOS-Inspired UX**: Refined spacing, rounded corners, and subtle micro-interactions reminiscent of high-end mobile operating systems.
+
+### 📦 Document & Order Management
+- **Inward/Outward Registers**: Track all official correspondence with a high-fidelity data terminal.
+- **Important Orders**: A dedicated vault for mission-critical directives.
+- **Advanced Searching**: Global filtering across subjects, dates, and projects (SEO optimized).
+- **Smart Sorting**: Automated chronological and dispatch-based sorting for maximum visibility.
 
 ### 👥 Staff Directory
-- **Personnel Management**: Maintain detailed records including IDs, posts, and contact details.
-- **Interactive UX**: Drag-and-drop reordering with persistent cloud-saving.
-- **Quick Actions**: One-click phone dialing and project-based filtering.
+- **Elite Personnel Tracking**: Maintain detailed records including IDs, posts, and contact terminals.
+- **Interactive UX**: Drag-and-drop reordering with persistent cloud-synchronization.
+- **Quick Actions**: One-click communication and project-based asset allocation.
 
 ### 📱 Performance & PWA
-- **Full PWA support**: Installable on iOS and Android for a native-app feel (offline asset caching, standalone mode).
-- **SEO Optimized**: Optimized meta tags, semantic HTML, and accessibility features for better search visibility.
-- **Timed Sessions**: Automatic logout after 8 hours to ensure data privacy.
-- **Instant Refresh**: Smooth fetching and updating mechanisms for real-time collaboration.
-
-### ☁️ Cloud & Persistence
-- **Dropbox Backend**: All data and attachments are securely stored and synced via the Dropbox API.
-- **Multi-File Support**: Upload and preview PDFs, images, and videos directly within the app with enhanced mobile viewer fallback.
+- **Elite PWA Experience**: Installable on iOS and Android with standalone mode, offline asset caching, and native-app feel.
+- **SEO Optimized**: Advanced meta structure, semantic HTML5, and accessibility compliance.
+- **Timed Security Sessions**: Automatic session invalidation after 8 hours for data integrity.
 
 ---
 
@@ -38,10 +38,10 @@ An advanced, serverless Office Register Management System designed for efficienc
 
 - **Core**: React 19 + TypeScript
 - **Bundler**: Vite 8
-- **Styling**: Tailwind CSS 4 (Glassmorphism & Modern UI)
-- **PWA**: `vite-plugin-pwa` (Workbox)
+- **Styling**: Tailwind CSS 4 (Custom design tokens & Mesh gradients)
+- **Motion**: Framer Motion (Spring-based interaction engine)
 - **Icons**: Lucide React
-- **Integration**: Dropbox SDK (Persistent JSON storage & File Hosting)
+- **Integration**: Dropbox SDK (Persistent JSON storage & Asset hosting)
 
 ---
 

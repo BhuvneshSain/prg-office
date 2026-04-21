@@ -1,8 +1,15 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { RegisterEntry } from '../types';
-import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, Files } from 'lucide-react';
+import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, Files, Sparkles, LayoutGrid, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import DocumentModal from './DocumentModal';
 import { ComboBox } from './ComboBox';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 type FilterType = 'all' | 'inward' | 'outward' | 'orders' | 'essential-docs';
 
@@ -77,195 +84,324 @@ export default function Reports({
     setProjectFilter('');
   };
 
-  const typeColors: Record<string, string> = {
-    inward: 'bg-blue-100 text-blue-700',
-    outward: 'bg-emerald-100 text-emerald-700',
-    orders: 'bg-amber-100 text-amber-600',
-    'essential-docs': 'bg-violet-100 text-violet-700'
+  const typeStyles: Record<string, { badge: string; icon: JSX.Element; label: string }> = {
+    inward: { 
+      badge: 'bg-blue-50 text-blue-600 border-blue-100', 
+      icon: <TrendingUp className="w-4 h-4" />, 
+      label: 'Inward' 
+    },
+    outward: { 
+      badge: 'bg-emerald-50 text-emerald-600 border-emerald-100', 
+      icon: <TrendingUp className="w-4 h-4 scale-y-[-1]" />, 
+      label: 'Outward' 
+    },
+    orders: { 
+      badge: 'bg-amber-50 text-amber-600 border-amber-100', 
+      icon: <AlertOctagon className="w-4 h-4" />, 
+      label: 'Order' 
+    },
+    'essential-docs': { 
+      badge: 'bg-cyber-violet/5 text-cyber-violet border-cyber-violet/10', 
+      icon: <Files className="w-4 h-4" />, 
+      label: 'Asset' 
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-2.5 bg-indigo-100 rounded-xl">
-          <BarChart3 className="w-6 h-6 text-indigo-700" />
+    <div className="space-y-10 max-w-7xl mx-auto pb-20">
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+      >
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="w-4 h-4 text-cyber-violet" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Intelligence Node</p>
+          </div>
+          <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Analytics Terminal</h2>
+          <p className="text-slate-400 text-sm font-bold mt-3 max-w-xl leading-relaxed">
+            Synthesized operational data and chronological audit logs across all office verticals.
+          </p>
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-800">Analytics & Reports</h2>
+        
+        <div className="flex items-center gap-3">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="px-4 py-2 bg-white/60 backdrop-blur-md rounded-2xl border border-white/60 shadow-sm"
+          >
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Status</p>
+            <p className="text-xs font-black text-emerald-500 uppercase tracking-tight flex items-center gap-1.5 leading-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Analysis
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Stat Matrix */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <StatCard title="Global Payload" value={totalDocs} icon={<Hash />} subtitle="All Entries" accent="indigo" />
+        <StatCard title="Inward Vector" value={totalInward} icon={<TrendingUp />} subtitle={`${thisMonthInward} Monthly`} accent="blue" />
+        <StatCard title="Outward Vector" value={totalOutward} icon={<TrendingUp className="rotate-180" />} subtitle={`${thisMonthOutward} Monthly`} accent="emerald" />
+        <StatCard title="Priority Orders" value={totalOrders} icon={<AlertOctagon />} subtitle={`${thisMonthOrders} Monthly`} accent="amber" />
+        <StatCard title="Library Assets" value={totalMyDocs} icon={<Files />} subtitle={`${thisMonthMyDocs} Monthly`} accent="violet" />
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Documents" value={totalDocs} icon={<Hash className="w-6 h-6 text-indigo-500" />} subtitle="All time records" colorClass="bg-indigo-50/50 border-indigo-100/60" />
-        <StatCard title="Inward Received" value={totalInward} icon={<TrendingUp className="w-6 h-6 text-blue-500 translate-y-0.5" />} subtitle={`${thisMonthInward} this month`} colorClass="bg-blue-50/50 border-blue-100/60" />
-        <StatCard title="Outward Dispatched" value={totalOutward} icon={<TrendingUp className="w-6 h-6 text-emerald-500 -translate-y-0.5 scale-y-[-1]" />} subtitle={`${thisMonthOutward} this month`} colorClass="bg-emerald-50/50 border-emerald-100/60" />
-        <StatCard title="Important Orders" value={totalOrders} icon={<AlertOctagon className="w-6 h-6 text-amber-500" />} subtitle={`${thisMonthOrders} this month`} colorClass="bg-amber-50/50 border-amber-100/60" />
-        <StatCard title="Essential Tools/Docs" value={totalMyDocs} icon={<Files className="w-6 h-6 text-violet-500" />} subtitle={`${thisMonthMyDocs} this month`} colorClass="bg-violet-50/50 border-violet-100/60" />
-      </div>
+      {/* Audit Log Terminal */}
+      <motion.div 
+        layout
+        className="glass-card rounded-[40px] border-white/60 shadow-glass overflow-hidden"
+      >
+        {/* Terminal Toolbar */}
+        <div className="p-8 border-b border-white/40 bg-white/40">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-cyber-violet/10 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-cyber-violet" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-800 tracking-tight">Audit Log Terminal</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                  Chronological Stream <span className="w-1 h-1 rounded-full bg-slate-200" /> 
+                  <span className="text-cyber-violet">{filtered.length} Indexed</span>
+                </p>
+              </div>
+            </div>
 
-      {/* Activity Log with Filters */}
-      <div className="bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-sm rounded-3xl overflow-hidden">
-
-        {/* Toolbar */}
-        <div className="p-5 border-b border-slate-100 flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-slate-400" />
-              Activity Log
-              <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{filtered.length} of {totalDocs}</span>
-            </h3>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Search */}
-              <div className="relative flex-1 sm:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative group flex-1 md:min-w-[300px]">
+                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyber-violet transition-colors" />
                 <input
-                  type="text" placeholder="Search entries..."
+                  type="text" placeholder="Scan records..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                  className="w-full pl-12 pr-6 py-3.5 bg-white/60 border border-slate-200/60 rounded-[22px] text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet transition-all placeholder:text-slate-300 shadow-sm"
                 />
               </div>
-              {/* Filters toggle */}
-              <button
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-sm font-medium transition-all ${showFilters || hasActiveFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-3.5 rounded-[22px] text-xs font-black uppercase tracking-widest transition-all",
+                  showFilters || hasActiveFilters ? "bg-slate-900 text-white shadow-xl shadow-slate-900/10" : "bg-white border border-slate-200 shadow-sm text-slate-500 hover:bg-slate-50"
+                )}
               >
                 <Filter className="w-4 h-4" />
                 Filters
-                {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-white/60 inline-block" />}
-              </button>
+                {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-cyber-cyan shadow-[0_0_8px_rgba(45,212,191,0.8)]" />}
+              </motion.button>
+
               {hasActiveFilters && (
-                <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                  <X className="w-4 h-4" /> Clear
-                </button>
+                <motion.button 
+                  initial={{ scale: 0 }} animate={{ scale: 1 }}
+                  onClick={clearFilters} 
+                  className="p-3.5 rounded-[22px] bg-red-50 text-red-500 hover:bg-red-100 transition-colors shadow-sm"
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
               )}
             </div>
           </div>
 
-          {/* Expanded Filter Panel */}
-          {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
-              {/* Type Filter */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</label>
-                <div className="flex gap-1 flex-wrap">
-                  {(['all', 'inward', 'outward', 'orders', 'essential-docs'] as FilterType[]).map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setTypeFilter(t)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${typeFilter === t ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                    >
-                      {t.replace('-', ' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Date From */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">From Date</label>
-                <input
-                  type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                />
-              </div>
-
-              {/* Date To */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">To Date</label>
-                <input
-                  type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                />
-              </div>
-
-              {/* Project Filter */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Project</label>
-                <ComboBox 
-                  value={projectFilter}
-                  onChange={(val) => setProjectFilter(val)}
-                  options={allProjects}
-                  placeholder="All Projects"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Entry List */}
-        <div className="divide-y divide-slate-50">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-              <div className="p-4 rounded-full bg-slate-50 border border-slate-100">
-                <Search className="w-8 h-8 text-slate-300" />
-              </div>
-              <p className="font-medium">No entries match your filters.</p>
-              {hasActiveFilters && (
-                <button onClick={clearFilters} className="text-xs text-indigo-600 hover:underline">Clear all filters</button>
-              )}
-            </div>
-          ) : (
-            filtered.map((item, idx) => (
-              <div
-                key={item.id ?? idx}
-                className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50/80 transition-colors group"
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8 mt-8 border-t border-white/60"
               >
-                {/* Type Icon */}
-                <div className={`mt-0.5 p-2 rounded-full flex-shrink-0 ${item.type === 'inward' ? 'bg-blue-100 text-blue-600' : item.type === 'orders' ? 'bg-amber-100 text-amber-600' : item.type === 'essential-docs' ? 'bg-violet-100 text-violet-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                  {item.type === 'inward' ? <TrendingUp className="w-4 h-4" /> : item.type === 'orders' ? <AlertOctagon className="w-4 h-4" /> : item.type === 'essential-docs' ? <Files className="w-4 h-4" /> : <TrendingUp className="w-4 h-4 scale-y-[-1]" />}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${typeColors[item.type]}`}>{item.type}</span>
-                    <p className="text-sm font-semibold text-slate-800 truncate">{item.subject || <span className="italic text-slate-400">No Subject</span>}</p>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Vertical Filter</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {(['all', 'inward', 'outward', 'orders', 'essential-docs'] as FilterType[]).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setTypeFilter(t)}
+                        className={cn(
+                          "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all",
+                          typeFilter === t ? "bg-cyber-violet text-white shadow-lg shadow-cyber-violet/20" : "bg-white border border-slate-100 text-slate-400 hover:bg-slate-50"
+                        )}
+                      >
+                        {t === 'essential-docs' ? 'Assets' : t}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1 truncate">
-                    <span className="font-medium">{item.type === 'inward' ? 'From: ' : item.type === 'orders' ? 'Project: ' : 'To: '}</span>
-                    {item.type === 'orders' ? (item.project || 'None') : item.partyName.replace(/\|\|\|/g, ', ')}
-                    {item.referenceNumber && <><span className="mx-2">•</span><span className="font-mono">{item.referenceNumber}</span></>}
-                    {item.project && item.type !== 'orders' && <><span className="mx-2">•</span><span className="text-indigo-500">{item.project}</span></>}
-                  </p>
                 </div>
 
-                {/* Date + View */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-xs text-slate-400 font-medium hidden sm:block">{item.date}</span>
-                  <button
-                    onClick={() => setSelectedEntry(item)}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm opacity-0 group-hover:opacity-100"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                    View
-                  </button>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Scan Origin</label>
+                  <input
+                    type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                    className="w-full px-5 py-3.5 bg-white/60 border border-slate-200/60 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet transition-all text-sm font-bold text-slate-800"
+                  />
                 </div>
-              </div>
-            ))
-          )}
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Scan Horizon</label>
+                  <input
+                    type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                    className="w-full px-5 py-3.5 bg-white/60 border border-slate-200/60 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet transition-all text-sm font-bold text-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Strategic Project</label>
+                  <ComboBox 
+                    value={projectFilter}
+                    onChange={(val) => setProjectFilter(val)}
+                    options={allProjects}
+                    placeholder="All Segments"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </div>
 
-      {/* Document Modal */}
-      {selectedEntry && <DocumentModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />}
+        {/* Data Stream */}
+        <div className="divide-y divide-slate-100/50">
+          <AnimatePresence mode="popLayout">
+            {filtered.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-24 text-center"
+              >
+                <div className="w-20 h-20 rounded-[30px] bg-slate-50 flex items-center justify-center mb-6">
+                  <Search className="w-10 h-10 text-slate-200" />
+                </div>
+                <h4 className="text-xl font-black text-slate-700 tracking-tight">Zero Matches</h4>
+                <p className="text-sm text-slate-400 font-bold max-w-xs mt-2 leading-relaxed">The current filter matrix yields no detectable records. Adjust parameters.</p>
+              </motion.div>
+            ) : (
+              filtered.map((item, idx) => (
+                <motion.div
+                  key={item.id ?? idx}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(idx * 0.03, 0.5) }}
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-6 px-8 py-6 hover:bg-cyber-violet/[0.02] transition-colors group relative"
+                >
+                  {/* Type Indicator */}
+                  <div className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-sm transition-all group-hover:scale-110",
+                    item.type === 'inward' ? "bg-blue-50 text-blue-500 border-blue-100" : 
+                    item.type === 'outward' ? "bg-emerald-50 text-emerald-500 border-emerald-100" : 
+                    item.type === 'orders' ? "bg-amber-50 text-amber-500 border-amber-100" : 
+                    "bg-cyber-violet/5 text-cyber-violet border-cyber-violet/10"
+                  )}>
+                    {typeStyles[item.type]?.icon}
+                  </div>
+
+                  {/* Core Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={cn(
+                        "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border",
+                        typeStyles[item.type]?.badge
+                      )}>
+                        {typeStyles[item.type]?.label} Record
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-300 font-mono tracking-tight group-hover:text-cyber-violet transition-colors">
+                        UID: {item.id.slice(-6)}
+                      </span>
+                    </div>
+                    <h4 className="text-base font-black text-slate-800 truncate group-hover:text-cyber-violet transition-colors">
+                      {item.subject || "Undefined Context"}
+                    </h4>
+                    <div className="flex items-center gap-3 mt-2 text-[11px] font-bold text-slate-400">
+                      <span className="flex items-center gap-1.5 min-w-[120px]">
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                        {item.type === 'orders' ? (item.project || 'Global') : item.partyName.replace(/\|\|\|/g, ', ')}
+                      </span>
+                      {item.referenceNumber && (
+                        <>
+                          <span className="text-slate-200">/</span>
+                          <span className="font-mono tracking-tighter text-slate-500">{item.referenceNumber}</span>
+                        </>
+                      )}
+                      {item.project && item.type !== 'orders' && (
+                        <>
+                          <span className="text-slate-200">/</span>
+                          <span className="text-cyber-violet/70">{item.project}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Date + Action Container */}
+                  <div className="flex items-center gap-6 shrink-0 ml-auto pt-2 sm:pt-0">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-xs font-black text-slate-800 tracking-tight leading-none mb-1">{item.date}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Registered At</p>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05, x: 4 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedEntry(item)}
+                      className="px-5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-cyber-violet hover:border-cyber-violet/40 hover:shadow-lg transition-all flex items-center gap-2 group/btn"
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest">Detail</span>
+                      <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      {/* Detail Overlay */}
+      <AnimatePresence>
+        {selectedEntry && (
+          <DocumentModal 
+            key="report-modal"
+            entry={selectedEntry} 
+            onClose={() => setSelectedEntry(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function StatCard({ title, value, icon, subtitle, colorClass }: { title: string; value: number | string; icon: React.ReactNode; subtitle: string; colorClass: string }) {
+function StatCard({ title, value, icon, subtitle, accent }: { title: string; value: number | string; icon: React.ReactNode; subtitle: string; accent: 'indigo' | 'blue' | 'emerald' | 'amber' | 'violet' }) {
+  const styles = {
+    indigo: "from-indigo-600 to-cyber-violet text-indigo-600 shadow-indigo-100/50",
+    blue: "from-blue-600 to-cyan-600 text-blue-600 shadow-blue-100/50",
+    emerald: "from-emerald-600 to-teal-600 text-emerald-600 shadow-emerald-100/50",
+    amber: "from-amber-600 to-orange-600 text-amber-600 shadow-amber-100/50",
+    violet: "from-violet-600 to-purple-600 text-violet-600 shadow-violet-100/50",
+  }[accent];
+
   return (
-    <div className={`p-6 rounded-3xl border ${colorClass} bg-white backdrop-blur-sm shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-3 bg-white rounded-2xl shadow-sm border border-black/5">
-          {icon}
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ y: -8 }}
+      className="group relative h-full"
+    >
+      {/* Background Glow */}
+      <div className={cn("absolute inset-0 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity bg-gradient-to-br rounded-3xl", styles)} />
+      
+      <div className="relative h-full glass-card p-6 rounded-[32px] border-white/60 shadow-glass flex flex-col items-center text-center">
+        <div className={cn("w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 border border-slate-50 transition-transform group-hover:scale-110", styles)}>
+          <div className="w-6 h-6">{icon}</div>
+        </div>
+        
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">{title}</p>
+        <h3 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-3">
+          {value}
+        </h3>
+        
+        <div className="mt-auto pt-4 border-t border-slate-50 w-full">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{subtitle}</p>
         </div>
       </div>
-      <h4 className="text-slate-500 font-medium text-sm tracking-wide">{title}</h4>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-slate-800 tracking-tight">{value}</span>
-      </div>
-      <p className="text-xs text-slate-400 font-medium mt-3 bg-white/60 inline-block px-2 py-1 rounded-md">{subtitle}</p>
-    </div>
+    </motion.div>
   );
 }

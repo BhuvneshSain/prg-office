@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Heart } from 'lucide-react';
-import { getRegisterData, getSettings } from './lib/dropbox';
+import { getRegisterData, getSettings } from './lib/dataService';
 import type { RegisterEntry, SettingsData } from './types';
 import EntryForm from './components/EntryForm';
 import DataTable from './components/DataTable';
@@ -12,7 +12,14 @@ import StaffForm from './components/StaffForm';
 import StaffTable from './components/StaffTable';
 import EssentialDocs from './components/EssentialDocs';
 import { Users, FileText, LogOut, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import Login from './components/Login';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'reports' | 'settings';
 
@@ -36,15 +43,16 @@ export default function App() {
 
   // Check authentication on mount
   useEffect(() => {
-    const auth = localStorage.getItem('pos_auth');
     const authTime = localStorage.getItem('pos_auth_time');
+    const authUser = localStorage.getItem('pos_auth_user');
     
-    if (auth === 'true' && authTime) {
+    if (authTime && authUser) {
       const elapsed = Date.now() - Number(authTime);
       if (elapsed < SESSION_DURATION) {
         setIsAuthenticated(true);
       } else {
-        handleLogout();
+        localStorage.clear();
+        setIsAuthenticated(false);
       }
     } else {
       setIsAuthenticated(false);
@@ -74,6 +82,7 @@ export default function App() {
     if (username === expectedUser && passwordHash === expectedHash) {
       localStorage.setItem('pos_auth', 'true');
       localStorage.setItem('pos_auth_time', Date.now().toString());
+      localStorage.setItem('pos_auth_user', username);
       setIsAuthenticated(true);
       return true;
     }
@@ -83,6 +92,7 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem('pos_auth');
     localStorage.removeItem('pos_auth_time');
+    localStorage.removeItem('pos_auth_user');
     setIsAuthenticated(false);
   };
 
@@ -211,79 +221,112 @@ export default function App() {
       )}
 
       {/* Sidebar - hidden on mobile, slide-in overlay */}
-      <aside className={`fixed md:relative z-50 h-[100dvh] top-0 left-0
-        ${sidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:w-20 md:translate-x-0'}
-        bg-white/95 backdrop-blur-2xl border-r border-slate-200/60 transition-all duration-300
-        ease-[cubic-bezier(0.25,1,0.5,1)] flex flex-col py-5 gap-4
-        shadow-[4px_0_30px_rgba(0,0,0,0.04)] md:shadow-none shrink-0`}
-      >
+      <aside className={cn(
+        "fixed md:relative z-50 h-[100dvh] top-0 left-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col py-6 gap-6 shrink-0",
+        sidebarOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full md:w-24 md:translate-x-0",
+        "bg-white/70 backdrop-blur-3xl border-r border-white/20 shadow-[0_0_40px_rgba(0,0,0,0.02)]"
+      )}>
         {/* Logo row */}
-        <div className="flex items-center justify-between px-4 mb-1">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-200">
-              <span className="text-white font-black text-xs">POS</span>
-            </div>
+        <div className="flex items-center justify-between px-6 mb-2">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <motion.div 
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyber-violet to-cyber-cyan flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyber"
+            >
+              <span className="text-white font-black text-sm">POS</span>
+            </motion.div>
             {sidebarOpen && (
-              <span className="font-bold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap leading-tight">
-                Programmer<br />Office Suite
-              </span>
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col"
+              >
+                <span className="font-extrabold text-sm tracking-tight text-slate-800 leading-none">Programmer</span>
+                <span className="font-bold text-[11px] text-slate-400 uppercase tracking-widest mt-0.5">Office Suite</span>
+              </motion.div>
             )}
           </div>
-          {/* Collapse toggle (desktop only) */}
+          
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all active:scale-95 hidden md:flex"
+            className="p-2 rounded-xl hover:bg-slate-100/50 text-slate-400 hover:text-slate-700 transition-all active:scale-90 hidden md:flex"
           >
-            <Menu className="w-4 h-4" />
+            <Menu className="w-5 h-5" />
           </button>
-          {/* Close button (mobile only) */}
+          
           <button
             onClick={() => setSidebarOpen(false)}
-            aria-label="Close menu"
-            className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 text-slate-400 transition-all active:scale-95 md:hidden"
+            className="p-2 rounded-xl bg-slate-50 text-slate-400 transition-all active:scale-90 md:hidden"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 flex flex-col gap-1 px-3 overflow-y-auto pb-4">
-          <NavItem icon={<LayoutDashboard className="w-[18px] h-[18px]" />} label="Dashboard" active={activeTab === 'dashboard'} isOpen={sidebarOpen} onClick={() => handleNavClick('dashboard')} />
-          <NavItem icon={<Inbox className="w-[18px] h-[18px]" />} label="Inward Register" active={activeTab === 'inward'} isOpen={sidebarOpen} onClick={() => handleNavClick('inward')} badge={inwardData.length} />
-          <NavItem icon={<Send className="w-[18px] h-[18px]" />} label="Outward Register" active={activeTab === 'outward'} isOpen={sidebarOpen} onClick={() => handleNavClick('outward')} badge={outwardData.length} />
-          <NavItem icon={<AlertOctagon className="w-[18px] h-[18px]" />} label="Important Orders" active={activeTab === 'orders'} isOpen={sidebarOpen} onClick={() => handleNavClick('orders')} badge={ordersData.length} />
-          <NavItem icon={<Users className="w-[18px] h-[18px]" />} label="Staff Management" active={activeTab === 'staff'} isOpen={sidebarOpen} onClick={() => handleNavClick('staff')} badge={staffData.length} />
-          <NavItem icon={<FileText className="w-[18px] h-[18px]" />} label="Essential Tools / Docs" active={activeTab === 'essential-docs'} isOpen={sidebarOpen} onClick={() => handleNavClick('essential-docs')} badge={myDocsData.length} />
-          <NavItem icon={<BarChart className="w-[18px] h-[18px]" />} label="Reports" active={activeTab === 'reports'} isOpen={sidebarOpen} onClick={() => handleNavClick('reports')} />
+        <nav className="flex-1 flex flex-col gap-1.5 px-4 overflow-y-auto pb-4 custom-scrollbar">
+          {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([tab, label]) => {
+            const icons: Record<Tab, React.ReactNode> = {
+              dashboard: <LayoutDashboard className="w-5 h-5" />,
+              inward: <Inbox className="w-5 h-5" />,
+              outward: <Send className="w-5 h-5" />,
+              orders: <AlertOctagon className="w-5 h-5" />,
+              staff: <Users className="w-5 h-5" />,
+              'essential-docs': <FileText className="w-5 h-5" />,
+              reports: <BarChart className="w-5 h-5" />,
+              settings: <SettingsIcon className="w-5 h-5" />,
+            };
+            const counts: Record<string, number> = {
+              inward: inwardData.length,
+              outward: outwardData.length,
+              orders: ordersData.length,
+              staff: staffData.length,
+              'essential-docs': myDocsData.length,
+            };
 
-          <div className="my-1 border-t border-slate-100 mx-1" />
+            return (
+              <NavItem 
+                key={tab}
+                icon={icons[tab]} 
+                label={label} 
+                active={activeTab === tab} 
+                isOpen={sidebarOpen} 
+                onClick={() => handleNavClick(tab)} 
+                badge={counts[tab]} 
+              />
+            );
+          })}
 
-          <NavItem icon={<SettingsIcon className="w-[18px] h-[18px]" />} label="Settings" active={activeTab === 'settings'} isOpen={sidebarOpen} onClick={() => handleNavClick('settings')} />
-          
           <div className="flex-1" />
           
-          <button
+          <motion.button
+            whileHover={{ x: 4 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleLogout}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full text-red-500 hover:bg-red-50 active:scale-95 ${!sidebarOpen && 'justify-center'}`}
-            title={!sidebarOpen ? 'Logout' : undefined}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group w-full text-slate-400 hover:text-red-500 hover:bg-red-50/50",
+              !sidebarOpen && "justify-center"
+            )}
           >
-            <LogOut className="w-[18px] h-[18px] group-hover:scale-110 transition-transform" />
-            {sidebarOpen && <span className="font-bold text-sm">Logout</span>}
-          </button>
+            <LogOut className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            {sidebarOpen && <span className="font-bold text-sm">Sign Out</span>}
+          </motion.button>
         </nav>
 
-        {/* Dropbox sync badge */}
-        <div className="px-3 mt-auto">
-          <div className={`flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100/60 ${!sidebarOpen && 'justify-center'}`}>
+        {/* Dropbox status */}
+        <div className="px-4 pb-2">
+          <div className={cn(
+            "p-3 rounded-[24px] bg-slate-50/50 border border-slate-100 flex items-center gap-3",
+            !sidebarOpen && "justify-center"
+          )}>
             <div className="relative flex-shrink-0">
-              <Cloud className="w-4 h-4 text-indigo-500" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-white animate-pulse" />
+              <Cloud className="w-5 h-5 text-indigo-400" />
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-700 truncate">Dropbox Sync</p>
-                <p className="text-[10px] text-emerald-600 font-medium">Connected</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Dropbox Cloud</p>
+                <p className="text-xs font-bold text-slate-700">Healthy</p>
               </div>
             )}
           </div>
@@ -306,10 +349,17 @@ export default function App() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div>
-              <h1 className="text-base font-bold text-slate-800 leading-none">{TAB_LABELS[activeTab]}</h1>
+            <div className="flex flex-col">
+              <motion.h1 
+                key={activeTab}
+                initial={{ y: 5, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-lg font-extrabold text-slate-800 leading-none tracking-tight"
+              >
+                {TAB_LABELS[activeTab]}
+              </motion.h1>
               {activeTab !== 'dashboard' && (
-                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Programmer Office Suite</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Register</p>
               )}
             </div>
           </div>
@@ -346,9 +396,20 @@ export default function App() {
         )}
 
         {/* Scrollable content — with bottom padding for mobile tab bar */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 pb-24 md:pb-6 custom-scrollbar flex flex-col">
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10 pb-28 md:pb-8 custom-scrollbar flex flex-col">
           <div className="flex-1">
-            {renderContent()}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                className="w-full h-full"
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
           </div>
           
           {/* Footer */}
@@ -374,19 +435,15 @@ export default function App() {
             </div>
           </footer>
         </div>
-
         {/* Mobile bottom navigation tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-2xl border-t border-slate-200/60 flex items-stretch h-16 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <nav className="md:hidden fixed bottom-6 left-6 right-6 z-40 bg-white/80 backdrop-blur-3xl border border-white/40 flex items-stretch h-16 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] px-2">
           {(
             [
               { tab: 'dashboard', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Home' },
               { tab: 'inward', icon: <Inbox className="w-5 h-5" />, label: 'Inward' },
               { tab: 'outward', icon: <Send className="w-5 h-5" />, label: 'Outward' },
               { tab: 'orders', icon: <AlertOctagon className="w-5 h-5" />, label: 'Orders' },
-              { tab: 'staff', icon: <Users className="w-5 h-5" />, label: 'Staff' },
               { tab: 'essential-docs', icon: <FileText className="w-5 h-5" />, label: 'Docs' },
-              { tab: 'reports', icon: <BarChart className="w-5 h-5" />, label: 'Reports' },
-              { tab: 'settings', icon: <SettingsIcon className="w-5 h-5" />, label: 'Settings' },
             ] as const
           ).map(({ tab, icon, label }) => {
             const isActive = activeTab === tab;
@@ -394,12 +451,24 @@ export default function App() {
               <button
                 key={tab}
                 onClick={() => handleNavClick(tab)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-all active:scale-90 ${isActive ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-all relative px-1",
+                  isActive ? "text-cyber-violet" : "text-slate-400"
+                )}
               >
-                <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-indigo-50 text-indigo-600' : ''}`}>
+                {isActive && (
+                  <motion.div 
+                    layoutId="mobile-nav-active"
+                    className="absolute inset-x-1 inset-y-2 bg-cyber-violet/5 rounded-2xl z-0"
+                  />
+                )}
+                <motion.div 
+                  animate={isActive ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
+                  className="relative z-10"
+                >
                   {icon}
-                </div>
-                {label}
+                </motion.div>
+                <span className="relative z-10 scale-90">{label}</span>
               </button>
             );
           })}
@@ -411,87 +480,174 @@ export default function App() {
 
 function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon: React.ReactNode; label: string; isOpen: boolean; active?: boolean; onClick: () => void; badge?: number | null }) {
   return (
-    <button
+    <motion.button
+      whileTap={{ scale: 0.97 }}
       onClick={onClick}
       title={!isOpen ? label : undefined}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full relative
-        ${active
-          ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100/60'
-          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent'}
-        ${!isOpen && 'justify-center'}`}
+      className={cn(
+        "flex items-center gap-4 px-4 py-3 rounded-[20px] transition-all duration-300 group w-full relative",
+        active ? "text-slate-900" : "text-slate-400 hover:text-slate-700",
+        !isOpen && "justify-center px-0"
+      )}
     >
-      <div className={`flex-shrink-0 transition-colors ${active ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
+      {active && (
+        <motion.div 
+          layoutId="sidebar-active"
+          transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+          className="absolute inset-0 bg-white shadow-[0_8px_20px_rgba(0,0,0,0.04)] border border-slate-100 rounded-[20px] z-0"
+        />
+      )}
+      
+      <div className={cn(
+        "relative z-10 transition-colors flex-shrink-0",
+        active ? "text-cyber-violet" : "group-hover:text-slate-600"
+      )}>
         {icon}
       </div>
+      
       {isOpen && (
-        <span className={`font-medium text-sm whitespace-nowrap flex-1 text-left ${active ? '' : 'opacity-80 group-hover:opacity-100'}`}>
+        <span className={cn(
+          "relative z-10 font-bold text-sm tracking-tight transition-all",
+          active ? "opacity-100" : "opacity-70 group-hover:opacity-100"
+        )}>
           {label}
         </span>
       )}
+      
       {isOpen && badge != null && badge > 0 && (
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${active ? 'bg-indigo-200 text-indigo-700' : 'bg-slate-200 text-slate-500'}`}>
+        <motion.span 
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          className={cn(
+            "relative z-10 text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center ml-auto",
+            active ? "bg-cyber-violet/10 text-cyber-violet/80" : "bg-slate-100 text-slate-400"
+          )}
+        >
           {badge}
-        </span>
+        </motion.span>
       )}
-    </button>
+    </motion.button>
   );
 }
 
 function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number }) {
+  const container: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const item: Variants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { type: "spring", bounce: 0.3, duration: 0.6 } 
+    }
+  };
+
+  const stats = [
+    { label: 'Inward', count: inwardCount, color: 'text-blue-600', bg: 'bg-blue-50/50', border: 'border-blue-100' },
+    { label: 'Outward', count: outwardCount, color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100' },
+    { label: 'Orders', count: ordersCount, color: 'text-amber-600', bg: 'bg-amber-50/50', border: 'border-amber-100' },
+    { label: 'Staff', count: staffCount, color: 'text-violet-600', bg: 'bg-violet-50/50', border: 'border-violet-100' },
+    { label: 'Docs', count: myDocsCount, color: 'text-cyber-violet', bg: 'bg-indigo-50/50', border: 'border-indigo-100' },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto w-full space-y-6">
-      <header className="mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1">Welcome back</p>
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">Programmer Office Suite</h2>
-        <p className="text-slate-500 text-sm sm:text-base mt-1 max-w-xl">Secure, serverless document management synced with Dropbox.</p>
-      </header>
+    <motion.div 
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="max-w-5xl mx-auto w-full space-y-10 py-4"
+    >
+      <motion.header variants={item} className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="h-[1px] w-8 bg-cyber-violet/30" />
+          <p className="text-[10px] font-black text-cyber-violet uppercase tracking-[0.2em]">Operational Overview</p>
+        </div>
+        <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-800 tracking-tight leading-[1.1]">
+          System <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-violet to-cyber-cyan">Dashboard</span>
+        </h2>
+        <p className="text-slate-500 text-sm sm:text-lg font-medium max-w-2xl leading-relaxed">
+          Welcome back. Your document repository is fully synchronized and secured.
+        </p>
+      </motion.header>
 
       {/* Quick stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-        {[
-          { label: 'Inward', count: inwardCount, color: 'bg-blue-50 border-blue-100 text-blue-700' },
-          { label: 'Outward', count: outwardCount, color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
-          { label: 'Orders', count: ordersCount, color: 'bg-amber-50 border-amber-100 text-amber-700' },
-          { label: 'Staff', count: staffCount, color: 'bg-violet-50 border-violet-100 text-violet-700' },
-          { label: 'Docs', count: myDocsCount, color: 'bg-indigo-50 border-indigo-100 text-indigo-700' },
-        ].map(({ label, count, color }) => (
-          <div key={label} className={`${color} border rounded-2xl p-3 sm:p-4 text-center`}>
-            <p className="text-2xl sm:text-3xl font-black">{count}</p>
-            <p className="text-xs font-semibold mt-0.5 opacity-80">{label}</p>
-          </div>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {stats.map((stat) => (
+          <motion.div 
+            key={stat.label}
+            variants={item}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
+            className={cn(
+              "group relative overflow-hidden rounded-[32px] p-5 border shadow-sm transition-all duration-300",
+              stat.bg, stat.border
+            )}
+          >
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 blur-2xl rounded-full translate-x-8 -translate-y-8" />
+            <p className={cn("text-3xl sm:text-4xl font-black tracking-tighter", stat.color)}>{stat.count}</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-1">{stat.label}</p>
+          </motion.div>
         ))}
       </div>
 
       {/* Tool cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <ToolCard title="Inward Register" icon={<Inbox className="w-6 h-6 text-blue-500" />} desc="Log incoming documents and attach scanned copies." gradient="from-blue-500 to-indigo-500" delay="0" onClick={() => onNavigate('inward')} />
-        <ToolCard title="Outward Register" icon={<Send className="w-6 h-6 text-emerald-500" />} desc="Record dispatched documents and track recipient references." gradient="from-emerald-500 to-teal-500" delay="50" onClick={() => onNavigate('outward')} />
-        <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6 text-amber-50" />} desc="Log and track urgent assignments and directives." gradient="from-amber-400 to-orange-500" delay="100" onClick={() => onNavigate('orders')} />
-        <ToolCard title="Staff Management" icon={<Users className="w-6 h-6 text-violet-500" />} desc="Manage personnel, designations and project allocations." gradient="from-violet-500 to-purple-500" delay="125" onClick={() => onNavigate('staff')} />
-        <ToolCard title="Essential Tools / Docs" icon={<FileText className="w-6 h-6 text-indigo-500" />} desc="Company tools, resources, and essential documents." gradient="from-indigo-500 to-purple-500" delay="140" onClick={() => onNavigate('essential-docs')} />
-        <ToolCard title="Analytics & Reports" icon={<BarChart className="w-6 h-6 text-purple-500" />} desc="View aggregated statistics and timelines of all records." gradient="from-purple-500 to-fuchsia-500" delay="160" onClick={() => onNavigate('reports')} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <ToolCard title="Inward Register" icon={<Inbox className="w-6 h-6" />} desc="Log and manage incoming documents." variant="blue" variants={item} onClick={() => onNavigate('inward')} />
+        <ToolCard title="Outward Register" icon={<Send className="w-6 h-6" />} desc="Track dispatches and recipient info." variant="emerald" variants={item} onClick={() => onNavigate('outward')} />
+        <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6" />} desc="Log urgent assignments & directives." variant="amber" variants={item} onClick={() => onNavigate('orders')} />
+        <ToolCard title="Staff Directory" icon={<Users className="w-6 h-6" />} desc="Personnel and project allocations." variant="violet" variants={item} onClick={() => onNavigate('staff')} />
+        <ToolCard title="Resource Hub" icon={<FileText className="w-6 h-6" />} desc="Essential tools and documentation." variant="indigo" variants={item} onClick={() => onNavigate('essential-docs')} />
+        <ToolCard title="Analytics" icon={<BarChart className="w-6 h-6" />} desc="Aggregated stats and timelines." variant="fuchsia" variants={item} onClick={() => onNavigate('reports')} />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-function ToolCard({ title, icon, desc, gradient, delay, onClick }: { title: string; icon: React.ReactNode; desc: string; gradient: string; delay: string; onClick: () => void }) {
+function ToolCard({ title, icon, desc, variant, variants, onClick }: { title: string; icon: React.ReactNode; desc: string; variant: string; variants: Variants; onClick: () => void }) {
+  const colorVariants: Record<string, { icon: string, glow: string }> = {
+    blue: { icon: 'text-blue-500 bg-blue-50', glow: 'shadow-blue-500/10' },
+    emerald: { icon: 'text-emerald-500 bg-emerald-50', glow: 'shadow-emerald-500/10' },
+    amber: { icon: 'text-amber-500 bg-amber-50', glow: 'shadow-amber-500/10' },
+    violet: { icon: 'text-violet-500 bg-violet-50', glow: 'shadow-violet-500/10' },
+    indigo: { icon: 'text-indigo-500 bg-indigo-50', glow: 'shadow-indigo-500/10' },
+    fuchsia: { icon: 'text-fuchsia-500 bg-fuchsia-50', glow: 'shadow-fuchsia-500/10' },
+  };
+
   return (
-    <div
+    <motion.div
+      variants={variants}
+      whileHover={{ y: -8, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 cursor-pointer group overflow-hidden animate-in fade-in slide-in-from-bottom-4 ease-out fill-mode-both"
-      style={{ animationDelay: `${delay}ms` }}
+      className={cn(
+        "glass-card group p-6 rounded-[32px] cursor-pointer relative overflow-hidden transition-all duration-500",
+        colorVariants[variant].glow
+      )}
     >
-      <div className="p-5 flex items-start gap-4 relative">
-        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${gradient} opacity-[0.04] group-hover:opacity-[0.08] rounded-bl-full transition-opacity duration-500`} />
-        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-shrink-0 shadow-sm">
+      <div className="relative z-10 flex flex-col gap-4">
+        <div className={cn(
+          "w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6",
+          colorVariants[variant].icon
+        )}>
           {icon}
         </div>
         <div>
-          <h4 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-snug">{title}</h4>
-          <p className="text-sm text-slate-500 mt-1 leading-relaxed">{desc}</p>
+          <h4 className="font-extrabold text-slate-800 text-lg tracking-tight group-hover:text-cyber-violet transition-colors">{title}</h4>
+          <p className="text-sm text-slate-500 font-medium mt-1 leading-relaxed opacity-80">{desc}</p>
         </div>
       </div>
-    </div>
+      
+      {/* Refined subtle glow edge */}
+      <div className="absolute -bottom-12 -right-12 w-24 h-24 bg-current opacity-[0.03] blur-3xl group-hover:opacity-[0.08] transition-opacity" />
+    </motion.div>
   );
 }

@@ -3,7 +3,7 @@ import { Loader2, Search, AlertOctagon, Maximize2, Pencil, Trash2 } from 'lucide
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
-import { deleteRegisterEntry } from '../lib/dropbox';
+import { deleteRegisterEntry } from '../lib/dataService';
 
 interface Props {
   data: RegisterEntry[];

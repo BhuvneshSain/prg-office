@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Search, FileText, Maximize2, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
@@ -20,12 +20,25 @@ export default function DataTable({ data, type, loading, departments, projects, 
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'subject-asc' | 'subject-desc' | 'party-asc' | 'party-desc' | 'dispatch-asc' | 'dispatch-desc'>(type === 'outward' ? 'dispatch-desc' : 'date-desc');
 
   const filteredData = data.filter(item =>
     item.subject.toLowerCase().includes(search.toLowerCase()) ||
     item.partyName.replace(/\|\|\|/g, ' ').toLowerCase().includes(search.toLowerCase()) ||
     item.referenceNumber.toLowerCase().includes(search.toLowerCase())
-  );
+  ).sort((a, b) => {
+    switch (sortBy) {
+      case 'date-desc': return new Date(b.date).getTime() - new Date(a.date).getTime();
+      case 'date-asc': return new Date(a.date).getTime() - new Date(b.date).getTime();
+      case 'subject-asc': return a.subject.localeCompare(b.subject);
+      case 'subject-desc': return b.subject.localeCompare(a.subject);
+      case 'party-asc': return a.partyName.localeCompare(b.partyName);
+      case 'party-desc': return b.partyName.localeCompare(a.partyName);
+      case 'dispatch-asc': return (a.referenceNumber || '').localeCompare(b.referenceNumber || '');
+      case 'dispatch-desc': return (b.referenceNumber || '').localeCompare(a.referenceNumber || '');
+      default: return 0;
+    }
+  });
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -46,16 +59,40 @@ export default function DataTable({ data, type, loading, departments, projects, 
             {type === 'inward' ? 'Inward' : 'Outward'} Logs
             <span className="text-xs font-medium text-slate-400 bg-white border border-slate-100 px-2 py-0.5 rounded-full">{filteredData.length}</span>
           </h3>
-          <div className="relative w-full sm:w-60">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search records..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)}
-              aria-label={`Search ${type} records`}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
-            />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search records..." 
+                value={search} 
+                onChange={e => setSearch(e.target.value)}
+                aria-label={`Search ${type} records`}
+                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
+              />
+            </div>
+            {type === 'outward' && (
+              <div className="relative">
+                <ArrowUpDown className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <select 
+                  value={sortBy} 
+                  onChange={e => setSortBy(e.target.value as any)}
+                  className="pl-9 pr-8 py-2 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer text-slate-600 font-medium"
+                >
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="subject-asc">Subject (A-Z)</option>
+                  <option value="subject-desc">Subject (Z-A)</option>
+                  <option value="party-asc">Recipient (A-Z)</option>
+                  <option value="party-desc">Recipient (Z-A)</option>
+                  <option value="dispatch-asc">Dispatch No. (0-9)</option>
+                  <option value="dispatch-desc">Dispatch No. (9-0)</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

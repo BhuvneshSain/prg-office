@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Download, Calendar, Hash, FileCheck } from 'lucide-react';
+import { X, Download, Calendar, Hash, FileCheck, Loader2, FileText } from 'lucide-react';
 import type { RegisterEntry } from '../types';
 import { getFileLink, getSharedLink } from '../lib/dropbox';
-
-// - [x] Modify `dropbox.ts` to improve `getSharedLink` error handling.
-// - [x] Update `DocumentModal.tsx` to include native browser PDF rendering.
-// - [x] STOP Automatic Downloads (Replace Temporary Link with Raw Shared Link in iframes).
-// - [/] Verify Zero-Download PDF preview (No browser download trigger).
-// - [/] Add auto-download fix to task list.
 
 declare global {
   interface Window {
@@ -27,18 +21,38 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
   const [fileLink, setFileLink] = useState<string | null>(null);
   const [sharedUrl, setSharedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const embedRef = useRef<HTMLDivElement>(null);
   const hasAttachment = entry.attachments && entry.attachments.length > 0;
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const getFileType = (name: string): 'image' | 'video' | 'pdf' | 'other' => {
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image';
+    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) return 'video';
+    if (ext === 'pdf') return 'pdf';
+    return 'other';
+  };
+
+  const currentFile = hasAttachment ? entry.attachments[activeAttachmentIndex] : null;
+  const fileType = currentFile ? getFileType(currentFile.name) : 'other';
 
   useEffect(() => {
     if (hasAttachment) {
       const fetchLink = async () => {
         setLoading(true);
+        setIframeLoaded(false);
         const attachment = entry.attachments[activeAttachmentIndex];
         const fileId = attachment.id;
         
         try {
-          // Fetch remote-only links - NO BLOBS/DOWNLOADS to browser memory
           const [link, shared] = await Promise.all([
             getFileLink(fileId),
             getSharedLink(fileId)
@@ -55,19 +69,12 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
     }
   }, [entry, activeAttachmentIndex, hasAttachment]);
 
-  // Handle Official Dropbox Zero-Download Embedder
   useEffect(() => {
-    if (sharedUrl && embedRef.current && window.Dropbox) {
-      // Clear existing content
+    if (sharedUrl && embedRef.current && window.Dropbox && fileType === 'other') {
       embedRef.current.innerHTML = "";
-      
-      // Streaming Preview: Document stays in the cloud
-      window.Dropbox.embed(
-        { link: sharedUrl },
-        embedRef.current
-      );
+      window.Dropbox.embed({ link: sharedUrl }, embedRef.current);
     }
-  }, [sharedUrl]);
+  }, [sharedUrl, fileType]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -82,14 +89,13 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
       
       <div className="relative bg-white rounded-none md:rounded-3xl shadow-2xl w-full md:max-w-7xl h-[100dvh] md:h-[92vh] flex flex-col overflow-hidden outline-none animate-in fade-in zoom-in-95 slide-in-from-bottom-8">
         
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3">
              <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
                <FileCheck className="w-6 h-6" />
              </div>
              <div>
-               <h2 className="text-lg font-bold text-slate-800 tracking-tight leading-tight">Zero-Download Stream</h2>
+               <h2 className="text-lg font-bold text-slate-800 tracking-tight leading-tight">Document Preview</h2>
                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 italic">Official Dropbox Cloud Preview</p>
              </div>
           </div>
@@ -97,11 +103,17 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
           <div className="flex items-center gap-3">
             {fileLink && (
               <a 
-                href={sharedUrl || fileLink} 
-                className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-100"
+                href={fileLink} 
+                target="_blank" 
+                rel="noreferrer"
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                  isMobile 
+                    ? 'text-white bg-indigo-600 hover:bg-indigo-700' 
+                    : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100'
+                }`}
               >
                 <Download className="w-4 h-4" />
-                Original
+                <span className="hidden min-[400px]:inline">{fileType === 'pdf' ? 'Open' : 'Download'} {entry.attachments.length > 1 ? 'Selected' : ''}</span>
               </a>
             )}
             <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700">
@@ -110,7 +122,6 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
           </div>
         </div>
 
-        {/* Multi-Attachment Selector */}
         {entry.attachments.length > 1 && (
           <div className="bg-white border-b border-slate-100 px-6 py-2 overflow-x-auto flex gap-2 no-scrollbar">
             {entry.attachments.map((att, idx) => (
@@ -127,10 +138,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
           </div>
         )}
 
-        {/* Content Body */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-          
-          {/* Metadata Panel */}
           <div className="w-full md:w-80 lg:w-96 p-6 overflow-y-auto border-b md:border-b-0 md:border-r border-slate-100 bg-white max-h-[30vh] md:max-h-none shrink-0 scrollbar-hide">
              <h3 className="text-lg font-bold text-slate-900 mb-6 leading-tight">{entry.type === 'orders' ? `Subject: ${entry.subject}` : `Ref: ${entry.referenceNumber}`}</h3>
              <div className="grid grid-cols-1 gap-6">
@@ -155,38 +163,79 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                  <p className="text-sm font-bold text-slate-700 uppercase tracking-widest animate-pulse">Requesting Stream...</p>
                </div>
              ) : (
-                 <div className="w-full h-full db-embed-container bg-white relative">
-                    {/* Mode 1: PDF Native Browser Rendering (Zero-Download Inline) */}
-                    {entry.attachments[activeAttachmentIndex].name.toLowerCase().endsWith('.pdf') && sharedUrl ? (
-                      <iframe 
-                        src={`${sharedUrl.replace('dl=0', 'raw=1')}`}
-                        className="w-full h-full border-none"
-                        title="PDF Preview"
-                      />
-                    ) : sharedUrl && window.Dropbox ? (
-                      /* Mode 2: Cloud Streaming for Office Docs (Requires sharing.write) */
-                      <div ref={embedRef} className="w-full h-full" />
-                    ) : (
-                      /* Mode 3: Fallback if Stream Fails */
-                      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
-                          <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2rem] flex items-center justify-center mb-2 mx-auto">
-                              <X className="w-10 h-10" />
-                          </div>
-                          <p className="text-lg font-bold text-slate-800">Preview Unavailable</p>
-                          <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-                            This file type requires <b>sharing.write</b> permissions to stream from the cloud. 
-                            Please update your Dropbox app scopes.
-                          </p>
+               <div className="w-full h-full db-embed-container bg-white relative flex items-center justify-center">
+                 {fileType === 'pdf' && sharedUrl ? (
+                    isMobile ? (
+                      <div className="flex flex-col items-center justify-center h-full w-full bg-white rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
+                        <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6 ring-8 ring-indigo-50/50">
+                          <FileText className="w-10 h-10 text-indigo-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">View PDF Document</h3>
+                        <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+                          Mobile browsers work best when opening PDFs in their native viewer.
+                        </p>
+                        <div className="flex flex-col w-full gap-3">
                           <a 
                             href={fileLink || '#'} 
-                            className="mt-2 flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-200 active:scale-95 transition-all"
                           >
-                            <Download className="w-4 h-4" />
-                            Download instead
+                            <FileText className="w-6 h-6" />
+                            View Full Document
                           </a>
+                        </div>
                       </div>
-                    )}
-                 </div>
+                    ) : (
+                      <>
+                        {!iframeLoaded && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm z-10">
+                            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
+                            <p className="text-sm font-medium text-slate-600">Loading document viewer...</p>
+                          </div>
+                        )}
+                        <iframe 
+                          src={`${sharedUrl.replace('dl=0', 'raw=1')}`}
+                          className="w-full h-full border-none"
+                          onLoad={() => setIframeLoaded(true)}
+                          title="PDF Preview"
+                        />
+                      </>
+                    )
+                 ) : fileType === 'image' && fileLink ? (
+                    <img 
+                      src={fileLink} 
+                      alt="Attachment" 
+                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg ring-1 ring-slate-200 animate-in zoom-in-95 duration-500"
+                    />
+                 ) : fileType === 'video' && fileLink ? (
+                    <video 
+                      controls 
+                      src={fileLink} 
+                      className="max-w-full max-h-full rounded-xl shadow-2xl ring-1 ring-slate-800 animate-in zoom-in-95 duration-500"
+                      autoPlay
+                    />
+                 ) : sharedUrl && window.Dropbox ? (
+                   <div ref={embedRef} className="w-full h-full" />
+                 ) : (
+                   <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+                       <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2rem] flex items-center justify-center mb-2 mx-auto">
+                           <X className="w-10 h-10" />
+                       </div>
+                       <p className="text-lg font-bold text-slate-800">Preview Unavailable</p>
+                       <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
+                         This file type requires specific permissions to stream from the cloud. 
+                       </p>
+                       <a 
+                         href={fileLink || '#'} 
+                         className="mt-2 flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                       >
+                         <Download className="w-4 h-4" />
+                         Download instead
+                       </a>
+                   </div>
+                 )}
+               </div>
              )}
           </div>
         </div>

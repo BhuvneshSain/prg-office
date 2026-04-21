@@ -22,8 +22,9 @@ async function reset() {
         mode: { '.tag': 'overwrite' }
       });
       console.log(`✅ Cleared ${file}`);
-    } catch (e: any) {
-      console.error(`❌ Failed to clear ${file}:`, e?.error || e);
+    } catch (err: unknown) {
+      const error = err as { error?: string } | string;
+      console.error(`❌ Failed to clear ${file}:`, typeof error === 'object' ? error.error : error);
     }
   }
 }

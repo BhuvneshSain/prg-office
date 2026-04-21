@@ -16,6 +16,11 @@ export const dbx = new Dropbox({
   refreshToken: REFRESH_TOKEN
 });
 
+// Helper to sort register entries by date descending (newest first)
+const sortEntriesByDate = (entries: RegisterEntry[]) => {
+  return [...entries].sort((a, b) => b.date.localeCompare(a.date));
+};
+
 // Read data from JSON file in Dropbox
 export const getRegisterData = async (type: RegisterType): Promise<RegisterEntry[]> => {
   if (!REFRESH_TOKEN) return [];
@@ -24,15 +29,18 @@ export const getRegisterData = async (type: RegisterType): Promise<RegisterEntry
   try {
     const response = await dbx.filesDownload({ path });
     // Dropbox filesDownload result contains fileBlob in browser env
-    const blob = (response.result as any).fileBlob as Blob;
-    const text = await blob.text();
-    return JSON.parse(text) as RegisterEntry[];
-  } catch (error: any) {
-    if (error?.status === 409 || error?.error?.error_summary?.includes('not_found')) {
+    const result = response.result as unknown as { fileBlob: Blob };
+    const text = await result.fileBlob.text();
+    const data = JSON.parse(text) as RegisterEntry[];
+    if (type === 'staff') return data; // Keep manual order for staff
+    return sortEntriesByDate(data);
+  } catch (error: unknown) {
+    const dbxError = error as { status?: number; error?: { error_summary?: string } };
+    if (dbxError?.status === 409 || dbxError?.error?.error_summary?.includes('not_found')) {
       // File doesn't exist yet, return empty array
       return [];
     }
-    if (error?.error?.error_summary?.includes('expired_access_token')) {
+    if (dbxError?.error?.error_summary?.includes('expired_access_token')) {
       throw new Error('Dropbox Access Token has expired. Please update it.');
     }
     console.error(`Error loading ${type} data from Dropbox`, error);
@@ -62,8 +70,11 @@ export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]
 // Add a single new entry
 export const addRegisterEntry = async (entry: RegisterEntry): Promise<boolean> => {
   const existingData = await getRegisterData(entry.type);
-  existingData.unshift(entry); // Add newest to the top
-  return await saveRegisterData(entry.type, existingData);
+  existingData.unshift(entry); // Add to array
+  
+  // Sort if not staff to keep JSON file organized
+  const finalData = entry.type === 'staff' ? existingData : sortEntriesByDate(existingData);
+  return await saveRegisterData(entry.type, finalData);
 };
 
 // Update an existing entry by ID
@@ -72,7 +83,10 @@ export const updateRegisterEntry = async (entry: RegisterEntry): Promise<boolean
   const idx = existingData.findIndex(e => e.id === entry.id);
   if (idx === -1) return false;
   existingData[idx] = entry;
-  return await saveRegisterData(entry.type, existingData);
+  
+  // Sort if not staff to handle date updates
+  const finalData = entry.type === 'staff' ? existingData : sortEntriesByDate(existingData);
+  return await saveRegisterData(entry.type, finalData);
 };
 
 // Delete an entry by ID
@@ -98,20 +112,21 @@ export const uploadAttachment = async (file: File): Promise<{ id: string, name: 
       mode: { '.tag': 'add' } // Don't overwrite existing
     });
     return {
-      id: response.result.name, // The full unique filename in dropbox
+      id: response.result.path_display || response.result.name, // Store the full path for reliability
       name: file.name
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error uploading attachment", error);
     return null;
   }
 };
 
 // Fetch temporary link for a file (for Download button)
-export const getFileLink = async (filename: string): Promise<string | null> => {
+export const getFileLink = async (path: string): Promise<string | null> => {
   if (!REFRESH_TOKEN) return null;
+  const fullPath = (path.startsWith('/') || path.startsWith('id:')) ? path.trim() : `/attachments/${path.trim()}`;
   try {
-    const response = await dbx.filesGetTemporaryLink({ path: `/attachments/${filename}` });
+    const response = await dbx.filesGetTemporaryLink({ path: fullPath });
     return response.result.link;
   } catch (error) {
     console.error("Error fetching file link", error);
@@ -119,18 +134,56 @@ export const getFileLink = async (filename: string): Promise<string | null> => {
   }
 };
 
-// Fetch actual file content as a Blob URL to bypass Dropbox's forced download headers
-export const getFileBlobUrl = async (filename: string): Promise<string | null> => {
+// Fetch PUBLIC shared link for remote viewing (Final Stability Fix)
+export const getSharedLink = async (path: string): Promise<string | null> => {
   if (!REFRESH_TOKEN) return null;
+  
+  const fullPath = (path.startsWith('/') || path.startsWith('id:')) ? path.trim() : `/attachments/${path.trim()}`;
+  
   try {
-    const response = await dbx.filesDownload({ path: `/attachments/${filename}` });
-    const blob = (response.result as any).fileBlob as Blob;
-    
-    // Explicitly enforce application/pdf to ensure browser rendering plugin kicks in
-    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-    return URL.createObjectURL(pdfBlob);
-  } catch (error) {
-    console.error("Error fetching file blob", error);
+    const meta = await dbx.filesGetMetadata({ path: fullPath });
+    const result = meta.result as { path_lower?: string; path_display?: string; name?: string };
+    const targetPath = result.path_lower || result.path_display || fullPath.toLowerCase();
+
+    // 2. CHECK FOR EXISTING LINKS FIRST (Faster & more reliable than immediate CREATE)
+    try {
+      const listResponse = await dbx.sharingListSharedLinks({ path: targetPath, direct_only: true });
+      if (listResponse.result.links.length > 0) return listResponse.result.links[0].url;
+    } catch (listError: unknown) {
+      console.warn("[Dropbox] Pre-check list failed:", listError);
+    }
+
+    // 3. ATTEMPT TO CREATE (Requires sharing.write)
+    try {
+      const createResponse = await dbx.sharingCreateSharedLinkWithSettings({ path: targetPath });
+      return createResponse.result.url;
+    } catch (createError: unknown) {
+      const dbxCreateError = createError as { status?: number; error?: { error_summary?: string } | string };
+      const status = dbxCreateError?.status;
+      
+      // 4. Fallback if already exists (409 Conflict) - handles race conditions
+      const summary = typeof dbxCreateError?.error === 'string' 
+        ? dbxCreateError.error 
+        : dbxCreateError?.error?.error_summary || "";
+
+      if (status === 409 || summary.includes('shared_link_already_exists')) {
+        const allLinksResponse = await dbx.sharingListSharedLinks({});
+        const match = allLinksResponse.result.links.find(l => {
+          const link = l as { path_lower?: string; path_display?: string };
+          return link.path_lower === targetPath || link.path_display === targetPath;
+        });
+        if (match) return match.url;
+      }
+      
+      // 5. CRITICAL: Don't use Temporary Links for regular embeds (CSP block)
+      // Log for the UI to handle PDF-specific fallbacks
+      console.warn(`[Dropbox] Sharing creation failed (Status: ${status}).`);
+      throw createError;
+    }
+  } catch (error: unknown) {
+    const dbxError = error as { error?: { error_summary?: string }; message?: string };
+    const errorMsg = dbxError?.error?.error_summary || dbxError?.message || "Unknown error";
+    console.error(`[Dropbox] Final sharing failure for "${fullPath}":`, errorMsg);
     return null;
   }
 };
@@ -140,11 +193,12 @@ export const getSettings = async (): Promise<SettingsData> => {
   if (!REFRESH_TOKEN) return { departments: ['Finance', 'HR', 'IT'], projects: ['Alpha', 'Beta'], posts: ['Manager', 'Developer'] };
   try {
     const response = await dbx.filesDownload({ path: '/data/settings.json' });
-    const blob = (response.result as any).fileBlob as Blob;
-    const text = await blob.text();
+    const result = response.result as unknown as { fileBlob: Blob };
+    const text = await result.fileBlob.text();
     return JSON.parse(text) as SettingsData;
-  } catch (error: any) {
-    if (error?.status === 409 || error?.error?.error_summary?.includes('not_found')) {
+  } catch (error: unknown) {
+    const dbxError = error as { status?: number; error?: { error_summary?: string } };
+    if (dbxError?.status === 409 || dbxError?.error?.error_summary?.includes('not_found')) {
       return { departments: [], projects: [], posts: [] };
     }
     console.error("Error fetching settings", error);

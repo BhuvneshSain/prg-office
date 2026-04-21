@@ -4,14 +4,24 @@ import { deleteRegisterEntry, saveRegisterData } from '../lib/dropbox';
 import StaffEditModal from './StaffEditModal';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
+import type { RegisterEntry } from '../types';
+
 const SEP = '|||';
 
-export default function StaffTable({ data, projects, posts, onRefresh }: any) {
-  const [search, setSearch] = useState('');
-  const [editEntry, setEditEntry] = useState<any | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+interface StaffTableProps {
+  data: RegisterEntry[];
+  loading?: boolean;
+  projects: string[];
+  posts: string[];
+  onRefresh: () => void;
+}
 
-  const filtered = data.filter((s: any) => 
+export default function StaffTable({ data, projects, posts, onRefresh }: StaffTableProps) {
+  const [search, setSearch] = useState('');
+  const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
+
+  const filtered = data.filter((s) => 
     s.partyName.toLowerCase().includes(search.toLowerCase()) || 
     s.subject.toLowerCase().includes(search.toLowerCase()) ||
     (s.mobile ?? '').includes(search) ||
@@ -26,14 +36,14 @@ export default function StaffTable({ data, projects, posts, onRefresh }: any) {
     }
   };
 
-  const onDragEnd = async (result: any) => {
+  const onDragEnd = async (result: { destination?: { index: number } | null; source: { index: number } }) => {
     if (!result.destination || search) return;
     
     const items = Array.from(data);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     
-    const ok = await saveRegisterData('staff', items as any);
+    const ok = await saveRegisterData('staff', items);
     if (ok) onRefresh();
     else alert('Failed to save new order.');
   };
@@ -64,7 +74,7 @@ export default function StaffTable({ data, projects, posts, onRefresh }: any) {
             <Droppable droppableId="staff-list">
               {(provided) => (
                 <tbody {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-slate-100">
-                  {filtered.map((row: any, index: number) => (
+                  {filtered.map((row, index) => (
                     <Draggable key={row.id} draggableId={row.id} index={index} isDragDisabled={!!search}>
                       {(provided, snapshot) => (
                         <tr

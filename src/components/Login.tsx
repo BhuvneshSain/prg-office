@@ -36,8 +36,8 @@ export default function Login({ onLogin }: LoginProps) {
       if (!success) {
         setError('Incorrect username or password.');
       }
-    } catch (err) {
-      setError('An error occurred during login.');
+    } catch {
+      setError('Invalid username or password.');
     } finally {
       setLoading(false);
     }

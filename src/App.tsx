@@ -92,8 +92,9 @@ export default function App() {
       setStaffData(stfData);
       setMyDocsData(docData);
       setSettings(setData);
-    } catch (err: any) {
-      setErrorHeader(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorHeader(error.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -196,14 +197,15 @@ export default function App() {
               <span className="text-white font-black text-xs">POS</span>
             </div>
             {sidebarOpen && (
-              <h1 className="font-bold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap leading-tight">
+              <span className="font-bold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap leading-tight">
                 Programmer<br />Office Suite
-              </h1>
+              </span>
             )}
           </div>
           {/* Collapse toggle (desktop only) */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all active:scale-95 hidden md:flex"
           >
             <Menu className="w-4 h-4" />
@@ -211,6 +213,7 @@ export default function App() {
           {/* Close button (mobile only) */}
           <button
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
             className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 text-slate-400 transition-all active:scale-95 md:hidden"
           >
             <X className="w-5 h-5" />
@@ -277,7 +280,7 @@ export default function App() {
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-base font-bold text-slate-800 leading-none">{TAB_LABELS[activeTab]}</h2>
+              <h1 className="text-base font-bold text-slate-800 leading-none">{TAB_LABELS[activeTab]}</h1>
               {activeTab !== 'dashboard' && (
                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">Programmer Office Suite</p>
               )}
@@ -354,7 +357,7 @@ export default function App() {
   );
 }
 
-function NavItem({ icon, label, isOpen, active = false, onClick, badge }: any) {
+function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon: React.ReactNode; label: string; isOpen: boolean; active?: boolean; onClick: () => void; badge?: number | null }) {
   return (
     <button
       onClick={onClick}
@@ -387,7 +390,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
     <div className="max-w-4xl mx-auto w-full space-y-6">
       <header className="mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1">Welcome back</p>
-        <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">Programmer Office Suite</h3>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">Programmer Office Suite</h2>
         <p className="text-slate-500 text-sm sm:text-base mt-1 max-w-xl">Secure, serverless document management synced with Dropbox.</p>
       </header>
 
@@ -420,7 +423,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
   );
 }
 
-function ToolCard({ title, icon, desc, gradient, delay, onClick }: any) {
+function ToolCard({ title, icon, desc, gradient, delay, onClick }: { title: string; icon: React.ReactNode; desc: string; gradient: string; delay: string; onClick: () => void }) {
   return (
     <div
       onClick={onClick}

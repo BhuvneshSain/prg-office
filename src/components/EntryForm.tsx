@@ -73,17 +73,18 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
       } else {
         throw new Error('Failed to save JSON data to Dropbox.');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'An unexpected error occurred.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorMsg(error.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-xl border border-slate-200 shadow-sm rounded-2xl p-6 md:p-8 w-full max-w-3xl mx-auto">
+    <section className="bg-white/90 backdrop-blur-xl border border-slate-200 shadow-sm rounded-2xl p-6 md:p-8 w-full max-w-3xl mx-auto" aria-labelledby="form-title">
       <div className="mb-6 pb-4 border-b border-slate-100 flex justify-between items-center">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-800 capitalize">New {type} Entry</h2>
+        <h2 id="form-title" className="text-2xl font-bold tracking-tight text-slate-800 capitalize">New {type} Entry</h2>
         <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${type === 'inward' ? 'bg-blue-100/50 text-blue-700' : 'bg-emerald-100/50 text-emerald-700'}`}>
           {type}
         </span>
@@ -106,8 +107,9 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Date</label>
+            <label htmlFor="entry-date" className="text-sm font-semibold text-slate-700">Date</label>
             <input 
+              id="entry-date"
               type="date" required
               value={formData.date}
               onChange={(e) => setFormData({...formData, date: e.target.value})}
@@ -115,9 +117,10 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">{type === 'outward' ? 'From Dispatch No.' : 'Dispatch No.'}</label>
+            <label htmlFor="dispatch-no" className="text-sm font-semibold text-slate-700">{type === 'outward' ? 'From Dispatch No.' : 'Dispatch No.'}</label>
             <div className="flex items-center gap-2 w-full">
               <input 
+                id="dispatch-no"
                 type="number" required placeholder="e.g., 1024"
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({...formData, referenceNumber: e.target.value})}
@@ -127,6 +130,7 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
                 <>
                   <span className="text-slate-400 font-bold">-</span>
                   <input 
+                    aria-label="Dispatch To number"
                     type="number" placeholder="To (Opt)"
                     value={dispatchTo}
                     onChange={(e) => setDispatchTo(e.target.value)}
@@ -170,8 +174,9 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
            <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">RajKaj Ref. No. (Optional)</label>
+            <label htmlFor="rajkaj-ref" className="text-sm font-semibold text-slate-700">RajKaj Ref. No. (Optional)</label>
             <input 
+              id="rajkaj-ref"
               type="number" placeholder="e.g., 50123"
               value={formData.remarks}
               onChange={(e) => setFormData({...formData, remarks: e.target.value})}
@@ -179,8 +184,9 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Subject</label>
+            <label htmlFor="subject" className="text-sm font-semibold text-slate-700">Subject</label>
             <input 
+              id="subject"
               type="text" required placeholder="Subject or description..."
               value={formData.subject}
               onChange={(e) => setFormData({...formData, subject: e.target.value})}
@@ -246,7 +252,7 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }
 

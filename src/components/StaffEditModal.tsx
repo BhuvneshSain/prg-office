@@ -2,10 +2,19 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { updateRegisterEntry } from '../lib/dropbox';
 import { MultiComboBox } from './ComboBox';
+import type { RegisterEntry } from '../types';
 
 const SEP = '|||';
 
-export default function StaffEditModal({ entry, projects, posts, onClose, onSuccess }: any) {
+interface StaffEditModalProps {
+  entry: RegisterEntry;
+  projects: string[];
+  posts: string[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export default function StaffEditModal({ entry, projects, posts, onClose, onSuccess }: StaffEditModalProps) {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(entry.partyName);
   const [empId, setEmpId] = useState(entry.referenceNumber);
@@ -28,7 +37,12 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
       };
       await updateRegisterEntry(updated);
       onSuccess();
-    } catch (err) { alert('Failed to update.'); } finally { setLoading(false); }
+      onClose();
+    } catch { 
+      alert('Failed to update.'); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (

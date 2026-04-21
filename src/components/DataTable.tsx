@@ -48,8 +48,14 @@ export default function DataTable({ data, type, loading, departments, projects, 
           </h3>
           <div className="relative w-full sm:w-60">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input type="text" placeholder="Search records..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search records..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              aria-label={`Search ${type} records`}
+              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400" 
+            />
           </div>
         </div>
 

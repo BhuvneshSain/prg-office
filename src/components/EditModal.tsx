@@ -84,8 +84,9 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
       if (!ok) throw new Error('Failed to save changes to Dropbox.');
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.message ?? 'An unexpected error occurred.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message ?? 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }

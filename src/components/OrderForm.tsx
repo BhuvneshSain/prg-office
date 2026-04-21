@@ -63,8 +63,9 @@ export default function OrderForm({ existingProjects, onSuccess }: OrderFormProp
       } else {
         throw new Error('Failed to save JSON data to Dropbox.');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'An unexpected error occurred.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorMsg(error.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }

@@ -6,7 +6,13 @@ import { MultiComboBox } from './ComboBox';
 
 const SEP = '|||';
 
-export default function StaffForm({ existingProjects, existingPosts, onSuccess }: any) {
+interface StaffFormProps {
+  existingProjects: string[];
+  existingPosts: string[];
+  onSuccess: () => void;
+}
+
+export default function StaffForm({ existingProjects, existingPosts, onSuccess }: StaffFormProps) {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -29,7 +35,12 @@ export default function StaffForm({ existingProjects, existingPosts, onSuccess }
       if (!ok) throw new Error('Failed to save to Dropbox.');
       setSuccessMsg(`Staff "${form.name}" added.`);
       setForm({ name: '', empId: '', post: '', mobile: '' }); setSelectedProjects([]); onSuccess();
-    } catch (err: any) { setErrorMsg(err.message); } finally { setLoading(false); }
+    } catch (err: unknown) { 
+      const error = err as Error;
+      setErrorMsg(error.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (

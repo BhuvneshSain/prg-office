@@ -52,7 +52,7 @@ export default function EssentialDocs({ data, onRefresh, departments = [], proje
       setShowAddModal(false);
       setFormData({ subject: '', date: new Date().toISOString().split('T')[0], remarks: '' });
       setSelectedFiles([]);
-    } catch (err) {
+    } catch {
       alert('Upload failed. Please try again.');
     } finally {
       setUploading(false);

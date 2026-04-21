@@ -253,7 +253,7 @@ export default function Reports({
   );
 }
 
-function StatCard({ title, value, icon, subtitle, colorClass }: any) {
+function StatCard({ title, value, icon, subtitle, colorClass }: { title: string; value: number | string; icon: React.ReactNode; subtitle: string; colorClass: string }) {
   return (
     <div className={`p-6 rounded-3xl border ${colorClass} bg-white backdrop-blur-sm shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}>
       <div className="flex justify-between items-start mb-4">

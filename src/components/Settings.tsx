@@ -121,8 +121,25 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
   );
 }
 
-function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAdd, onRemove, editing, onEditStart, onEditChange, onEditSave, placeholder, emptyMsg }: any) {
-  const ACCENT_MAP: Record<string, any> = {
+interface MasterSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  accent: string;
+  items: string[];
+  newValue: string;
+  onNewChange: (val: string) => void;
+  onAdd: (e: React.FormEvent) => void;
+  onRemove: (name: string) => void;
+  editing: { old: string; new: string } | null;
+  onEditStart: (item: string) => void;
+  onEditChange: (val: string) => void;
+  onEditSave: (item: string) => void;
+  placeholder: string;
+  emptyMsg: string;
+}
+
+function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAdd, onRemove, editing, onEditStart, onEditChange, onEditSave, placeholder, emptyMsg }: MasterSectionProps) {
+  const ACCENT_MAP: Record<string, { btn: string; ring: string; border: string; edit: string }> = {
     indigo: { btn: 'bg-indigo-600 hover:bg-indigo-700', ring: 'focus:ring-indigo-500/20 focus:border-indigo-500', border: 'hover:text-indigo-600', edit: 'focus:border-indigo-500' },
     amber: { btn: 'bg-amber-500 hover:bg-amber-600', ring: 'focus:ring-amber-500/20 focus:border-amber-500', border: 'hover:text-amber-600', edit: 'focus:border-amber-500' },
     emerald: { btn: 'bg-emerald-600 hover:bg-emerald-700', ring: 'focus:ring-emerald-500/20 focus:border-emerald-500', border: 'hover:text-emerald-600', edit: 'focus:border-emerald-500' },

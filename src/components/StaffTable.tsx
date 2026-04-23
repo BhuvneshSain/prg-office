@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Users, Pencil, Trash2, Search, Phone, GripVertical, UserX, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { deleteRegisterEntry, saveRegisterData } from '../lib/dataService';
@@ -23,7 +23,7 @@ interface StaffTableProps {
   onRefresh: () => void;
 }
 
-export default function StaffTable({ data, projects, posts, onRefresh }: StaffTableProps) {
+const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }: StaffTableProps) {
   const [search, setSearch] = useState('');
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
@@ -280,4 +280,6 @@ export default function StaffTable({ data, projects, posts, onRefresh }: StaffTa
       </AnimatePresence>
     </motion.div>
   );
-}
+});
+
+export default StaffTable;

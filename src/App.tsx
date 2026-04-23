@@ -149,28 +149,28 @@ export default function App() {
     switch (activeTab) {
       case 'inward':
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <EntryForm type="inward" existingDepts={settings?.departments || []} existingProjects={settings?.projects || []} onSuccess={fetchData} />
             <DataTable type="inward" data={inwardData} loading={loading} departments={settings?.departments || []} projects={settings?.projects || []} onRefresh={fetchData} />
           </div>
         );
       case 'outward':
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <EntryForm type="outward" existingDepts={settings?.departments || []} existingProjects={settings?.projects || []} onSuccess={fetchData} />
             <DataTable type="outward" data={outwardData} loading={loading} departments={settings?.departments || []} projects={settings?.projects || []} onRefresh={fetchData} />
           </div>
         );
       case 'orders':
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <OrderForm existingProjects={settings?.projects || []} onSuccess={fetchData} />
             <OrdersTable data={ordersData} loading={loading} projects={settings?.projects || []} onRefresh={fetchData} />
           </div>
         );
       case 'staff':
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <StaffForm existingProjects={settings?.projects || []} existingPosts={settings?.posts || []} onSuccess={fetchData} />
             <StaffTable data={staffData} loading={loading} projects={settings?.projects || []} posts={settings?.posts || []} onRefresh={fetchData} />
           </div>
@@ -179,13 +179,13 @@ export default function App() {
         return <EssentialDocs data={myDocsData} onRefresh={fetchData} />;
       case 'reports':
         return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div>
             <Reports inward={inwardData} outward={outwardData} orders={ordersData} myDocs={myDocsData} />
           </div>
         );
       case 'settings':
         return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div>
             {settings
               ? <Settings settings={settings} onSettingsChange={fetchData} />
               : <div className="flex justify-center p-16"><div className="w-8 h-8 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" /></div>
@@ -398,13 +398,13 @@ export default function App() {
         {/* Scrollable content — with bottom padding for mobile tab bar */}
         <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10 pb-28 md:pb-8 custom-scrollbar flex flex-col">
           <div className="flex-1">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="popLayout">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
                 className="w-full h-full"
               >
                 {renderContent()}

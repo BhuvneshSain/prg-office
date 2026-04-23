@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import type { RegisterEntry } from '../types';
 import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, X, Files, LayoutGrid, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,7 @@ function cn(...inputs: ClassValue[]) {
 
 type FilterType = 'all' | 'inward' | 'outward' | 'orders' | 'essential-docs';
 
-export default function Reports({
+const Reports = memo(function Reports({
   inward, outward, orders, myDocs
 }: {
   inward: RegisterEntry[],
@@ -367,7 +367,9 @@ export default function Reports({
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default Reports;
 
 function StatCard({ title, value, icon, subtitle, accent }: { title: string; value: number | string; icon: React.ReactNode; subtitle: string; accent: 'indigo' | 'blue' | 'emerald' | 'amber' | 'violet' }) {
   const styles = {

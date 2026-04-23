@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
@@ -21,7 +21,7 @@ interface Props {
   onRefresh: () => void;
 }
 
-export default function DataTable({ data, type, loading, departments, projects, onRefresh }: Props) {
+const DataTable = memo(function DataTable({ data, type, loading, departments, projects, onRefresh }: Props) {
   const [search, setSearch] = useState('');
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
@@ -252,7 +252,9 @@ export default function DataTable({ data, type, loading, departments, projects, 
       )}
     </>
   );
-}
+});
+
+export default DataTable;
 
 function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: React.ReactNode; label: string; onClick: () => void; color: string }) {
   const colors: Record<string, string> = {

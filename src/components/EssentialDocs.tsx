@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Files, Upload, Trash2, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addRegisterEntry, deleteRegisterEntry } from '../lib/dataService';
@@ -13,7 +13,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export default function EssentialDocs({ data, onRefresh, departments = [], projects = [] }: { data: RegisterEntry[], onRefresh: () => void, departments?: string[], projects?: string[] }) {
+const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments = [], projects = [] }: { data: RegisterEntry[], onRefresh: () => void, departments?: string[], projects?: string[] }) {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [viewDoc, setViewDoc] = useState<RegisterEntry | null>(null);
@@ -373,4 +373,6 @@ export default function EssentialDocs({ data, onRefresh, departments = [], proje
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default EssentialDocs;

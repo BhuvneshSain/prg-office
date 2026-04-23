@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Save, Plus, X, Loader2, CheckCircle2, Edit2, Building2, FolderOpen, Briefcase, Sparkles, Database, Trash2, ArrowRight } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Plus, Loader2, CheckCircle2, Edit2, Building2, FolderOpen, Briefcase, Sparkles, Database, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SettingsData } from '../types';
 import { saveSettings as saveDropboxSettings } from '../lib/dataService';

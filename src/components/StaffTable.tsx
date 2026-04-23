@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Users, Pencil, Trash2, Search, FolderOpen, Phone, GripVertical, UserX, AlertCircle, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { Users, Pencil, Trash2, Search, Phone, GripVertical, UserX, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { deleteRegisterEntry, saveRegisterData } from '../lib/dataService';
 import StaffEditModal from './StaffEditModal';

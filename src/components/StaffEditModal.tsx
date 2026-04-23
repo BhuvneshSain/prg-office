@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Save, Loader2, Sparkles, UserCheck } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { updateRegisterEntry } from '../lib/dataService';
-import { MultiComboBox, ComboBox } from './ComboBox';
+import { MultiComboBox } from './ComboBox';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import type { RegisterEntry } from '../types';

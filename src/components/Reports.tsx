@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { RegisterEntry } from '../types';
-import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, Maximize2, X, Files, Sparkles, LayoutGrid, ChevronRight } from 'lucide-react';
+import { BarChart3, TrendingUp, Calendar, Hash, AlertOctagon, Search, Filter, X, Files, LayoutGrid, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DocumentModal from './DocumentModal';
 import { ComboBox } from './ComboBox';
@@ -84,7 +84,7 @@ export default function Reports({
     setProjectFilter('');
   };
 
-  const typeStyles: Record<string, { badge: string; icon: JSX.Element; label: string }> = {
+  const typeStyles: Record<string, { badge: string; icon: React.JSX.Element; label: string }> = {
     inward: { 
       badge: 'bg-blue-50 text-blue-600 border-blue-100', 
       icon: <TrendingUp className="w-4 h-4" />, 

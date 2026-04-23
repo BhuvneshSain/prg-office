@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface LoginProps {
   onLogin: (username: string, passwordHash: string) => Promise<boolean>;

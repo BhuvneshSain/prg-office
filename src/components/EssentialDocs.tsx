@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Files, Upload, Trash2, Eye, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight } from 'lucide-react';
+import { Files, Upload, Trash2, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addRegisterEntry, deleteRegisterEntry } from '../lib/dataService';
 import { uploadAttachment, getFileLink } from '../lib/fileService';

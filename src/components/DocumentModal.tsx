@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Calendar, Hash, FileCheck, Loader2, FileText, Sparkles, LayoutGrid, ChevronRight, Share2, Globe, AlertOctagon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, Download, Calendar, FileCheck, Loader2, FileText, Sparkles, LayoutGrid, Share2, Globe, AlertOctagon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { RegisterEntry } from '../types';
 import { getFileLink, getSharedLink } from '../lib/fileService';
 import { clsx, type ClassValue } from 'clsx';

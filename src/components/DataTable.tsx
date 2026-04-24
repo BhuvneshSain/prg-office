@@ -256,7 +256,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
 
 export default DataTable;
 
-function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: React.ReactNode; label: string; onClick: () => void; color: string }) {
+function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: React.ReactNode; label: string; onClick: (e: React.MouseEvent) => void; color: string }) {
   const colors: Record<string, string> = {
     slate: 'bg-slate-100 text-slate-500 hover:bg-slate-200',
     violet: 'bg-cyber-violet/10 text-cyber-violet hover:bg-cyber-violet/20',
@@ -276,11 +276,17 @@ function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: Reac
 
 function MobileIconBtn({ id, icon, onClick, color }: { id: string; icon: React.ReactNode; onClick: () => void; color: string }) {
   const colors: Record<string, string> = {
-    slate: 'bg-slate-100 text-slate-500',
-    indigo: 'bg-indigo-50 text-indigo-600',
+    slate: 'bg-slate-50 text-slate-400',
+    indigo: 'bg-cyber-violet/5 text-cyber-violet',
     red: 'bg-red-50 text-red-500',
   };
   return (
-    <button id={id} onClick={onClick} aria-label="Action button" className={`p-2 rounded-lg ${colors[color]}`}>{icon}</button>
+    <motion.button 
+      id={id} onClick={onClick}
+      whileTap={{ scale: 0.9 }}
+      className={cn("p-2 rounded-xl transition-all shadow-sm border border-slate-100/50", colors[color])}
+    >
+      {icon}
+    </motion.button>
   );
 }

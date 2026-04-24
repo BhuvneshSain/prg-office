@@ -284,9 +284,10 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                     </div>
                     
                     <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                      <motion.button 
-                        whileHover={{ scale: 1.1, backgroundColor: '#f0f9ff' }}
-                        whileTap={{ scale: 0.9 }}
+                      <ActionBtn 
+                        id={`view-${doc.id}`}
+                        icon={doc.attachments.length > 1 ? <Files className="w-4 h-4" /> : <Download className="w-4 h-4" />} 
+                        label={doc.attachments.length > 1 ? "Inspect Files" : "Download Payload"} 
                         onClick={async () => {
                           if (doc.attachments.length > 1) {
                             setViewDoc(doc);
@@ -294,35 +295,31 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                             const link = await getFileLink(doc.attachments[0].id);
                             if (link) window.open(link, '_blank');
                           }
-                        }}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-sky-600 transition-colors"
-                      >
-                        {doc.attachments.length > 1 ? <Files className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                      </motion.button>
+                        }} 
+                        color="sky" 
+                      />
 
-                      <motion.button 
-                        whileHover={{ scale: 1.1, backgroundColor: '#fff7ed' }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setEditingDoc(doc)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-amber-500 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </motion.button>
+                      <ActionBtn 
+                        id={`edit-${doc.id}`}
+                        icon={<Edit className="w-4 h-4" />} 
+                        label="Modify" 
+                        onClick={() => setEditingDoc(doc)} 
+                        color="amber" 
+                      />
 
-                      <motion.button 
-                        whileHover={{ scale: 1.1, backgroundColor: '#fef2f2' }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={async (e) => {
+                      <ActionBtn 
+                        id={`delete-${doc.id}`}
+                        icon={<Trash2 className="w-4 h-4" />} 
+                        label="Archive" 
+                        onClick={async (e: React.MouseEvent) => {
                           e.stopPropagation();
                           if (confirm('Permanently purge this resource?')) {
                             await deleteRegisterEntry(doc.id, 'essential-docs');
                             onRefresh();
                           }
-                        }}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </motion.button>
+                        }} 
+                        color="red" 
+                      />
                     </div>
                   </div>
 
@@ -376,3 +373,24 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
 });
 
 export default EssentialDocs;
+
+function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: React.ReactNode; label: string; onClick: (e: React.MouseEvent) => void; color: string }) {
+  const colors: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-500 hover:bg-slate-200',
+    violet: 'bg-cyber-violet/10 text-cyber-violet hover:bg-cyber-violet/20',
+    amber: 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20',
+    red: 'bg-red-50 text-red-500 hover:bg-red-100',
+    sky: 'bg-sky-50 text-sky-600 hover:bg-sky-100',
+  };
+  return (
+    <motion.button 
+      id={id}
+      onClick={onClick} title={label} 
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      className={cn("w-9 h-9 flex items-center justify-center rounded-xl transition-all shadow-sm", colors[color])}
+    >
+      {icon}
+    </motion.button>
+  );
+}

@@ -179,22 +179,8 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
                             </td>
                             <td className="px-6 py-4 text-center">
                               <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                                <motion.button 
-                                  whileHover={{ scale: 1.1, backgroundColor: '#f5f3ff' }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => setEditEntry(row)} 
-                                  className="p-2 rounded-xl text-slate-400 hover:text-cyber-violet transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </motion.button>
-                                <motion.button 
-                                  whileHover={{ scale: 1.1, backgroundColor: '#fef2f2' }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => setDeleteTarget(row)} 
-                                  className="p-2 rounded-xl text-slate-400 hover:text-red-500 transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </motion.button>
+                                <ActionBtn id={`edit-${row.id}`} icon={<Pencil className="w-4 h-4" />} label="Modify" onClick={() => setEditEntry(row)} color="violet" />
+                                <ActionBtn id={`delete-${row.id}`} icon={<Trash2 className="w-4 h-4" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
                               </div>
                             </td>
                           </motion.tr>
@@ -283,3 +269,22 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
 });
 
 export default StaffTable;
+
+function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: React.ReactNode; label: string; onClick: (e: React.MouseEvent) => void; color: string }) {
+  const colors: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-500 hover:bg-slate-200',
+    violet: 'bg-cyber-violet/10 text-cyber-violet hover:bg-cyber-violet/20',
+    red: 'bg-red-50 text-red-500 hover:bg-red-100',
+  };
+  return (
+    <motion.button 
+      id={id}
+      onClick={onClick} title={label} 
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      className={cn("p-2 rounded-xl transition-all shadow-sm", colors[color])}
+    >
+      {icon}
+    </motion.button>
+  );
+}

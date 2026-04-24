@@ -228,7 +228,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                     </div>
                  )}
 
-                 {fileType === 'pdf' && sharedUrl ? (
+                  {fileType === 'pdf' && sharedUrl ? (
                     isMobile ? (
                       <div className="flex flex-col items-center justify-center h-full w-full bg-white p-8 text-center">
                         <motion.div 
@@ -261,13 +261,32 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                           </div>
                         )}
                         <iframe 
-                          src={`${sharedUrl.replace('dl=0', 'raw=1')}`}
+                          src={sharedUrl.replace('dl=0', 'raw=1')}
                           className="w-full h-full border-none bg-white"
                           onLoad={() => setIframeLoaded(true)}
                           title="PDF Preview"
                         />
                       </>
                     )
+                 ) : fileType === 'pdf' ? (
+                    <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-white">
+                        <div className="w-24 h-24 rounded-[40px] bg-red-50 text-red-500 flex items-center justify-center mb-8 shadow-inner">
+                            <AlertOctagon className="w-12 h-12" />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-3">Preview Protocol Failure</h3>
+                        <p className="text-sm font-bold text-slate-400 max-w-sm mx-auto leading-relaxed mb-10">
+                          Cloud extraction for this entity type is restricted. Local execution required.
+                        </p>
+                        <motion.a 
+                          whileTap={{ scale: 0.95 }}
+                          href={fileLink || '#'} 
+                          className="flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10"
+                        >
+                          <Download className="w-5 h-5" />
+                          Acquire Payload
+                        </motion.a>
+                    </div>
+
                  ) : fileType === 'image' && fileLink ? (
                     <motion.img 
                       initial={{ opacity: 0, scale: 0.9 }}

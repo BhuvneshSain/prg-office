@@ -1,5 +1,6 @@
 import { useState, memo } from 'react';
-import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
+import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
@@ -59,17 +60,16 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
   return (
     <>
       <div className="glass-card rounded-[32px] overflow-hidden flex flex-col border-white/40 shadow-glass">
-        {/* Header / Search Area */}
-        <div className="p-5 sm:p-6 border-b border-slate-100/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/40 backdrop-blur-md">
+        <div className="p-5 sm:p-6 border-b border-[var(--border-primary)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--header-bg)] backdrop-blur-md">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-cyber-violet/5 text-cyber-violet">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-slate-800 tracking-tight leading-none capitalize">
+              <h3 className="text-lg font-extrabold text-[var(--text-primary)] tracking-tight leading-none capitalize">
                 {type} Registry
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1.5 flex items-center gap-2">
                 Live Data <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
               </p>
             </div>
@@ -80,13 +80,13 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72 group">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyber-violet transition-colors" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-cyber-violet transition-colors" />
               <input 
                 type="text" 
                 placeholder={`Search ${type}...`} 
                 value={search} 
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-[18px] bg-white/50 text-sm focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-white outline-none transition-all placeholder:text-slate-400 font-medium" 
+                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-sm focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
               />
             </div>
             
@@ -95,16 +95,35 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                 <select 
                   value={sortBy} 
                   onChange={e => setSortBy(e.target.value as typeof sortBy)}
-                  className="pl-4 pr-10 py-2.5 border border-slate-200 rounded-[18px] bg-white/50 text-xs font-bold text-slate-600 focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet outline-none transition-all appearance-none cursor-pointer hover:bg-white"
+                  className="pl-4 pr-10 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-xs font-bold text-[var(--text-secondary)] focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet outline-none transition-all appearance-none cursor-pointer hover:bg-[var(--bg-surface)]"
                 >
-                  <option value="date-desc">Newest First</option>
-                  <option value="date-asc">Oldest First</option>
                   <option value="subject-asc">A to Z</option>
                   <option value="dispatch-desc">Dispatch High</option>
                 </select>
-                <ArrowUpDown className="w-3.5 h-3.5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ArrowUpDown className="w-3.5 h-3.5 absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
               </div>
             )}
+
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToExcel(filteredData, `${type}_registry`)}
+                title="Export to Excel"
+                className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToPDF(filteredData, `${type.toUpperCase()} Registry Report`, `${type}_report`)}
+                title="Export to PDF"
+                className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+              >
+                <FileDown className="w-4 h-4" />
+              </motion.button>
+            </div>
           </div>
         </div>
 
@@ -131,7 +150,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] uppercase tracking-[0.15em] text-slate-400 font-black">
+                  <tr className="bg-slate-50/5 border-b border-[var(--border-primary)] text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)] font-black">
                     <th className="px-6 py-4">Date</th>
                     <th className="px-6 py-4">Ref.</th>
                     <th className="px-6 py-4">{type === 'inward' ? 'Sender' : 'Recipient'}</th>
@@ -152,15 +171,15 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                         className="transition-colors group cursor-default"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-xs font-bold text-slate-500">{row.date}</span>
+                          <span className="text-xs font-bold text-[var(--text-secondary)]">{row.date}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-[10px] font-black font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                          <span className="text-[10px] font-black font-mono text-[var(--text-muted)] bg-[var(--card-bg)] px-2 py-0.5 rounded-lg border border-[var(--border-primary)]">
                             {row.referenceNumber || row.remarks || '—'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs font-extrabold text-slate-800 truncate max-w-[150px]">
+                          <p className="text-xs font-extrabold text-[var(--text-primary)] truncate max-w-[150px]">
                             {row.partyName.replace(/\|\|\|/g, ', ')}
                           </p>
                         </td>
@@ -169,10 +188,10 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                             <span className="text-[10px] font-black text-cyber-violet bg-cyber-violet/5 px-2 py-0.5 rounded-lg border border-cyber-violet/10">
                               {row.project}
                             </span>
-                          ) : <span className="text-slate-300">——</span>}
+                          ) : <span className="text-[var(--text-muted)]/30">——</span>}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs font-bold text-slate-600 truncate max-w-[200px]" title={row.subject}>
+                          <p className="text-xs font-bold text-[var(--text-secondary)] truncate max-w-[200px]" title={row.subject}>
                             {row.subject}
                           </p>
                         </td>
@@ -196,8 +215,8 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                 <div key={row.id} className="p-4">
                   <div className="flex justify-between items-start gap-2 mb-1.5">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 text-sm truncate">{row.subject || '—'}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{row.partyName.replace(/\|\|\|/g, ', ')}</p>
+                      <p className="font-semibold text-[var(--text-primary)] text-sm truncate">{row.subject || '—'}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{row.partyName.replace(/\|\|\|/g, ', ')}</p>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <MobileIconBtn id={`view-mob-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} onClick={() => setViewEntry(row)} color="slate" />

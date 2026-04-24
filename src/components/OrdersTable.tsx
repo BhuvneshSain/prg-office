@@ -1,5 +1,6 @@
 import { useState, memo } from 'react';
-import { Loader2, Search, AlertOctagon, Maximize2, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Search, AlertOctagon, Maximize2, Pencil, Trash2, FileSpreadsheet, FileDown } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
@@ -45,17 +46,17 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
     <>
       <div className="glass-card rounded-[32px] overflow-hidden flex flex-col border-white/40 shadow-glass">
         {/* Header / Search Area */}
-        <div className="p-5 sm:p-6 border-b border-slate-100/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/40 backdrop-blur-md">
+        <div className="p-5 sm:p-6 border-b border-[var(--border-primary)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--header-bg)] backdrop-blur-md">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-amber-500/5 text-amber-500">
               <AlertOctagon className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-slate-800 tracking-tight leading-none">
+              <h3 className="text-lg font-extrabold text-[var(--text-primary)] tracking-tight leading-none">
                 Important Orders
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                Priority Directives <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                Executive Directives <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
               </p>
             </div>
             <span className="ml-2 text-[10px] font-black text-amber-600 bg-amber-500/5 px-2 py-0.5 rounded-full border border-amber-500/10">
@@ -65,14 +66,35 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72 group">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-amber-500 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search orders..." 
                 value={search} 
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-[18px] bg-white/50 text-sm focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 font-medium" 
+                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-sm focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToExcel(filteredData, 'orders_registry')}
+                title="Export to Excel"
+                className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToPDF(filteredData, 'Important Orders Report', 'orders_report')}
+                title="Export to PDF"
+                className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+              >
+                <FileDown className="w-4 h-4" />
+              </motion.button>
             </div>
           </div>
         </div>
@@ -100,7 +122,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] uppercase tracking-[0.15em] text-slate-400 font-black">
+                  <tr className="bg-slate-50/5 border-b border-[var(--border-primary)] text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)] font-black">
                     <th className="px-6 py-4">Date</th>
                     <th className="px-6 py-4">RajKaj Ref.</th>
                     <th className="px-6 py-4">Project</th>
@@ -108,7 +130,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                     <th className="px-6 py-4 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100/50">
+                <tbody className="divide-y divide-[var(--border-primary)]">
                   <AnimatePresence>
                     {filteredData.map((row, idx) => (
                       <motion.tr 
@@ -120,22 +142,22 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                         className="transition-colors group cursor-default"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-xs font-bold text-slate-500">{row.date}</span>
+                          <span className="text-xs font-bold text-[var(--text-secondary)]">{row.date}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-[10px] font-black font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                          <span className="text-[10px] font-black font-mono text-[var(--text-muted)] bg-[var(--card-bg)] px-2 py-0.5 rounded-lg border border-[var(--border-primary)]">
                             {row.remarks || '—'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           {row.project ? (
-                            <span className="text-[10px] font-black text-amber-600 bg-amber-500/5 px-2 py-0.5 rounded-lg border border-amber-500/10">
+                            <span className="text-[10px] font-black text-amber-600 bg-amber-500/5 px-2.5 py-1 rounded-lg border border-amber-500/10">
                               {row.project}
                             </span>
-                          ) : <span className="text-slate-300">——</span>}
+                          ) : <span className="text-[var(--text-muted)]/30">——</span>}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs font-bold text-slate-600 truncate max-w-[200px]" title={row.subject}>
+                          <p className="text-xs font-bold text-[var(--text-secondary)] truncate max-w-[250px]" title={row.subject}>
                             {row.subject}
                           </p>
                         </td>

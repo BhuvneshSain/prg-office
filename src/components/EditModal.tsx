@@ -108,7 +108,7 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 b-mesh-heavy opacity-90 backdrop-blur-xl" 
+        className="absolute inset-0 b-mesh-heavy opacity-90 backdrop-blur-xl dark:opacity-95" 
         onClick={onClose} 
       />
 
@@ -118,22 +118,22 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-        className="relative z-10 w-full max-w-2xl bg-white/60 backdrop-blur-2xl rounded-[40px] shadow-glass border border-white/60 overflow-hidden flex flex-col"
+        className="relative z-10 w-full max-w-2xl bg-[var(--card-bg)] backdrop-blur-2xl rounded-[40px] shadow-glass border border-[var(--glass-border)] overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-white/40 flex items-center justify-between">
+        <div className="px-8 py-6 border-b border-[var(--border-primary)] bg-[var(--header-bg)] flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className={cn("w-3.5 h-3.5", entry.type === 'orders' ? "text-amber-500" : "text-cyber-violet")} />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vault Editor</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Vault Editor</p>
             </div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight capitalize">{entry.type} Modification</h2>
+            <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tight capitalize">{entry.type} Modification</h2>
           </div>
           <motion.button 
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose} 
-            className="w-10 h-10 rounded-full bg-slate-100/50 flex items-center justify-center text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors"
+            className="w-10 h-10 rounded-full bg-[var(--bg-page)] flex items-center justify-center text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500 transition-colors border border-[var(--border-primary)]"
           >
             <X className="w-5 h-5" />
           </motion.button>
@@ -158,7 +158,7 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
                 <div className="flex items-center gap-3">
                   <input type="number" required value={dispatchFrom} onChange={e => setDispatchFrom(e.target.value)}
                     placeholder="Start" className={INPUT} />
-                  <span className="text-slate-300 font-black">—</span>
+                  <span className="text-[var(--text-muted)] font-black">—</span>
                   <input type="number" value={dispatchTo} onChange={e => setDispatchTo(e.target.value)}
                     placeholder="End" className={INPUT} />
                 </div>
@@ -221,23 +221,23 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => fileRef.current?.click()}
-              className="border-2 border-dashed border-slate-200/60 rounded-[28px] p-6 text-center cursor-pointer hover:border-cyber-violet/40 hover:bg-white/80 hover:shadow-lg transition-all group"
+              className="border-2 border-dashed border-[var(--border-primary)] rounded-[28px] p-6 text-center cursor-pointer hover:border-cyber-violet/40 hover:bg-[var(--bg-surface)] hover:shadow-lg transition-all group bg-[var(--bg-page)]"
             >
               {newFile ? (
                 <div className="flex flex-col items-center gap-2">
-                   <div className="w-12 h-12 rounded-2xl bg-cyber-violet/10 flex items-center justify-center text-cyber-violet">
+                   <div className="w-12 h-12 rounded-2xl bg-cyber-violet/10 flex items-center justify-center text-cyber-violet border border-cyber-violet/10">
                     <FileIcon className="w-6 h-6" />
                   </div>
-                  <span className="text-sm font-black text-slate-800 truncate px-4">{newFile.name}</span>
+                  <span className="text-sm font-black text-[var(--text-primary)] truncate px-4">{newFile.name}</span>
                 </div>
               ) : (
-                <div className="text-slate-400 flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center group-hover:bg-cyber-violet/10 group-hover:text-cyber-violet transition-colors">
-                    <UploadCloud className="w-6 h-6" />
+                <div className="text-[var(--text-muted)] flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--bg-surface)] flex items-center justify-center group-hover:bg-cyber-violet/10 group-hover:text-cyber-violet transition-colors border border-[var(--border-primary)]">
+                    <UploadCloud className="w-6 h-6 text-[var(--text-muted)] group-hover:text-cyber-violet" />
                   </div>
                   <div>
                     <p className="text-xs font-black uppercase tracking-widest leading-none">Terminal Upload</p>
-                    {entry.attachments?.[0] && <p className="text-[10px] font-bold text-slate-300 mt-1">Current: {entry.attachments[0].name}</p>}
+                    {entry.attachments?.[0] && <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1">Current: {entry.attachments[0].name}</p>}
                   </div>
                 </div>
               )}
@@ -251,7 +251,7 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
               <motion.p 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-xs font-black tracking-tight text-red-600 bg-red-50/80 border border-red-100 rounded-2xl px-5 py-4"
+                className="text-xs font-black tracking-tight text-red-600 bg-red-500/10 border border-red-500/20 rounded-2xl px-5 py-4"
               >
                 {error}
               </motion.p>
@@ -260,13 +260,13 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
         </form>
 
         {/* Action Panel */}
-        <div className="px-8 py-8 border-t border-white/40 bg-white/40 flex gap-4">
+        <div className="px-8 py-8 border-t border-[var(--border-primary)] bg-[var(--header-bg)] flex gap-4">
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button" 
             onClick={onClose}
-            className="flex-1 py-4 rounded-[22px] border border-slate-200/60 bg-white shadow-sm text-slate-600 font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all"
+            className="flex-1 py-4 rounded-[22px] border border-[var(--border-primary)] bg-[var(--bg-surface)] shadow-sm text-[var(--text-muted)] font-black uppercase text-[10px] tracking-widest hover:bg-[var(--bg-page)] transition-all"
           >
             Abort
           </motion.button>
@@ -293,7 +293,7 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2.5">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-1">
+      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-2 flex items-center gap-1">
         {label}
       </label>
       {children}
@@ -301,4 +301,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const INPUT = "w-full px-5 py-3.5 bg-white/60 border border-slate-200/60 rounded-[22px] outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-800 focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet";
+const INPUT = "w-full px-5 py-3.5 bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[22px] outline-none transition-all placeholder:text-[var(--text-muted)] font-bold text-sm text-[var(--text-primary)] focus:bg-[var(--bg-surface)] focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet";

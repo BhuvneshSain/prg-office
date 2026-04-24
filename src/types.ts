@@ -24,3 +24,15 @@ export interface SettingsData {
   projects: string[];
   posts: string[];
 }
+
+export type AuditAction = 'ADD' | 'UPDATE' | 'DELETE';
+
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  action: AuditAction;
+  type: RegisterType;
+  targetId: string;
+  details: string;
+  user: string;
+}

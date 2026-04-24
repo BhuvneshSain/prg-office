@@ -30,13 +30,13 @@ export function ComboBox({ value, onChange, options, placeholder, activeColor = 
       ring: "focus:ring-cyber-violet/5 focus:border-cyber-violet",
       hover: "hover:bg-cyber-violet/[0.03]",
       activeBadge: "bg-cyber-violet text-white",
-      optionText: "text-slate-700 hover:text-cyber-violet"
+      optionText: "text-[var(--text-primary)] hover:text-cyber-violet"
     },
     amber: {
       ring: "focus:ring-amber-500/5 focus:border-amber-500",
       hover: "hover:bg-amber-500/[0.03]",
       activeBadge: "bg-amber-500 text-white",
-      optionText: "text-slate-700 hover:text-amber-600"
+      optionText: "text-[var(--text-primary)] hover:text-amber-600"
     }
   };
 
@@ -55,7 +55,7 @@ export function ComboBox({ value, onChange, options, placeholder, activeColor = 
              setIsOpen(false);
           }, 200)}
           className={cn(
-            "w-full px-5 py-3.5 bg-white/40 border border-slate-200/60 rounded-[22px] outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-800 focus:bg-white focus:ring-4",
+            "w-full px-5 py-3.5 bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[22px] outline-none transition-all placeholder:text-[var(--text-muted)] font-bold text-sm text-[var(--text-primary)] focus:bg-[var(--bg-surface)] focus:ring-4",
             theme.ring
           )}
         />
@@ -70,7 +70,7 @@ export function ComboBox({ value, onChange, options, placeholder, activeColor = 
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.98 }}
-            className="absolute top-full left-0 w-full mt-3 bg-white/80 backdrop-blur-xl border border-white/60 rounded-[28px] shadow-glass max-h-[min(280px,45vh)] overflow-y-auto p-2 z-[100] custom-scrollbar"
+            className="absolute top-full left-0 w-full mt-3 bg-[var(--bg-surface)] backdrop-blur-xl border border-[var(--glass-border)] rounded-[28px] shadow-glass max-h-[min(280px,45vh)] overflow-y-auto p-2 z-[100] custom-scrollbar"
           >
             {filtered.length > 0 ? (
               <div className="space-y-0.5">
@@ -94,9 +94,9 @@ export function ComboBox({ value, onChange, options, placeholder, activeColor = 
               </div>
             ) : (
               <div className="px-6 py-4 flex flex-col items-center gap-2 text-center">
-                <Sparkles className="w-5 h-5 text-slate-300" />
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">New Entry Expected</p>
-                <p className="text-[11px] text-slate-400 font-bold italic">Master data suggested only.</p>
+                <Sparkles className="w-5 h-5 text-[var(--text-muted)]" />
+                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest leading-none">New Entry Expected</p>
+                <p className="text-[11px] text-[var(--text-muted)] font-bold italic">Master data suggested only.</p>
               </div>
             )}
           </motion.div>
@@ -125,7 +125,7 @@ export function MultiComboBox({ values, onChange, options, placeholder }: MultiC
     <div className={cn("relative", isOpen ? "z-[100]" : "z-10")} ref={containerRef}>
        <div 
          className={cn(
-           "w-full min-h-[56px] bg-white/40 border border-slate-200/60 rounded-[24px] focus-within:ring-4 focus-within:ring-cyber-violet/5 focus-within:border-cyber-violet focus-within:bg-white transition-all p-2 flex flex-wrap gap-2 items-center cursor-text relative pr-12"
+           "w-full min-h-[56px] bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[24px] focus-within:ring-4 focus-within:ring-cyber-violet/5 focus-within:border-cyber-violet focus-within:bg-[var(--bg-surface)] transition-all p-2 flex flex-wrap gap-2 items-center cursor-text relative pr-12"
          )}
          onClick={() => setIsOpen(true)}
        >
@@ -137,7 +137,7 @@ export function MultiComboBox({ values, onChange, options, placeholder }: MultiC
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 0.8 }}
                key={v} title={v} 
-               className="flex items-center gap-2 bg-white border border-slate-200/60 shadow-sm text-slate-700 text-[10px] font-black uppercase tracking-tight pl-3 pr-2 py-1.5 rounded-[14px] max-w-full group"
+               className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border-primary)] shadow-sm text-[var(--text-primary)] text-[10px] font-black uppercase tracking-tight pl-3 pr-2 py-1.5 rounded-[14px] max-w-full group"
              >
                <span className="truncate max-w-[150px]">{v}</span>
                <button 
@@ -160,7 +160,7 @@ export function MultiComboBox({ values, onChange, options, placeholder }: MultiC
               setInputValue('');
               setIsOpen(false);
            }, 200)}
-           className="flex-1 min-w-[100px] bg-transparent outline-none px-2 text-sm font-bold text-slate-800 placeholder:text-slate-300"
+           className="flex-1 min-w-[100px] bg-transparent outline-none px-2 text-sm font-bold text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
          />
          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-focus-within:rotate-180 transition-all">
            <ChevronDown className="w-5 h-5" />
@@ -173,14 +173,14 @@ export function MultiComboBox({ values, onChange, options, placeholder }: MultiC
              initial={{ opacity: 0, y: 10, scale: 0.98 }}
              animate={{ opacity: 1, y: 0, scale: 1 }}
              exit={{ opacity: 0, y: 5, scale: 0.98 }}
-             className="absolute top-full left-0 w-full mt-3 bg-white/80 backdrop-blur-xl border border-white/60 rounded-[28px] shadow-glass max-h-[280px] overflow-y-auto p-2 z-[100] custom-scrollbar"
+             className="absolute top-full left-0 w-full mt-3 bg-[var(--bg-surface)] backdrop-blur-xl border border-[var(--glass-border)] rounded-[28px] shadow-glass max-h-[280px] overflow-y-auto p-2 z-[100] custom-scrollbar"
            >
              {filtered.length > 0 ? (
                <div className="space-y-0.5">
                  {filtered.map(opt => (
                    <div 
                      key={opt}
-                     className="px-4 py-3 cursor-pointer rounded-2xl text-sm font-black tracking-tight text-slate-700 hover:bg-cyber-violet/[0.03] hover:text-cyber-violet transition-all"
+                     className="px-4 py-3 cursor-pointer rounded-2xl text-sm font-black tracking-tight text-[var(--text-primary)] hover:bg-cyber-violet/[0.03] hover:text-cyber-violet transition-all"
                      onMouseDown={(e) => { 
                        e.preventDefault();
                        onChange([...values, opt]); 
@@ -193,7 +193,7 @@ export function MultiComboBox({ values, onChange, options, placeholder }: MultiC
                  ))}
                </div>
              ) : (
-               <div className="px-6 py-4 flex items-center justify-center gap-3 text-slate-400 italic text-xs font-medium">
+               <div className="px-6 py-4 flex items-center justify-center gap-3 text-[var(--text-muted)] italic text-xs font-medium">
                  No fresh labels found.
                </div>
              )}

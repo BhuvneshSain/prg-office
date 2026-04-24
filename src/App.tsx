@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Heart } from 'lucide-react';
+import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Heart, Moon, Sun } from 'lucide-react';
 import { getRegisterData, getSettings } from './lib/dataService';
 import type { RegisterEntry, SettingsData } from './types';
 import EntryForm from './components/EntryForm';
@@ -40,6 +40,18 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('pos_theme') === 'dark');
+
+  // Theme Sync
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('pos_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('pos_theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -210,7 +222,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex bg-slate-50/50 min-h-[100dvh] font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="flex bg-[var(--bg-page)] min-h-[100dvh] font-sans text-[var(--text-primary)] selection:bg-cyber-violet/10 selection:text-cyber-violet">
 
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
@@ -224,7 +236,7 @@ export default function App() {
       <aside className={cn(
         "fixed md:relative z-50 h-[100dvh] top-0 left-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col py-6 gap-6 shrink-0",
         sidebarOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full md:w-24 md:translate-x-0",
-        "bg-white/70 backdrop-blur-3xl border-r border-white/20 shadow-[0_0_40px_rgba(0,0,0,0.02)]"
+        "bg-[var(--bg-sidebar)] backdrop-blur-3xl border-r border-[var(--glass-border)] shadow-[0_0_40px_rgba(0,0,0,0.02)]"
       )}>
         {/* Logo row */}
         <div className="flex items-center justify-between px-6 mb-2">
@@ -242,15 +254,15 @@ export default function App() {
                 animate={{ opacity: 1, x: 0 }}
                 className="flex flex-col"
               >
-                <span className="font-extrabold text-sm tracking-tight text-slate-800 leading-none">Programmer</span>
-                <span className="font-bold text-[11px] text-slate-400 uppercase tracking-widest mt-0.5">Office Suite</span>
+                <span className="font-extrabold text-sm tracking-tight text-[var(--text-primary)] leading-none">Programmer</span>
+                <span className="font-bold text-[11px] text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Office Suite</span>
               </motion.div>
             )}
           </div>
           
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-xl hover:bg-slate-100/50 text-slate-400 hover:text-slate-700 transition-all active:scale-90 hidden md:flex"
+            className="p-2 rounded-xl hover:bg-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all active:scale-90 hidden md:flex"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -316,7 +328,7 @@ export default function App() {
         {/* Dropbox status */}
         <div className="px-4 pb-2">
           <div className={cn(
-            "p-3 rounded-[24px] bg-slate-50/50 border border-slate-100 flex items-center gap-3",
+            "p-3 rounded-[24px] bg-[var(--card-bg)] border border-[var(--border-primary)] flex items-center gap-3",
             !sidebarOpen && "justify-center"
           )}>
             <div className="relative flex-shrink-0">
@@ -334,13 +346,13 @@ export default function App() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden bg-slate-50/50 relative">
+      <main className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden bg-[var(--bg-page)] relative">
         {/* Ambient glows */}
         <div className="absolute top-0 left-0 w-[60%] h-[40%] bg-indigo-400/4 blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-[50%] h-[40%] bg-purple-400/4 blur-[100px] rounded-full pointer-events-none" />
 
         {/* Top header bar */}
-        <header className="relative z-10 bg-white/70 backdrop-blur-2xl border-b border-slate-200/50 h-14 flex items-center justify-between px-3 sm:px-6 flex-shrink-0">
+        <header className="relative z-10 bg-[var(--bg-sidebar)] backdrop-blur-2xl border-b border-[var(--border-primary)] h-14 flex items-center justify-between px-3 sm:px-6 flex-shrink-0">
           <div className="flex items-center gap-2">
             {/* Mobile hamburger */}
             <button
@@ -354,7 +366,7 @@ export default function App() {
                 key={activeTab}
                 initial={{ y: 5, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="text-lg font-extrabold text-slate-800 leading-none tracking-tight"
+                className="text-lg font-extrabold text-[var(--text-primary)] leading-none tracking-tight"
               >
                 {TAB_LABELS[activeTab]}
               </motion.h1>
@@ -374,8 +386,15 @@ export default function App() {
               <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 rounded-xl transition-all active:scale-95 border border-transparent text-slate-400 hover:text-cyber-violet hover:bg-cyber-violet/5 dark:hover:bg-cyber-violet/10"
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
               onClick={() => handleNavClick('settings')}
-              className={`p-2 rounded-xl transition-all active:scale-95 border ${activeTab === 'settings' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 border-transparent'}`}
+              className={`p-2 rounded-xl transition-all active:scale-95 border ${activeTab === 'settings' ? 'bg-cyber-violet/5 text-cyber-violet border-cyber-violet/10' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 border-transparent'}`}
             >
               <SettingsIcon className="w-4 h-4" />
             </button>
@@ -415,8 +434,8 @@ export default function App() {
           {/* Footer */}
           <footer className="mt-8 pt-6 pb-2 border-t border-slate-200/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-medium text-slate-400">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-white border border-slate-100 flex items-center justify-center shadow-sm">
-                <span className="text-indigo-600 font-black text-[9px]">POS</span>
+              <div className="w-6 h-6 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)] flex items-center justify-center shadow-sm">
+                <span className="text-cyber-violet font-black text-[9px]">POS</span>
               </div>
               <p>© {new Date().getFullYear()} ProOffice Suite. All rights reserved.</p>
             </div>
@@ -436,7 +455,7 @@ export default function App() {
           </footer>
         </div>
         {/* Mobile bottom navigation tab bar */}
-        <nav className="md:hidden fixed bottom-6 left-6 right-6 z-40 bg-white/80 backdrop-blur-3xl border border-white/40 flex items-stretch h-16 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] px-2">
+        <nav className="md:hidden fixed bottom-6 left-6 right-6 z-40 bg-[var(--bg-sidebar)] backdrop-blur-3xl border border-[var(--glass-border)] flex items-stretch h-16 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] px-2">
           {(
             [
               { tab: 'dashboard', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Home' },
@@ -486,7 +505,7 @@ function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon
       title={!isOpen ? label : undefined}
       className={cn(
         "flex items-center gap-4 px-4 py-3 rounded-[20px] transition-all duration-300 group w-full relative",
-        active ? "text-slate-900" : "text-slate-400 hover:text-slate-700",
+        active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]",
         !isOpen && "justify-center px-0"
       )}
     >
@@ -500,7 +519,7 @@ function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon
       
       <div className={cn(
         "relative z-10 transition-colors flex-shrink-0",
-        active ? "text-cyber-violet" : "group-hover:text-slate-600"
+        active ? "text-cyber-violet" : "group-hover:text-[var(--text-secondary)]"
       )}>
         {icon}
       </div>
@@ -572,10 +591,10 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
           <span className="h-[1px] w-8 bg-cyber-violet/30" />
           <p className="text-[10px] font-black text-cyber-violet uppercase tracking-[0.2em]">Operational Overview</p>
         </div>
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-800 tracking-tight leading-[1.1]">
+        <h2 className="text-4xl sm:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight leading-[1.1]">
           System <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-violet to-cyber-cyan">Dashboard</span>
         </h2>
-        <p className="text-slate-500 text-sm sm:text-lg font-medium max-w-2xl leading-relaxed">
+        <p className="text-[var(--text-secondary)] text-sm sm:text-lg font-medium max-w-2xl leading-relaxed">
           Welcome back. Your document repository is fully synchronized and secured.
         </p>
       </motion.header>
@@ -592,9 +611,9 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
               stat.bg, stat.border
             )}
           >
-            <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 blur-2xl rounded-full translate-x-8 -translate-y-8" />
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 blur-2xl rounded-full translate-x-8 -translate-y-8" />
             <p className={cn("text-3xl sm:text-4xl font-black tracking-tighter", stat.color)}>{stat.count}</p>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-1">{stat.label}</p>
+            <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-1">{stat.label}</p>
           </motion.div>
         ))}
       </div>
@@ -641,8 +660,8 @@ function ToolCard({ title, icon, desc, variant, variants, onClick }: { title: st
           {icon}
         </div>
         <div>
-          <h4 className="font-extrabold text-slate-800 text-lg tracking-tight group-hover:text-cyber-violet transition-colors">{title}</h4>
-          <p className="text-sm text-slate-500 font-medium mt-1 leading-relaxed opacity-80">{desc}</p>
+          <h4 className="font-extrabold text-[var(--text-primary)] text-lg tracking-tight group-hover:text-cyber-violet transition-colors">{title}</h4>
+          <p className="text-sm text-[var(--text-secondary)] font-medium mt-1 leading-relaxed opacity-80">{desc}</p>
         </div>
       </div>
       

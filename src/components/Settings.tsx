@@ -77,18 +77,18 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
         animate={{ opacity: 1, y: 0 }}
         className="glass-card rounded-[40px] border-white/60 shadow-glass overflow-hidden"
       >
-        <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/40">
+        <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--header-bg)]">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-[28px] bg-cyber-violet/10 flex items-center justify-center shadow-inner">
+            <div className="w-16 h-16 rounded-[28px] bg-cyber-violet/10 flex items-center justify-center shadow-inner border border-cyber-violet/10">
               <SettingsIcon className="w-8 h-8 text-cyber-violet animate-[spin_10s_linear_infinite]" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Database className="w-3.5 h-3.5 text-cyber-violet" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Master Control</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)]">Master Control</p>
               </div>
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight leading-none">Core Parameters</h2>
-              <p className="text-slate-400 text-sm font-bold mt-2">Manage taxonomies, mission projects, and operational ranks.</p>
+              <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tight leading-none">Core Parameters</h2>
+              <p className="text-[var(--text-secondary)] text-sm font-bold mt-2">Manage taxonomies, mission projects, and operational ranks.</p>
             </div>
           </div>
           
@@ -212,19 +212,19 @@ function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAd
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="glass-card rounded-[40px] border-white/60 shadow-glass flex flex-col h-[500px]"
+      className="glass-card rounded-[40px] border-[var(--glass-border)] shadow-glass flex flex-col h-[500px]"
     >
-      <div className="p-8 border-b border-white/40 bg-white/40 flex items-center justify-between">
+      <div className="p-8 border-b border-[var(--border-primary)] bg-[var(--header-bg)] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", styles.icon)}>
             {icon}
           </div>
           <div>
-            <h3 className="text-base font-black text-slate-800 tracking-tight">{title}</h3>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">Master Records</p>
+            <h3 className="text-base font-black text-[var(--text-primary)] tracking-tight">{title}</h3>
+            <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest leading-none mt-1">Master Records</p>
           </div>
         </div>
-        <span className="text-[10px] font-black bg-white border border-slate-100 text-slate-400 px-3 py-1.5 rounded-xl shadow-sm">
+        <span className="text-[10px] font-black bg-[var(--bg-surface)] border border-[var(--border-primary)] text-[var(--text-muted)] px-3 py-1.5 rounded-xl shadow-sm">
           {items.length} Units
         </span>
       </div>
@@ -235,7 +235,7 @@ function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAd
             type="text" required placeholder={placeholder} value={newValue}
             onChange={e => onNewChange(e.target.value)}
             className={cn(
-              "flex-1 px-5 py-3.5 bg-white/60 border border-slate-200/60 rounded-[22px] outline-none text-sm font-bold text-slate-800 transition-all placeholder:text-slate-300",
+              "flex-1 px-5 py-3.5 bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[22px] outline-none text-sm font-bold text-[var(--text-primary)] transition-all placeholder:text-[var(--text-muted)] focus:bg-[var(--bg-surface)]",
               styles.focus
             )}
           />
@@ -257,10 +257,10 @@ function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAd
                 animate={{ opacity: 1 }}
                 className="py-12 text-center"
               >
-                <div className="w-16 h-16 rounded-[22px] bg-slate-50 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-slate-200" />
+                <div className="w-16 h-16 rounded-[22px] bg-[var(--bg-page)] flex items-center justify-center mx-auto mb-4 border border-[var(--border-primary)]">
+                  <Sparkles className="w-8 h-8 text-[var(--text-muted)]" />
                 </div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{emptyMsg}</p>
+                <p className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest">{emptyMsg}</p>
               </motion.div>
             ) : (
               items.map((item: string, idx: number) => (
@@ -270,14 +270,14 @@ function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAd
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="flex items-center justify-between bg-white/40 border border-slate-100/50 px-5 py-4 rounded-[24px] group hover:bg-white hover:border-slate-200 hover:shadow-xl hover:shadow-slate-200/40 transition-all cursor-default"
+                  className="flex items-center justify-between bg-[var(--bg-surface)] border border-[var(--border-primary)] px-5 py-4 rounded-[24px] group hover:bg-[var(--bg-page)] hover:border-cyber-violet/30 hover:shadow-xl hover:shadow-cyber-violet/5 transition-all cursor-default"
                 >
                   {editing?.old === item ? (
                     <div className="flex-1 flex gap-2">
-                       <input 
+                      <input 
                         autoFocus 
                         className={cn(
-                          "flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-800 outline-none",
+                          "flex-1 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-xl text-sm font-black text-[var(--text-primary)] outline-none",
                           styles.focus
                         )} 
                         value={editing.new} 
@@ -287,7 +287,7 @@ function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAd
                       />
                     </div>
                   ) : (
-                    <span className="text-slate-800 font-black text-sm tracking-tight flex-1 truncate">{item}</span>
+                    <span className="text-[var(--text-primary)] font-black text-sm tracking-tight flex-1 truncate">{item}</span>
                   )}
                   
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
@@ -301,7 +301,7 @@ function MasterSection({ title, icon, accent, items, newValue, onNewChange, onAd
                     )}
                     <button 
                       onClick={() => onRemove(item)} 
-                      className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-2 rounded-xl text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

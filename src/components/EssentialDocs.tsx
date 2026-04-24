@@ -1,9 +1,10 @@
 import React, { useState, memo } from 'react';
-import { Files, Upload, Trash2, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight } from 'lucide-react';
+import { Files, Upload, Trash2, Download, Search, Loader2, Plus, Calendar as CalendarIcon, AlignLeft, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight, FileSpreadsheet, FileDown } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addRegisterEntry, deleteRegisterEntry } from '../lib/dataService';
-import { uploadAttachment, getFileLink } from '../lib/fileService';
-import type { RegisterEntry, AttachmentsData } from '../types';
+import { batchUploadAttachments, getFileLink } from '../lib/fileService';
+import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
 import { clsx, type ClassValue } from 'clsx';
@@ -23,6 +24,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
     date: new Date().toISOString().split('T')[0],
     remarks: ''
   });
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [editingDoc, setEditingDoc] = useState<RegisterEntry | null>(null);
 
@@ -31,13 +33,12 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
     if (selectedFiles.length === 0) return;
 
     setUploading(true);
+    setUploadProgress({ current: 0, total: selectedFiles.length });
+    
     try {
-      const uploadPromises = selectedFiles.map(file => uploadAttachment(file));
-      const uploadedFiles = await Promise.all(uploadPromises);
-      
-      const attachments: AttachmentsData[] = uploadedFiles
-        .filter((f): f is { id: string, name: string } => f !== null)
-        .map(f => ({ id: f.id, name: f.name }));
+      const attachments = await batchUploadAttachments(selectedFiles, (curr: number, tot: number) => {
+        setUploadProgress({ current: curr, total: tot });
+      });
 
       if (attachments.length === 0) throw new Error('Upload failed');
 
@@ -61,6 +62,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
       alert('Security Protocol Failure: Synchronization interrupted.');
     } finally {
       setUploading(false);
+      setUploadProgress({ current: 0, total: 0 });
     }
   };
 
@@ -203,7 +205,19 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                   className="w-full py-5 bg-slate-900 text-white rounded-[22px] font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl transition-all disabled:opacity-50"
                 >
                   {uploading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <div className="flex flex-col items-center gap-1">
+                       <div className="flex items-center gap-3">
+                         <Loader2 className="w-5 h-5 animate-spin" />
+                         <span className="tracking-tight uppercase text-[10px] font-black">Syncing {uploadProgress.current}/{uploadProgress.total}</span>
+                       </div>
+                       <div className="w-32 h-0.5 bg-white/20 rounded-full mt-1 overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                            className="h-full bg-white"
+                          />
+                       </div>
+                    </div>
                   ) : (
                     <>
                       <FileCheck className="w-5 h-5" />
@@ -222,27 +236,45 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
         layout
         className="glass-card rounded-[40px] border-white/60 shadow-glass overflow-hidden"
       >
-        <div className="p-6 border-b border-white/40 bg-white/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyber-violet/10 flex items-center justify-center">
-              <Wrench className="w-5 h-5 text-cyber-violet" />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-800 tracking-tight">Resources Vault</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-emerald-400" /> System Online
-              </p>
-            </div>
+        <div className="p-5 sm:p-6 border-b border-[var(--border-primary)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--header-bg)] backdrop-blur-md">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-lg font-black flex items-center gap-2 text-[var(--text-primary)] tracking-tight">
+              <Files className="w-5 h-5 text-cyber-violet" /> Essential Hub
+            </h3>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-cyber-violet/40" /> Central Knowledge Base
+            </p>
           </div>
           
           <div className="relative group w-full sm:w-72">
             <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyber-violet transition-colors" />
             <input 
-              placeholder="Filter resources..." 
-              className="w-full pl-11 pr-5 py-3 bg-white/60 border border-slate-200/60 rounded-[22px] text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet transition-all placeholder:text-slate-300"
+              type="text" 
+              placeholder="Search resources..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[18px] text-sm focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToExcel(data, 'essential_documents')}
+                title="Export to Excel"
+                className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToPDF(data, 'Essential Documents Report', 'docs_report')}
+                title="Export to PDF"
+                className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+              >
+                <FileDown className="w-4 h-4" />
+              </motion.button>
+            </div>
           </div>
         </div>
 
@@ -258,11 +290,11 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                 animate={{ opacity: 1 }}
                 className="col-span-full py-20 flex flex-col items-center justify-center text-center"
               >
-                <div className="w-20 h-20 rounded-[30px] bg-slate-50 flex items-center justify-center mb-6">
-                  <Files className="w-10 h-10 text-slate-200" />
+                <div className="w-20 h-20 rounded-[30px] bg-[var(--bg-page)] flex items-center justify-center mb-6 border border-[var(--border-primary)]">
+                  <Files className="w-10 h-10 text-[var(--text-muted)]" />
                 </div>
-                <h4 className="text-lg font-black text-slate-700 tracking-tight">Archive Empty</h4>
-                <p className="text-sm text-slate-400 font-bold max-w-xs mt-2">No documents detected in this sector. Initialise a deposit.</p>
+                <h4 className="text-lg font-black text-[var(--text-primary)] tracking-tight">Archive Empty</h4>
+                <p className="text-sm text-[var(--text-muted)] font-bold max-w-xs mt-2">No documents detected in this sector. Initialise a deposit.</p>
               </motion.div>
             ) : (
               filtered.map((doc, idx) => (
@@ -272,10 +304,10 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group relative p-6 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[32px] hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 h-full flex flex-col"
+                  className="group relative p-6 bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--glass-border)] rounded-[32px] hover:bg-[var(--bg-surface)] hover:shadow-2xl hover:shadow-cyber-violet/5 transition-all duration-300 h-full flex flex-col"
                 >
                   <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-cyber-violet transition-all duration-300">
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--bg-surface)] shadow-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-cyber-violet transition-all duration-300 border border-[var(--border-primary)]">
                       {doc.attachments.length > 1 ? (
                         <Files className="w-7 h-7 text-cyber-violet group-hover:text-white transition-colors" />
                       ) : (
@@ -325,19 +357,19 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{doc.date}</span>
+                       <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{doc.date}</span>
                     </div>
-                    <h4 className="text-lg font-black text-slate-800 leading-tight group-hover:text-cyber-violet transition-colors">{doc.subject}</h4>
-                    <p className="text-xs text-slate-400 font-bold mt-2 line-clamp-2 leading-relaxed">{doc.remarks}</p>
+                    <h4 className="text-lg font-black text-[var(--text-primary)] leading-tight group-hover:text-cyber-violet transition-colors">{doc.subject}</h4>
+                    <p className="text-xs text-[var(--text-muted)] font-bold mt-2 line-clamp-2 leading-relaxed">{doc.remarks}</p>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100/50 flex items-center justify-between">
+                  <div className="mt-6 pt-4 border-t border-[var(--border-primary)] flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-widest text-cyber-violet bg-cyber-violet/5 px-2 py-1 rounded-md">
                       {doc.attachments.length} Payload{doc.attachments.length !== 1 && 's'}
                     </span>
                     <button 
                       onClick={() => setViewDoc(doc)}
-                      className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-800 flex items-center gap-1.5 transition-colors"
+                      className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1.5 transition-colors"
                     >
                       Inspect <ArrowRight className="w-3 h-3" />
                     </button>

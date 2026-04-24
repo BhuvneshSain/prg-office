@@ -26,6 +26,33 @@ export const uploadAttachment = async (file: File): Promise<{ id: string, name: 
   }
 };
 
+export const batchUploadAttachments = async (
+  files: File[], 
+  onProgress?: (processed: number, total: number) => void
+): Promise<{ id: string, name: string }[]> => {
+  if (!checkConfig() || files.length === 0) return [];
+  
+  let processed = 0;
+  const total = files.length;
+  
+  const uploadPromises = files.map(async (file) => {
+    try {
+      const result = await uploadAttachment(file);
+      processed++;
+      if (onProgress) onProgress(processed, total);
+      return result;
+    } catch (err) {
+      console.error(`Batch upload failed for ${file.name}`, err);
+      processed++; // Still increment to keep progress correct
+      if (onProgress) onProgress(processed, total);
+      return null;
+    }
+  });
+
+  const results = await Promise.all(uploadPromises);
+  return results.filter((r): r is { id: string, name: string } => r !== null);
+};
+
 export const getFileLink = async (path: string): Promise<string | null> => {
   if (!checkConfig()) return null;
   const fullPath = (path.startsWith('/') || path.startsWith('id:')) ? path.trim() : `/attachments/${path.trim()}`;

@@ -1,5 +1,6 @@
 import { useState, memo } from 'react';
-import { Users, Pencil, Trash2, Search, Phone, GripVertical, UserX, AlertCircle } from 'lucide-react';
+import { Search, Users, Pencil, Trash2, FileSpreadsheet, FileDown, Phone, GripVertical, UserX, AlertCircle } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { deleteRegisterEntry, saveRegisterData } from '../lib/dataService';
 import StaffEditModal from './StaffEditModal';
@@ -22,6 +23,8 @@ interface StaffTableProps {
   posts: string[];
   onRefresh: () => void;
 }
+
+
 
 const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }: StaffTableProps) {
   const [search, setSearch] = useState('');
@@ -61,23 +64,46 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
       animate={{ opacity: 1 }}
       className="glass-card rounded-[32px] border-white/60 overflow-hidden shadow-glass"
     >
-      <div className="p-6 border-b border-white/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/40">
-        <div>
-          <h3 className="text-lg font-black flex items-center gap-2 text-slate-800 tracking-tight">
+      <div className="p-5 sm:p-6 border-b border-[var(--border-primary)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--header-bg)] backdrop-blur-md">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-black flex items-center gap-2 text-[var(--text-primary)] tracking-tight">
             <Users className="w-5 h-5 text-cyber-violet" /> Personnel Directory
           </h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-cyber-violet/40" /> Active Service Records
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-cyber-violet/40" /> Active Service Records
+            </p>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToExcel(data, 'staff_directory')}
+                title="Export to Excel"
+                className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => exportToPDF(data, 'Staff Directory Report', 'staff_report')}
+                title="Export to PDF"
+                className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+              >
+                <FileDown className="w-4 h-4" />
+              </motion.button>
+            </div>
+          </div>
         </div>
 
         <div className="relative group w-full sm:w-64">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyber-violet transition-colors" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-cyber-violet transition-colors" />
           <input 
+            type="text" 
             placeholder="Search personnel..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-white/60 border border-slate-200/60 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet transition-all placeholder:text-slate-300"
             value={search} 
-            onChange={e => setSearch(e.target.value)} 
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-sm focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
           />
         </div>
       </div>
@@ -137,10 +163,15 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
                                 </div>
                               </td>
                             )}
-                            <td className="px-6 py-4">
-                              <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-cyber-violet transition-colors">
-                                {row.partyName}
-                              </span>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-cyber-violet/5 flex items-center justify-center border border-cyber-violet/10 font-black text-cyber-violet text-[10px]">
+                                  {row.partyName.split(' ')[0][0]}{row.partyName.split(' ').length > 1 ? row.partyName.split(' ')[1][0] : ''}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-[var(--text-primary)] leading-none">{row.partyName}</span>
+                                </div>
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-[11px] font-bold text-slate-400 font-mono tracking-tighter bg-slate-100/50 px-2 py-1 rounded-lg">
@@ -152,17 +183,12 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
                                 {row.subject}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               {row.mobile ? (
-                                <div className="flex items-center gap-2 text-slate-500 group-hover:text-slate-800 transition-colors">
-                                  <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center">
-                                    <Phone className="w-3 h-3" />
-                                  </div>
-                                  <span className="text-xs font-bold font-mono tracking-tight">{row.mobile}</span>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Unlinked</span>
-                              )}
+                                <a href={`tel:${row.mobile}`} className="flex items-center gap-2 text-xs font-bold text-cyber-violet hover:underline decoration-cyber-violet/30">
+                                  <Phone className="w-3 h-3" /> {row.mobile}
+                                </a>
+                              ) : <span className="text-[var(--text-muted)]/30 text-xs">—</span>}
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex flex-wrap gap-1.5">

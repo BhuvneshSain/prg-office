@@ -2,7 +2,7 @@
  * Service for managing Register and settings data (JSON) in Dropbox
  */
 import { dbx, checkConfig, handleDbxError } from './serviceUtils';
-import type { RegisterEntry, SettingsData } from '../types';
+import type { RegisterEntry, SettingsData, AuditEntry, AuditAction } from '../types';
 
 export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs';
 
@@ -48,7 +48,11 @@ export const addRegisterEntry = async (entry: RegisterEntry): Promise<boolean> =
   const existingData = await getRegisterData(entry.type);
   existingData.unshift(entry);
   const finalData = entry.type === 'staff' ? existingData : sortEntriesByDate(existingData);
-  return await saveRegisterData(entry.type, finalData);
+  const success = await saveRegisterData(entry.type, finalData);
+  if (success) {
+    await logAction('ADD', entry.type, entry.id, `Created ${entry.type} record: ${entry.subject || entry.referenceNumber}`);
+  }
+  return success;
 };
 
 export const updateRegisterEntry = async (entry: RegisterEntry): Promise<boolean> => {
@@ -57,14 +61,23 @@ export const updateRegisterEntry = async (entry: RegisterEntry): Promise<boolean
   if (idx === -1) return false;
   existingData[idx] = entry;
   const finalData = entry.type === 'staff' ? existingData : sortEntriesByDate(existingData);
-  return await saveRegisterData(entry.type, finalData);
+  const success = await saveRegisterData(entry.type, finalData);
+  if (success) {
+    await logAction('UPDATE', entry.type, entry.id, `Modified ${entry.type} record: ${entry.subject || entry.referenceNumber}`);
+  }
+  return success;
 };
 
 export const deleteRegisterEntry = async (id: string, type: RegisterType): Promise<boolean> => {
   const existingData = await getRegisterData(type);
+  const targetEntry = existingData.find(e => e.id === id);
   const filtered = existingData.filter(e => e.id !== id);
   if (filtered.length === existingData.length) return false;
-  return await saveRegisterData(type, filtered);
+  const success = await saveRegisterData(type, filtered);
+  if (success && targetEntry) {
+    await logAction('DELETE', type, id, `Archived ${type} record: ${targetEntry.subject || targetEntry.referenceNumber}`);
+  }
+  return success;
 };
 
 export const getSettings = async (): Promise<SettingsData> => {
@@ -92,6 +105,49 @@ export const saveSettings = async (settings: SettingsData): Promise<boolean> => 
     return true;
   } catch (error) {
     handleDbxError(error, 'saveSettings');
+    return false;
+  }
+};
+
+export const getAuditLogs = async (): Promise<AuditEntry[]> => {
+  if (!checkConfig()) return [];
+  const path = '/data/audit-logs.json';
+  try {
+    const response = await dbx.filesDownload({ path });
+    const result = response.result as unknown as { fileBlob: Blob };
+    const text = await result.fileBlob.text();
+    return JSON.parse(text) as AuditEntry[];
+  } catch (error) {
+    handleDbxError(error, 'getAuditLogs');
+    return [];
+  }
+};
+
+export const logAction = async (action: AuditAction, type: RegisterType, targetId: string, details: string): Promise<boolean> => {
+  if (!checkConfig()) return false;
+  const logs = await getAuditLogs();
+  const entry: AuditEntry = {
+    id: Date.now().toString(),
+    timestamp: new Date().toISOString(),
+    action,
+    type,
+    targetId,
+    details,
+    user: 'Cyber Admin' // Multi-user support can be added later
+  };
+  
+  logs.unshift(entry);
+  const content = JSON.stringify(logs.slice(0, 1000), null, 2); // Keep last 1000 logs
+  
+  try {
+    await dbx.filesUpload({
+      path: '/data/audit-logs.json',
+      contents: content,
+      mode: { '.tag': 'overwrite' }
+    });
+    return true;
+  } catch (error) {
+    handleDbxError(error, 'logAction');
     return false;
   }
 };

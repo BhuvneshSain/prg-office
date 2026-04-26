@@ -1,7 +1,7 @@
 import { useState, memo } from 'react';
 import { Search, Users, Pencil, Trash2, FileSpreadsheet, FileDown, Phone, GripVertical, UserX, AlertCircle } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { deleteRegisterEntry, saveRegisterData } from '../lib/dataService';
 import StaffEditModal from './StaffEditModal';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -125,12 +125,10 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
             <Droppable droppableId="staff-list">
               {(provided) => (
                 <tbody {...provided.droppableProps} ref={provided.innerRef} className="relative">
-                  <LayoutGroup>
                     {filtered.map((row, index) => (
                       <Draggable key={row.id} draggableId={row.id} index={index} isDragDisabled={!!search}>
                         {(provided, snapshot) => (
                           <motion.tr
-                            layout
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             onMouseEnter={() => setHoveredRow(row.id)}
@@ -144,17 +142,11 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
                             style={provided.draggableProps.style}
                           >
                             {/* Hover Highlight */}
-                            <AnimatePresence>
-                              {hoveredRow === row.id && !snapshot.isDragging && (
-                                <motion.td 
-                                  layoutId="staff-hover"
-                                  className="absolute inset-x-2 inset-y-1.5 bg-cyber-violet/[0.03] rounded-2xl -z-10 pointer-events-none border border-cyber-violet/5"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  exit={{ opacity: 0 }}
-                                />
-                              )}
-                            </AnimatePresence>
+                            {hoveredRow === row.id && !snapshot.isDragging && (
+                              <td 
+                                className="absolute inset-x-2 inset-y-1.5 bg-cyber-violet/[0.03] rounded-2xl -z-10 pointer-events-none border border-cyber-violet/5"
+                              />
+                            )}
 
                             {!search && (
                               <td className="px-4 py-4 text-center align-middle" {...provided.dragHandleProps}>
@@ -213,7 +205,6 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
                         )}
                       </Draggable>
                     ))}
-                  </LayoutGroup>
                   {provided.placeholder}
                 </tbody>
               )}

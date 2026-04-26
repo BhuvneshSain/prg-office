@@ -4,7 +4,24 @@ export interface AttachmentsData {
   link?: string; // Optional temporary download link fetched from dbx
 }
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs';
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
+
+export type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Deferred';
+export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical';
+
+export interface TaskEntry {
+  id: string;
+  title: string;
+  description: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  dueDate?: string;
+  assignedTo: string[]; // Names of staff members
+  linkedDocId?: string; // Reference to inward/order id
+  linkedDocType?: 'inward' | 'orders';
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface RegisterEntry {
   id: string; // Unique ID (e.g. timestamp or UUID)
@@ -25,7 +42,7 @@ export interface SettingsData {
   posts: string[];
 }
 
-export type AuditAction = 'ADD' | 'UPDATE' | 'DELETE';
+export type AuditAction = 'ADD' | 'UPDATE' | 'DELETE' | 'TASK_LINK';
 
 export interface AuditEntry {
   id: string;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Heart, Moon, Sun } from 'lucide-react';
-import { getRegisterData, getSettings } from './lib/dataService';
-import type { RegisterEntry, SettingsData } from './types';
+import { getRegisterData, getSettings, updateTask } from './lib/dataService';
+import type { RegisterEntry, SettingsData, TaskEntry } from './types';
 import EntryForm from './components/EntryForm';
 import DataTable from './components/DataTable';
 import Reports from './components/Reports';
@@ -11,7 +11,9 @@ import Settings from './components/Settings';
 import StaffForm from './components/StaffForm';
 import StaffTable from './components/StaffTable';
 import EssentialDocs from './components/EssentialDocs';
-import { Users, FileText, LogOut, Loader2 } from 'lucide-react';
+import TaskManager from './components/TaskManager';
+import TaskForm from './components/TaskForm';
+import { Users, FileText, LogOut, Loader2, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -21,7 +23,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'reports' | 'settings';
+type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'tasks' | 'essential-docs' | 'reports' | 'settings';
 
 const TAB_LABELS: Record<Tab, string> = {
   dashboard: 'Dashboard',
@@ -29,6 +31,7 @@ const TAB_LABELS: Record<Tab, string> = {
   outward: 'Outward Register',
   orders: 'Important Orders',
   staff: 'Staff Management',
+  tasks: 'Task Management',
   'essential-docs': 'Essential Tools / Docs',
   reports: 'Reports',
   settings: 'Settings',
@@ -116,22 +119,28 @@ export default function App() {
   const [outwardData, setOutwardData] = useState<RegisterEntry[]>([]);
   const [ordersData, setOrdersData] = useState<RegisterEntry[]>([]);
   const [staffData, setStaffData] = useState<RegisterEntry[]>([]);
+  const [tasksData, setTasksData] = useState<TaskEntry[]>([]);
   const [myDocsData, setMyDocsData] = useState<RegisterEntry[]>([]);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorHeader, setErrorHeader] = useState<string | null>(null);
+  const [globalViewEntry, setGlobalViewEntry] = useState<RegisterEntry | null>(null);
+  const [taskModalDoc, setTaskModalDoc] = useState<RegisterEntry | null>(null);
+  const [editTask, setEditTask] = useState<TaskEntry | null>(null);
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
     setRefreshing(true);
     setErrorHeader(null);
     try {
-      const [inData, outData, ordData, stfData, docData, setData] = await Promise.all([
+      const [inData, outData, ordData, stfData, taskData, docData, setData] = await Promise.all([
         getRegisterData('inward'),
         getRegisterData('outward'),
         getRegisterData('orders'),
         getRegisterData('staff'),
+        getRegisterData('tasks') as Promise<any>,
         getRegisterData('essential-docs'),
         getSettings()
       ]);
@@ -139,6 +148,7 @@ export default function App() {
       setOutwardData(outData);
       setOrdersData(ordData);
       setStaffData(stfData);
+      setTasksData(taskData);
       setMyDocsData(docData);
       setSettings(setData);
     } catch (err: unknown) {
@@ -157,13 +167,38 @@ export default function App() {
     if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
+  const handleToggleTaskStatus = async (task: TaskEntry) => {
+    const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
+    await updateTask({ ...task, status: newStatus });
+    fetchData();
+  };
+
+  const handleViewLinkedDoc = (id: string, type: 'inward' | 'orders') => {
+    const dataSource = type === 'inward' ? inwardData : ordersData;
+    const doc = dataSource.find(d => d.id === id);
+    if (doc) setGlobalViewEntry(doc);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'inward':
         return (
           <div className="space-y-6">
             <EntryForm type="inward" existingDepts={settings?.departments || []} existingProjects={settings?.projects || []} onSuccess={fetchData} />
-            <DataTable type="inward" data={inwardData} loading={loading} departments={settings?.departments || []} projects={settings?.projects || []} onRefresh={fetchData} />
+            <DataTable 
+              type="inward" 
+              data={inwardData} 
+              loading={loading} 
+              departments={settings?.departments || []} 
+              projects={settings?.projects || []} 
+              tasks={tasksData}
+              onRefresh={fetchData} 
+              onLinkTask={(doc) => { 
+                setTaskModalDoc(doc); 
+                setActiveTab('tasks');
+                setShowTaskForm(true); 
+              }}
+            />
           </div>
         );
       case 'outward':
@@ -187,6 +222,29 @@ export default function App() {
             <StaffTable data={staffData} loading={loading} projects={settings?.projects || []} posts={settings?.posts || []} onRefresh={fetchData} />
           </div>
         );
+      case 'tasks':
+        return (
+          <div className="space-y-6">
+            {showTaskForm && (
+              <TaskForm 
+                staffNames={staffData.map(s => s.partyName)} 
+                onSuccess={fetchData} 
+                editTask={editTask}
+                linkedDoc={taskModalDoc}
+                onClose={() => { setShowTaskForm(false); setEditTask(null); setTaskModalDoc(null); }} 
+              />
+            )}
+            <TaskManager 
+              tasks={tasksData} 
+              loading={loading} 
+              onRefresh={fetchData} 
+              onEdit={(t) => { setEditTask(t); setShowTaskForm(true); }}
+              onToggleStatus={handleToggleTaskStatus}
+              onViewDoc={handleViewLinkedDoc}
+              onNew={() => { setEditTask(null); setTaskModalDoc(null); setShowTaskForm(true); }}
+            />
+          </div>
+        );
       case 'essential-docs':
         return <EssentialDocs data={myDocsData} onRefresh={fetchData} />;
       case 'reports':
@@ -205,7 +263,7 @@ export default function App() {
           </div>
         );
       default:
-        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} myDocsCount={myDocsData.length} />;
+        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} myDocsCount={myDocsData.length} tasksCount={tasksData.length} />;
     }
   };
 
@@ -284,6 +342,7 @@ export default function App() {
               outward: <Send className="w-5 h-5" />,
               orders: <AlertOctagon className="w-5 h-5" />,
               staff: <Users className="w-5 h-5" />,
+              tasks: <ClipboardList className="w-5 h-5" />,
               'essential-docs': <FileText className="w-5 h-5" />,
               reports: <BarChart className="w-5 h-5" />,
               settings: <SettingsIcon className="w-5 h-5" />,
@@ -293,6 +352,7 @@ export default function App() {
               outward: outwardData.length,
               orders: ordersData.length,
               staff: staffData.length,
+              tasks: tasksData.filter(t => t.status !== 'Completed').length,
               'essential-docs': myDocsData.length,
             };
 
@@ -460,7 +520,7 @@ export default function App() {
             [
               { tab: 'dashboard', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Home' },
               { tab: 'inward', icon: <Inbox className="w-5 h-5" />, label: 'Inward' },
-              { tab: 'outward', icon: <Send className="w-5 h-5" />, label: 'Outward' },
+              { tab: 'tasks', icon: <ClipboardList className="w-5 h-5" />, label: 'Tasks' },
               { tab: 'orders', icon: <AlertOctagon className="w-5 h-5" />, label: 'Orders' },
               { tab: 'essential-docs', icon: <FileText className="w-5 h-5" />, label: 'Docs' },
             ] as const
@@ -493,6 +553,13 @@ export default function App() {
           })}
         </nav>
       </main>
+      {/* Global Document Modal */}
+      {globalViewEntry && (
+        <DocumentModal 
+          entry={globalViewEntry} 
+          onClose={() => setGlobalViewEntry(null)} 
+        />
+      )}
     </div>
   );
 }
@@ -549,7 +616,7 @@ function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon
   );
 }
 
-function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number }) {
+function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount, tasksCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number; tasksCount: number }) {
   const container: Variants = {
     hidden: { opacity: 0 },
     show: {
@@ -576,6 +643,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
     { label: 'Outward', count: outwardCount, color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100' },
     { label: 'Orders', count: ordersCount, color: 'text-amber-600', bg: 'bg-amber-50/50', border: 'border-amber-100' },
     { label: 'Staff', count: staffCount, color: 'text-violet-600', bg: 'bg-violet-50/50', border: 'border-violet-100' },
+    { label: 'Tasks', count: tasksCount, color: 'text-indigo-600', bg: 'bg-indigo-50/50', border: 'border-indigo-100' },
     { label: 'Docs', count: myDocsCount, color: 'text-cyber-violet', bg: 'bg-indigo-50/50', border: 'border-indigo-100' },
   ];
 
@@ -624,6 +692,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
         <ToolCard title="Outward Register" icon={<Send className="w-6 h-6" />} desc="Track dispatches and recipient info." variant="emerald" variants={item} onClick={() => onNavigate('outward')} />
         <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6" />} desc="Log urgent assignments & directives." variant="amber" variants={item} onClick={() => onNavigate('orders')} />
         <ToolCard title="Staff Directory" icon={<Users className="w-6 h-6" />} desc="Personnel and project allocations." variant="violet" variants={item} onClick={() => onNavigate('staff')} />
+        <ToolCard title="Task Center" icon={<ClipboardList className="w-6 h-6" />} desc="Manage directives and responses." variant="indigo" variants={item} onClick={() => onNavigate('tasks')} />
         <ToolCard title="Resource Hub" icon={<FileText className="w-6 h-6" />} desc="Essential tools and documentation." variant="indigo" variants={item} onClick={() => onNavigate('essential-docs')} />
         <ToolCard title="Analytics" icon={<BarChart className="w-6 h-6" />} desc="Aggregated stats and timelines." variant="fuchsia" variants={item} onClick={() => onNavigate('reports')} />
       </div>

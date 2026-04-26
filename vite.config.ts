@@ -61,5 +61,8 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 1000,
+  },
+  optimizeDeps: {
+    include: ['recharts', 'jspdf', 'jspdf-autotable']
   }
 })

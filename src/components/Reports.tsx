@@ -21,16 +21,29 @@ const Reports = memo(function Reports({
   myDocs: RegisterEntry[]
 }) {
   // Stat totals
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const totalInward = inward.length;
-  const totalOutward = outward.length;
-  const totalOrders = orders.length;
-  const totalMyDocs = myDocs.length;
-  const totalDocs = totalInward + totalOutward + totalOrders + totalMyDocs;
-  const thisMonthInward = inward.filter(i => i.date.startsWith(currentMonth)).length;
-  const thisMonthOutward = outward.filter(o => o.date.startsWith(currentMonth)).length;
-  const thisMonthOrders = orders.filter(o => o.date.startsWith(currentMonth)).length;
-  const thisMonthMyDocs = myDocs.filter(m => m.date.startsWith(currentMonth)).length;
+  const stats = React.useMemo(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const totalInward = inward.length;
+    const totalOutward = outward.length;
+    const totalOrders = orders.length;
+    const totalMyDocs = myDocs.length;
+    const totalDocs = totalInward + totalOutward + totalOrders + totalMyDocs;
+    
+    const thisMonthInward = inward.filter(i => i.date.startsWith(currentMonth)).length;
+    const thisMonthOutward = outward.filter(o => o.date.startsWith(currentMonth)).length;
+    const thisMonthOrders = orders.filter(o => o.date.startsWith(currentMonth)).length;
+    const thisMonthMyDocs = myDocs.filter(m => m.date.startsWith(currentMonth)).length;
+
+    return {
+      totalInward, totalOutward, totalOrders, totalMyDocs, totalDocs,
+      thisMonthInward, thisMonthOutward, thisMonthOrders, thisMonthMyDocs
+    };
+  }, [inward, outward, orders, myDocs]);
+
+  const {
+    totalInward, totalOutward, totalOrders, totalMyDocs, totalDocs,
+    thisMonthInward, thisMonthOutward, thisMonthOrders, thisMonthMyDocs
+  } = stats;
 
   const [selectedEntry, setSelectedEntry] = useState<RegisterEntry | null>(null);
 

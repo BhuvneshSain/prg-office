@@ -2,9 +2,9 @@
  * Service for managing Register and settings data (JSON) in Dropbox
  */
 import { dbx, checkConfig, handleDbxError } from './serviceUtils';
-import type { RegisterEntry, SettingsData, AuditEntry, AuditAction } from '../types';
+import type { RegisterEntry, SettingsData, AuditEntry, AuditAction, TaskEntry } from '../types';
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs';
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
 
 const sortEntriesByDate = (entries: RegisterEntry[]) => {
   return [...entries].sort((a, b) => b.date.localeCompare(a.date));
@@ -19,7 +19,7 @@ export const getRegisterData = async (type: RegisterType): Promise<RegisterEntry
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as RegisterEntry[];
-    return type === 'staff' ? data : sortEntriesByDate(data);
+    return type === 'staff' || type === 'tasks' ? data : sortEntriesByDate(data);
   } catch (error) {
     const handled = handleDbxError(error, `getRegisterData(${type})`);
     return handled === null ? [] : [];
@@ -150,4 +150,70 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
     handleDbxError(error, 'logAction');
     return false;
   }
+};
+
+// Task specific methods
+export const getTasks = async (): Promise<TaskEntry[]> => {
+  if (!checkConfig()) return [];
+  const path = '/data/tasks.json';
+  try {
+    const response = await dbx.filesDownload({ path });
+    const result = response.result as unknown as { fileBlob: Blob };
+    const text = await result.fileBlob.text();
+    const data = JSON.parse(text) as TaskEntry[];
+    return data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  } catch (error) {
+    handleDbxError(error, 'getTasks');
+    return [];
+  }
+};
+
+export const saveTasks = async (tasks: TaskEntry[]): Promise<boolean> => {
+  if (!checkConfig()) return false;
+  const content = JSON.stringify(tasks, null, 2);
+  try {
+    await dbx.filesUpload({
+      path: '/data/tasks.json',
+      contents: content,
+      mode: { '.tag': 'overwrite' }
+    });
+    return true;
+  } catch (error) {
+    handleDbxError(error, 'saveTasks');
+    return false;
+  }
+};
+
+export const addTask = async (task: TaskEntry): Promise<boolean> => {
+  const tasks = await getTasks();
+  tasks.unshift(task);
+  const success = await saveTasks(tasks);
+  if (success) {
+    await logAction('ADD', 'tasks', task.id, `Created task: ${task.title}`);
+  }
+  return success;
+};
+
+export const updateTask = async (task: TaskEntry): Promise<boolean> => {
+  const tasks = await getTasks();
+  const idx = tasks.findIndex(t => t.id === task.id);
+  if (idx === -1) return false;
+  tasks[idx] = { ...task, updatedAt: new Date().toISOString() };
+  const success = await saveTasks(tasks);
+  if (success) {
+    await logAction('UPDATE', 'tasks', task.id, `Updated task: ${task.title}`);
+  }
+  return success;
+};
+
+export const deleteTask = async (id: string): Promise<boolean> => {
+  const tasks = await getTasks();
+  const target = tasks.find(t => t.id === id);
+  const filtered = tasks.filter(t => t.id !== id);
+  if (filtered.length === tasks.length) return false;
+  const success = await saveTasks(filtered);
+  if (success && target) {
+    await logAction('DELETE', 'tasks', id, `Deleted task: ${target.title}`);
+  }
+  return success;
 };

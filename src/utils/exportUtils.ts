@@ -1,14 +1,7 @@
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type { RegisterEntry } from '../types';
-
-// Extend jsPDF with autotable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 export const exportToExcel = (data: RegisterEntry[], filename: string) => {
   const formattedData = data.map(item => ({
@@ -54,7 +47,7 @@ export const exportToPDF = (data: RegisterEntry[], title: string, filename: stri
     project: item.project || '-',
   }));
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 40,
     columns,
     body: rows,

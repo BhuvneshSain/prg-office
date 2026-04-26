@@ -1,5 +1,5 @@
 import { useState, memo } from 'react';
-import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown } from 'lucide-react';
+import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, ClipboardList } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
@@ -19,10 +19,12 @@ interface Props {
   loading: boolean;
   departments: string[];
   projects: string[];
+  tasks?: TaskEntry[];
   onRefresh: () => void;
+  onLinkTask?: (entry: RegisterEntry) => void;
 }
 
-const DataTable = memo(function DataTable({ data, type, loading, departments, projects, onRefresh }: Props) {
+const DataTable = memo(function DataTable({ data, type, loading, departments, projects, tasks = [], onRefresh, onLinkTask }: Props) {
   const [search, setSearch] = useState('');
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
@@ -156,17 +158,19 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     <th className="px-6 py-4">{type === 'inward' ? 'Sender' : 'Recipient'}</th>
                     <th className="px-6 py-4">Project</th>
                     <th className="px-6 py-4">Subject</th>
+                    {type === 'inward' && (
+                      <th className="px-6 py-4 text-center">Task Status</th>
+                    )}
                     <th className="px-6 py-4 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100/50">
                   <AnimatePresence>
-                    {filteredData.map((row, idx) => (
+                    {filteredData.map((row) => (
                       <motion.tr 
                         key={row.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.03 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         whileHover={{ backgroundColor: "rgba(124, 58, 237, 0.02)", x: 4 }}
                         className="transition-colors group cursor-default"
                       >
@@ -195,9 +199,33 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                             {row.subject}
                           </p>
                         </td>
+                        {type === 'inward' && (
+                          <td className="px-6 py-4 text-center">
+                            {(() => {
+                              const linkedTask = tasks.find(t => t.linkedDocId === row.id);
+                              if (!linkedTask) return <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">No Task</span>;
+                              
+                              const statusColors: Record<string, string> = {
+                                'Completed': 'text-emerald-600 bg-emerald-50 border-emerald-100',
+                                'In Progress': 'text-blue-600 bg-blue-50 border-blue-100',
+                                'Pending': 'text-amber-600 bg-amber-50 border-amber-100',
+                                'Deferred': 'text-slate-500 bg-slate-50 border-slate-100',
+                              };
+                              
+                              return (
+                                <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border whitespace-nowrap", statusColors[linkedTask.status])}>
+                                  {linkedTask.status}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                        )}
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                             <ActionBtn id={`view-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} label="Quick View" onClick={() => setViewEntry(row)} color="slate" />
+                            {type === 'inward' && onLinkTask && (
+                              <ActionBtn id={`task-${row.id}`} icon={<ClipboardList className="w-3.5 h-3.5" />} label="Link to Task" onClick={() => onLinkTask(row)} color="indigo" />
+                            )}
                             <ActionBtn id={`edit-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} label="Modify" onClick={() => setEditEntry(row)} color="violet" />
                             <ActionBtn id={`delete-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
                           </div>
@@ -220,6 +248,9 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <MobileIconBtn id={`view-mob-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} onClick={() => setViewEntry(row)} color="slate" />
+                      {type === 'inward' && onLinkTask && (
+                        <MobileIconBtn id={`task-mob-${row.id}`} icon={<ClipboardList className="w-3.5 h-3.5" />} onClick={() => onLinkTask(row)} color="indigo" />
+                      )}
                       <MobileIconBtn id={`edit-mob-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} onClick={() => setEditEntry(row)} color="indigo" />
                       <MobileIconBtn id={`delete-mob-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} onClick={() => setDeleteTarget(row)} color="red" />
                     </div>
@@ -279,6 +310,7 @@ function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: Reac
   const colors: Record<string, string> = {
     slate: 'bg-slate-100 text-slate-500 hover:bg-slate-200',
     violet: 'bg-cyber-violet/10 text-cyber-violet hover:bg-cyber-violet/20',
+    indigo: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
     red: 'bg-red-50 text-red-500 hover:bg-red-100',
   };
   return (

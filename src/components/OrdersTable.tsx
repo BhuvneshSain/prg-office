@@ -132,12 +132,11 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                 </thead>
                 <tbody className="divide-y divide-[var(--border-primary)]">
                   <AnimatePresence>
-                    {filteredData.map((row, idx) => (
+                    {filteredData.map((row) => (
                       <motion.tr 
                         key={row.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.03 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.02)", x: 4 }}
                         className="transition-colors group cursor-default"
                       >

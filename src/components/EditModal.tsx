@@ -108,7 +108,7 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 b-mesh-heavy opacity-90 backdrop-blur-xl dark:opacity-95" 
+        className="absolute inset-0 bg-slate-400/10 backdrop-blur-xl dark:bg-slate-900/60" 
         onClick={onClose} 
       />
 

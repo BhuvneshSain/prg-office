@@ -9,6 +9,7 @@ import { deleteTask } from '../lib/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useDebounce } from '../hooks/useDebounce';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,14 +27,15 @@ interface TaskManagerProps {
 
 const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdit, onToggleStatus, onViewDoc, onNew }: TaskManagerProps) {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = 
-      task.title.toLowerCase().includes(search.toLowerCase()) ||
-      task.description.toLowerCase().includes(search.toLowerCase()) ||
-      task.assignedTo.some(name => name.toLowerCase().includes(search.toLowerCase()));
+      task.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      task.description.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      task.assignedTo.some(name => name.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
     const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
     
@@ -97,8 +99,8 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 custom-scrollbar">
-           <div className="flex items-center gap-2 pr-4 border-r border-slate-200/50">
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+           <div className="flex items-center gap-2 pr-3 border-r border-slate-200/50 shrink-0">
              <Filter className="w-3.5 h-3.5 text-slate-400" />
              <select 
                value={statusFilter} 
@@ -117,7 +119,7 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
              onClick={onNew}
-             className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-900/10"
+             className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-900/10 shrink-0"
            >
              <Plus className="w-3.5 h-3.5" /> Initialize Task
            </motion.button>
@@ -177,14 +179,13 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
 }) {
   return (
     <motion.div 
-      layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -4 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      whileHover={{ y: -2 }}
       className={cn(
-        "glass-card p-6 rounded-[32px] border-white/60 shadow-glass flex relative overflow-hidden group",
-        viewMode === 'list' ? "flex-row items-center gap-6" : "flex-col gap-4"
+        "glass-card p-5 sm:p-6 rounded-[32px] border-white/60 shadow-glass flex relative overflow-hidden group",
+        viewMode === 'list' ? "flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6" : "flex-col gap-4"
       )}
     >
       {/* Priority Indicator */}
@@ -200,7 +201,7 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
            </span>
         </div>
         
-        <h4 className="text-lg font-black text-slate-800 tracking-tight truncate group-hover:text-indigo-600 transition-colors">
+        <h4 className="text-lg font-black text-slate-800 tracking-tight sm:truncate group-hover:text-indigo-600 transition-colors">
           {task.title}
         </h4>
         <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">
@@ -218,14 +219,14 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
 
       <div className={cn(
         "flex gap-4 items-center",
-        viewMode === 'list' ? "border-l border-slate-100 pl-6 shrink-0" : "mt-4 pt-4 border-t border-slate-100 justify-between"
+        viewMode === 'list' ? "sm:border-l border-slate-100 sm:pl-6 shrink-0" : "mt-2 sm:mt-4 pt-4 border-t border-slate-100 justify-between"
       )}>
          <div className="flex items-center gap-2">
             {statusIcon}
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{task.status}</span>
          </div>
 
-          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+          <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
            <button 
              onClick={onToggleStatus} 
              title={task.status === 'Completed' ? "Mark as Pending" : "Mark as Completed"}

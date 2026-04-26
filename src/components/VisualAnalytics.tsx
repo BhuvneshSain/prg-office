@@ -56,7 +56,7 @@ export default function VisualAnalytics({
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="lg:col-span-2 glass-card p-8 rounded-[40px] border-[var(--border-primary)] shadow-glass h-[400px]"
+        className="lg:col-span-2 glass-card p-5 sm:p-8 rounded-[40px] border-[var(--border-primary)] shadow-glass h-[400px]"
       >
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -136,7 +136,7 @@ export default function VisualAnalytics({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="glass-card p-8 rounded-[40px] border-[var(--border-primary)] shadow-glass h-[400px] flex flex-col"
+        className="glass-card p-5 sm:p-8 rounded-[40px] border-[var(--border-primary)] shadow-glass h-[400px] flex flex-col"
       >
         <div className="mb-8 text-center sm:text-left">
           <h3 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Strategic Spread</h3>

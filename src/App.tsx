@@ -169,9 +169,22 @@ export default function App() {
   };
 
   const handleToggleTaskStatus = async (task: TaskEntry) => {
+    const originalStatus = task.status;
     const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-    await updateTask({ ...task, status: newStatus });
-    fetchData();
+    
+    // Optimistic Update
+    setTasksData(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+    
+    try {
+      const ok = await updateTask({ ...task, status: newStatus });
+      if (!ok) throw new Error("Sync failed");
+      fetchData(); // Sync with server source of truth
+    } catch (err) {
+      console.error("Task status sync failed", err);
+      // Rollback on failure
+      setTasksData(prev => prev.map(t => t.id === task.id ? { ...t, status: originalStatus } : t));
+      alert("Operational error: Network synchronization failed. Status reverted.");
+    }
   };
 
   const handleViewLinkedDoc = (id: string, type: 'inward' | 'orders') => {
@@ -476,15 +489,15 @@ export default function App() {
         )}
 
         {/* Scrollable content — with bottom padding for mobile tab bar */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10 pb-28 md:pb-8 custom-scrollbar flex flex-col">
+        <div className="flex-1 overflow-y-auto px-3 py-5 sm:px-8 sm:py-10 pb-28 md:pb-8 custom-scrollbar flex flex-col">
           <div className="flex-1">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="w-full h-full"
               >
                 {renderContent()}

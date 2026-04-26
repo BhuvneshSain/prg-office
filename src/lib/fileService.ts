@@ -70,38 +70,32 @@ export const getSharedLink = async (path: string): Promise<string | null> => {
   const fullPath = (path.startsWith('/') || path.startsWith('id:')) ? path.trim() : `/attachments/${path.trim()}`;
   
   try {
-    const meta = await dbx.filesGetMetadata({ path: fullPath });
-    const fileId = (meta.result as any).id;
-    const targetLower = (meta.result as { path_lower?: string }).path_lower || fullPath.toLowerCase();
-
-    // Strategy 1: List all links without any path parameter to avoid 400 errors
+    // Strategy 1: Check if link already exists for this specific path
     try {
-      // Calling without any arguments to get the full list for the user/app
-      const allLinksResponse = await dbx.sharingListSharedLinks({});
-      const match = allLinksResponse.result.links.find(l => {
-        const lAny = l as { path_lower?: string; id?: string };
-        const lp = lAny.path_lower?.toLowerCase();
-        return lAny.id === fileId || lp === targetLower || (lp && targetLower.endsWith(lp)) || (targetLower && lp && lp.endsWith(targetLower));
-      });
-      if (match) return match.url;
+      const listResponse = await dbx.sharingListSharedLinks({ path: fullPath, direct_only: true });
+      if (listResponse.result.links.length > 0) {
+        return listResponse.result.links[0].url;
+      }
     } catch (listError) {
-      console.warn("[Dropbox] Base list failed:", listError);
+      console.warn("[Dropbox] List for path failed, trying fallback...", listError);
     }
 
-    // Strategy 2: If no link exists, try to create one with the canonical path from metadata
+    // Strategy 2: Create new link
     try {
-      const canonicalPath = (meta.result as { path_display?: string }).path_display || fullPath;
-      const createResponse = await dbx.sharingCreateSharedLinkWithSettings({ path: canonicalPath });
+      const createResponse = await dbx.sharingCreateSharedLinkWithSettings({ 
+        path: fullPath,
+        settings: { requested_visibility: { '.tag': 'public' } }
+      });
       return createResponse.result.url;
     } catch (createError: any) {
       const summary = createError?.error?.error_summary || "";
       if (summary.includes('shared_link_already_exists')) {
-          const retryLinks = await dbx.sharingListSharedLinks({});
-          const match = retryLinks.result.links.find(l => {
-             const lAny = l as { path_lower?: string; id?: string };
-             return lAny.id === fileId || lAny.path_lower?.toLowerCase() === targetLower;
-          });
-          if (match) return match.url;
+        // Last resort: list links for this path specifically
+        const retryLinks = await dbx.sharingListSharedLinks({ path: fullPath });
+        if (retryLinks.result.links.length > 0) {
+          return retryLinks.result.links[0].url;
+        }
+        return null;
       }
       throw createError;
     }

@@ -144,7 +144,7 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
     <motion.section 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-[40px] p-6 md:p-10 w-full max-w-3xl mx-auto shadow-glass border-white/60 relative overflow-hidden" 
+      className="glass-card rounded-[40px] p-5 sm:p-10 w-full max-w-3xl mx-auto shadow-glass border-white/60 relative overflow-hidden" 
       aria-labelledby="form-title"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-cyber-violet/5 rounded-bl-[100px] pointer-events-none" />
@@ -342,6 +342,13 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
                     setFileError('Invalid format found. PDFs only.');
                     return;
                   }
+                  
+                  const tooLarge = filesArray.find(f => f.size > 10 * 1024 * 1024);
+                  if (tooLarge) {
+                    setFileError(`File too large: ${tooLarge.name} exceeds 10MB limit.`);
+                    return;
+                  }
+
                   if (filesArray.length > 20) {
                     setFileError('Limit exceeded (Max 20 files).');
                     return;

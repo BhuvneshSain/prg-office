@@ -33,6 +33,10 @@ export const handleDbxError = (error: unknown, context: string) => {
     throw new Error('Dropbox Access Token has expired. Please update it.');
   }
   
-  console.error(`[Dropbox] Error in ${context}:`, error);
+  console.error(`[Dropbox] Error in ${context}:`, {
+    status: dbxError?.status,
+    summary,
+    details: dbxError?.error
+  });
   return undefined;
 };

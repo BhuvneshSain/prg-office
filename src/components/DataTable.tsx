@@ -8,6 +8,7 @@ import { deleteRegisterEntry } from '../lib/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useDebounce } from '../hooks/useDebounce';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,6 +27,7 @@ interface Props {
 
 const DataTable = memo(function DataTable({ data, type, loading, departments, projects, tasks = [], onRefresh, onLinkTask }: Props) {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
@@ -33,9 +35,9 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'subject-asc' | 'subject-desc' | 'party-asc' | 'party-desc' | 'dispatch-asc' | 'dispatch-desc'>(type === 'outward' ? 'dispatch-desc' : 'date-desc');
 
   const filteredData = data.filter(item =>
-    item.subject.toLowerCase().includes(search.toLowerCase()) ||
-    item.partyName.replace(/\|\|\|/g, ' ').toLowerCase().includes(search.toLowerCase()) ||
-    item.referenceNumber.toLowerCase().includes(search.toLowerCase())
+    item.subject.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    item.partyName.replace(/\|\|\|/g, ' ').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    item.referenceNumber.toLowerCase().includes(debouncedSearch.toLowerCase())
   ).sort((a, b) => {
     switch (sortBy) {
       case 'date-desc': return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -80,7 +82,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
             </span>
           </div>
           
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72 group">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-cyber-violet transition-colors" />
               <input 
@@ -88,43 +90,45 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                 placeholder={`Search ${type}...`} 
                 value={search} 
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-sm focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
+                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-xs focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
               />
             </div>
             
-            {type === 'outward' && (
-              <div className="relative">
-                <select 
-                  value={sortBy} 
-                  onChange={e => setSortBy(e.target.value as typeof sortBy)}
-                  className="pl-4 pr-10 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-xs font-bold text-[var(--text-secondary)] focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet outline-none transition-all appearance-none cursor-pointer hover:bg-[var(--bg-surface)]"
-                >
-                  <option value="subject-asc">A to Z</option>
-                  <option value="dispatch-desc">Dispatch High</option>
-                </select>
-                <ArrowUpDown className="w-3.5 h-3.5 absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-              </div>
-            )}
-
             <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => exportToExcel(filteredData, `${type}_registry`)}
-                title="Export to Excel"
-                className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => exportToPDF(filteredData, `${type.toUpperCase()} Registry Report`, `${type}_report`)}
-                title="Export to PDF"
-                className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
-              >
-                <FileDown className="w-4 h-4" />
-              </motion.button>
+              {type === 'outward' && (
+                <div className="relative flex-1 sm:flex-none">
+                  <select 
+                    value={sortBy} 
+                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    className="w-full pl-4 pr-10 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet outline-none transition-all appearance-none cursor-pointer hover:bg-[var(--bg-surface)]"
+                  >
+                    <option value="subject-asc">A to Z</option>
+                    <option value="dispatch-desc">Dispatch High</option>
+                  </select>
+                  <ArrowUpDown className="w-3 h-3 absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 ml-auto">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => exportToExcel(filteredData, `${type}_registry`)}
+                  title="Export to Excel"
+                  className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => exportToPDF(filteredData, `${type.toUpperCase()} Registry Report`, `${type}_report`)}
+                  title="Export to PDF"
+                  className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+                >
+                  <FileDown className="w-4 h-4" />
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
@@ -167,12 +171,9 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                 <tbody className="divide-y divide-slate-100/50">
                   <AnimatePresence>
                     {filteredData.map((row) => (
-                      <motion.tr 
+                      <tr 
                         key={row.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        whileHover={{ backgroundColor: "rgba(124, 58, 237, 0.02)", x: 4 }}
-                        className="transition-colors group cursor-default"
+                        className="transition-colors group cursor-default hover:bg-cyber-violet/[0.02]"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-xs font-bold text-[var(--text-secondary)]">{row.date}</span>
@@ -230,7 +231,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                             <ActionBtn id={`delete-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
                           </div>
                         </td>
-                      </motion.tr>
+                      </tr>
                     ))}
                   </AnimatePresence>
                 </tbody>

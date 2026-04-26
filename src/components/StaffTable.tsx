@@ -7,6 +7,7 @@ import StaffEditModal from './StaffEditModal';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useDebounce } from '../hooks/useDebounce';
 
 import type { RegisterEntry } from '../types';
 
@@ -24,19 +25,18 @@ interface StaffTableProps {
   onRefresh: () => void;
 }
 
-
-
 const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }: StaffTableProps) {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-  const filtered = data.filter((s) => 
-    s.partyName.toLowerCase().includes(search.toLowerCase()) || 
-    s.subject.toLowerCase().includes(search.toLowerCase()) ||
-    (s.mobile ?? '').includes(search) ||
-    (s.project ?? '').toLowerCase().includes(search.toLowerCase())
+  const filtered = data.filter((s: RegisterEntry) => 
+    s.partyName.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+    s.subject.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    (s.mobile ?? '').includes(debouncedSearch) ||
+    (s.project ?? '').toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   const handleDelete = async () => {
@@ -50,7 +50,7 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
   const onDragEnd = async (result: { destination?: { index: number } | null; source: { index: number } }) => {
     if (!result.destination || search) return;
     
-    const items = Array.from(data);
+    const items: RegisterEntry[] = Array.from(data);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     
@@ -110,7 +110,7 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
 
       <div className="overflow-x-auto custom-scrollbar">
         <DragDropContext onDragEnd={onDragEnd}>
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse hidden sm:table">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] border-b border-slate-100/50">
                 {!search && <th className="w-14 px-4 py-4 text-center">Ord</th>}
@@ -125,7 +125,7 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
             <Droppable droppableId="staff-list">
               {(provided) => (
                 <tbody {...provided.droppableProps} ref={provided.innerRef} className="relative">
-                    {filtered.map((row, index) => (
+                    {filtered.map((row: RegisterEntry, index: number) => (
                       <Draggable key={row.id} draggableId={row.id} index={index} isDragDisabled={!!search}>
                         {(provided, snapshot) => (
                           <motion.tr
@@ -211,7 +211,50 @@ const StaffTable = memo(function StaffTable({ data, projects, posts, onRefresh }
             </Droppable>
           </table>
         </DragDropContext>
+
+        {/* Mobile View */}
+        <div className="sm:hidden divide-y divide-slate-50">
+          {filtered.map((row: RegisterEntry) => (
+            <div key={row.id} className="p-4">
+              <div className="flex justify-between items-start gap-3 mb-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-cyber-violet/5 flex items-center justify-center border border-cyber-violet/10 font-black text-cyber-violet text-xs shrink-0">
+                    {row.partyName.split(' ')[0][0]}{row.partyName.split(' ').length > 1 ? row.partyName.split(' ')[1][0] : ''}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-[var(--text-primary)] text-sm truncate">{row.partyName}</p>
+                    <p className="text-[10px] font-black text-cyber-violet uppercase tracking-widest mt-0.5">{row.subject}</p>
+                  </div>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <ActionBtn id={`edit-mob-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} label="Modify" onClick={() => setEditEntry(row)} color="violet" />
+                  <ActionBtn id={`delete-mob-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 ml-[52px]">
+                {row.mobile && (
+                  <a href={`tel:${row.mobile}`} className="flex items-center gap-1.5 text-[11px] font-bold text-cyber-violet">
+                    <Phone className="w-3 h-3" /> {row.mobile}
+                  </a>
+                )}
+                <span className="text-[11px] text-[var(--text-muted)] font-mono font-bold">{row.referenceNumber || 'ID: HIDDEN'}</span>
+              </div>
+
+              {(row.project ?? '').split(SEP).filter(Boolean).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3 ml-[52px]">
+                  {(row.project ?? '').split(SEP).filter(Boolean).map((p: string) => (
+                    <span key={p} className="bg-slate-50 text-[9px] font-black uppercase tracking-tight px-2 py-0.5 rounded-lg border border-slate-100 text-slate-500">
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
 
       {/* Empty State */}
       {filtered.length === 0 && (

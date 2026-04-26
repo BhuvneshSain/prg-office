@@ -8,6 +8,7 @@ import { deleteRegisterEntry } from '../lib/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useDebounce } from '../hooks/useDebounce';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,15 +23,16 @@ interface Props {
 
 const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefresh }: Props) {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const filteredData = data.filter(item =>
-    item.subject.toLowerCase().includes(search.toLowerCase()) ||
-    (item.project ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    (item.remarks ?? '').toLowerCase().includes(search.toLowerCase())
+    item.subject.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    (item.project ?? '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    (item.remarks ?? '').toLowerCase().includes(debouncedSearch.toLowerCase())
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const handleDelete = async () => {
@@ -64,7 +66,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
             </span>
           </div>
           
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72 group">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-amber-500 transition-colors" />
               <input 
@@ -72,11 +74,11 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                 placeholder="Search orders..." 
                 value={search} 
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-sm focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
+                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-xs focus:ring-4 focus:ring-amber-500/5 focus:border-amber-500 focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-auto">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

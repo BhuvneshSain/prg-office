@@ -75,13 +75,13 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
     <div className="space-y-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-cyber-violet" />
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Vault Assets</p>
           </div>
-          <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Resources Library</h2>
-          <p className="text-slate-400 text-sm font-bold mt-3 max-w-md">Secure, centralized access to office tools, mission-critical documents, and personnel resources.</p>
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-none">Resources Library</h2>
+          <p className="text-slate-400 text-sm font-bold mt-3 max-w-md hidden sm:block">Secure, centralized access to office tools, mission-critical documents, and personnel resources.</p>
         </div>
         
         <motion.button 
@@ -251,7 +251,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
             <input 
               type="text" 
               placeholder="Search resources..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[18px] text-sm focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--input-bg)] border border-[var(--border-primary)] rounded-[18px] text-xs focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -278,11 +278,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
           </div>
         </div>
 
-        <motion.div 
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8"
-        >
-          <AnimatePresence mode="popLayout">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
             {filtered.length === 0 ? (
               <motion.div 
                 key="empty"
@@ -315,7 +311,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                       )}
                     </div>
                     
-                    <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                    <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all translate-x-0 md:translate-x-2 md:group-hover:translate-x-0">
                       <ActionBtn 
                         id={`view-${doc.id}`}
                         icon={doc.attachments.length > 1 ? <Files className="w-4 h-4" /> : <Download className="w-4 h-4" />} 
@@ -377,8 +373,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                 </motion.div>
               ))
             )}
-          </AnimatePresence>
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Detail Overlays */}

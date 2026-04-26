@@ -34,6 +34,15 @@
 
 ---
 
+## 📈 Recent Updates (v2.1.0)
+- **Performance "Nitro" Mode**: Drastically reduced GPU strain by optimizing backdrop blurs and mesh gradients. Removed expensive layout recalculations for large data lists.
+- **Debounced Search Engine**: Implemented `useDebounce` to eliminate main-thread blocking during large registry queries.
+- **Security Protocols**: Enforced a strict 10MB file size limit for all PDF intelligence uploads.
+- **Synchronization Integrity**: Resolved task status race conditions with Optimistic UI updates and rollback mechanisms.
+- **Dropbox API Optimization**: Scoped shared link queries to specific file paths, preventing API rate-limiting on large vaults.
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Core**: React 19 + TypeScript

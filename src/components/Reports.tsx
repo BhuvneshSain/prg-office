@@ -51,8 +51,7 @@ const Reports = memo(function Reports({
     <div className="space-y-10 max-w-7xl mx-auto pb-20">
       {/* Header Section */}
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1 }}
         className="flex flex-col md:flex-row md:items-end justify-between gap-6"
       >
         <div>
@@ -131,20 +130,18 @@ function StatCard({ title, value, icon, subtitle, accent }: { title: string; val
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ y: -8 }}
+      whileHover={{ y: -2 }}
       className="group relative h-full"
     >
       <div className={cn("absolute inset-0 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity bg-gradient-to-br rounded-3xl", styles)} />
       
-      <div className="relative h-full glass-card p-6 rounded-[32px] border-[var(--glass-border)] shadow-glass flex flex-col items-center text-center">
+      <div className="relative h-full glass-card p-5 sm:p-6 rounded-[32px] border-[var(--glass-border)] shadow-glass flex flex-col items-center text-center">
         <div className={cn("w-14 h-14 rounded-2xl bg-[var(--bg-surface)] shadow-sm flex items-center justify-center mb-6 border border-[var(--border-primary)] transition-transform group-hover:scale-110", styles)}>
           <div className="w-6 h-6">{icon}</div>
         </div>
         
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">{title}</p>
-        <h3 className="text-4xl font-black text-[var(--text-primary)] tracking-tight leading-none mb-3">
+        <h3 className="text-3xl sm:text-4xl font-black text-[var(--text-primary)] tracking-tight leading-none mb-3">
           {value}
         </h3>
         

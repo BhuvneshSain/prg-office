@@ -1,7 +1,7 @@
 import { useState, memo } from 'react';
 import { 
   ClipboardList, Search, Plus, Calendar, Clock, AlertCircle, 
-  CheckCircle2, Trash2, Pencil, ExternalLink, Filter, ArrowUpRight, 
+  CheckCircle2, Trash2, Pencil, ExternalLink, Filter, 
   Circle, LayoutGrid, List
 } from 'lucide-react';
 import type { TaskEntry, TaskStatus, TaskPriority } from '../types';

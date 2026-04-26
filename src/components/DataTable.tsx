@@ -1,7 +1,7 @@
 import { useState, memo } from 'react';
 import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, ClipboardList } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
-import type { RegisterEntry } from '../types';
+import type { RegisterEntry, TaskEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
 import { deleteRegisterEntry } from '../lib/dataService';

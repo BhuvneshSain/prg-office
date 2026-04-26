@@ -45,7 +45,8 @@ export default function AuditLogs() {
   const actionStyles = {
     ADD: { icon: <ShieldCheck className="w-3.5 h-3.5" />, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
     UPDATE: { icon: <Clock className="w-3.5 h-3.5" />, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-    DELETE: { icon: <Trash2 className="w-3.5 h-3.5" />, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' }
+    DELETE: { icon: <Trash2 className="w-3.5 h-3.5" />, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+    TASK_LINK: { icon: <Terminal className="w-3.5 h-3.5" />, color: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' }
   };
 
   return (

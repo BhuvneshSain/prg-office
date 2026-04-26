@@ -18,6 +18,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Login from './components/Login';
+import DocumentModal from './components/DocumentModal';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

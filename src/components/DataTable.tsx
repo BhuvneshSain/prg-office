@@ -63,49 +63,49 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
 
   return (
     <>
-      <div className="glass-card rounded-[32px] overflow-hidden flex flex-col border-white/40 shadow-glass">
-        <div className="p-5 sm:p-6 border-b border-[var(--border-primary)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--header-bg)] backdrop-blur-md">
+      <div className="border border-rule overflow-hidden flex flex-col">
+        <div className="p-5 sm:p-6 border-b border-rule flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-panel">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-cyber-violet/5 text-cyber-violet">
-              <FileText className="w-5 h-5" />
+            <div className="p-2.5 bg-ink/5 text-accent">
+              <FileText />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-[var(--text-primary)] tracking-tight leading-none capitalize">
+              <h3 className="text-lg font-serif-display text-ink tracking-tight leading-none capitalize">
                 {type} Registry
               </h3>
-              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                Live Data <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="font-mono text-[10px] text-muted tracking-[0.18em] uppercase mt-1.5 flex items-center gap-2">
+                Live Data <span className="w-1 h-1 rounded-full bg-good" />
               </p>
             </div>
-            <span className="ml-2 text-[10px] font-black text-cyber-violet bg-cyber-violet/5 px-2 py-0.5 rounded-full border border-cyber-violet/10">
+            <span className="ml-2 font-mono text-[10px] text-accent bg-accent/5 px-2 py-0.5 rounded-full border border-accent/10">
               {filteredData.length} Records
             </span>
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72 group">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-cyber-violet transition-colors" />
-              <input 
-                type="text" 
-                placeholder={`Search ${type}...`} 
-                value={search} 
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-ink transition-colors" />
+              <input
+                type="text"
+                placeholder={`Search ${type}...`}
+                value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-xs focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet focus:bg-[var(--bg-surface)] outline-none transition-all placeholder:text-[var(--text-muted)] font-medium text-[var(--text-primary)]" 
+                className="w-full pl-10 pr-4 py-2.5 border border-rule bg-panel text-xs focus:border-ink outline-none transition-all placeholder:text-muted font-serif-body text-ink"
               />
             </div>
             
             <div className="flex items-center gap-2">
               {type === 'outward' && (
                 <div className="relative flex-1 sm:flex-none">
-                  <select 
-                    value={sortBy} 
+                  <select
+                    value={sortBy}
                     onChange={e => setSortBy(e.target.value as typeof sortBy)}
-                    className="w-full pl-4 pr-10 py-2.5 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet outline-none transition-all appearance-none cursor-pointer hover:bg-[var(--bg-surface)]"
+                    className="w-full pl-4 pr-10 py-2.5 border border-rule bg-panel font-mono text-[10px] text-muted tracking-[0.18em] uppercase focus:border-ink outline-none transition-all appearance-none cursor-pointer hover:bg-paper"
                   >
                     <option value="subject-asc">A to Z</option>
                     <option value="dispatch-desc">Dispatch High</option>
                   </select>
-                  <ArrowUpDown className="w-3 h-3 absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                  <ArrowUpDown className="w-3 h-3 absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                 </div>
               )}
 
@@ -115,7 +115,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                   whileTap={{ scale: 0.95 }}
                   onClick={() => exportToExcel(filteredData, `${type}_registry`)}
                   title="Export to Excel"
-                  className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+                  className="p-2.5 border border-rule text-muted hover:text-ink hover:border-ink transition-colors"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                 </motion.button>
@@ -124,7 +124,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                   whileTap={{ scale: 0.95 }}
                   onClick={() => exportToPDF(filteredData, `${type.toUpperCase()} Registry Report`, `${type}_report`)}
                   title="Export to PDF"
-                  className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+                  className="p-2.5 border border-rule text-muted hover:text-bad hover:border-bad transition-colors"
                 >
                   <FileDown className="w-4 h-4" />
                 </motion.button>
@@ -134,21 +134,18 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 animate-pulse">
-            <div className="relative">
-              <div className="absolute inset-0 bg-cyber-violet/20 blur-xl rounded-full" />
-              <Loader2 className="w-8 h-8 animate-spin text-cyber-violet relative z-10" />
-            </div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Syncing Records</p>
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-ink" />
+            <p className="font-mono text-xs text-muted uppercase tracking-[0.18em]">Syncing Records</p>
           </div>
         ) : filteredData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-5">
-            <div className="w-20 h-20 rounded-[32px] bg-slate-50 flex items-center justify-center border border-slate-100">
-              <FileText className="w-10 h-10 text-slate-300" />
+            <div className="w-20 h-20 bg-panel flex items-center justify-center border border-rule">
+              <FileText className="w-10 h-10 text-muted" />
             </div>
-            <div className="text-center">
-              <p className="font-extrabold text-slate-800 tracking-tight">Vault Empty</p>
-              <p className="text-xs text-slate-400 mt-1 font-medium">No results match your current parameters.</p>
+            <div className="text-muted">
+              <p className="font-serif-display text-ink tracking-tight">Vault Empty</p>
+              <p className="text-xs text-muted mt-1 font-serif-body">No results match your current parameters.</p>
             </div>
           </div>
         ) : (
@@ -156,7 +153,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-slate-50/5 border-b border-[var(--border-primary)] text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)] font-black">
+                  <tr className="bg-panel/40 border-b border-rule font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
                     <th className="px-6 py-4">Date</th>
                     <th className="px-6 py-4">Ref.</th>
                     <th className="px-6 py-4">{type === 'inward' ? 'Sender' : 'Recipient'}</th>
@@ -168,35 +165,35 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     <th className="px-6 py-4 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100/50">
+                <tbody className="divide-y divide-rule/50">
                   <AnimatePresence>
                     {filteredData.map((row) => (
                       <tr 
                         key={row.id}
-                        className="transition-colors group cursor-default hover:bg-cyber-violet/[0.02]"
+                        className="transition-colors group cursor-default hover:bg-panel/50"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-xs font-bold text-[var(--text-secondary)]">{row.date}</span>
+                          <span className="text-xs font-serif-body text-muted">{row.date}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-[10px] font-black font-mono text-[var(--text-muted)] bg-[var(--card-bg)] px-2 py-0.5 rounded-lg border border-[var(--border-primary)]">
+                          <span className="font-mono text-[10px] text-muted bg-panel px-2 py-0.5 border border-rule">
                             {row.referenceNumber || row.remarks || '—'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs font-extrabold text-[var(--text-primary)] truncate max-w-[150px]">
+                          <p className="text-xs font-serif-display text-ink truncate max-w-[150px]">
                             {row.partyName.replace(/\|\|\|/g, ', ')}
                           </p>
                         </td>
                         <td className="px-6 py-4">
                           {row.project ? (
-                            <span className="text-[10px] font-black text-cyber-violet bg-cyber-violet/5 px-2 py-0.5 rounded-lg border border-cyber-violet/10">
+                            <span className="font-mono text-[10px] text-accent bg-accent/5 px-2 py-0.5 border border-accent/10">
                               {row.project}
                             </span>
-                          ) : <span className="text-[var(--text-muted)]/30">——</span>}
+                          ) : <span className="text-muted/30">——</span>}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs font-bold text-[var(--text-secondary)] truncate max-w-[200px]" title={row.subject}>
+                          <p className="text-xs font-serif-body text-muted truncate max-w-[200px]" title={row.subject}>
                             {row.subject}
                           </p>
                         </td>
@@ -204,17 +201,17 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                           <td className="px-6 py-4 text-center">
                             {(() => {
                               const linkedTask = tasks.find(t => t.linkedDocId === row.id);
-                              if (!linkedTask) return <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">No Task</span>;
-                              
+                              if (!linkedTask) return <span className="font-mono text-[8px] text-muted uppercase tracking-[0.18em]">No Task</span>;
+
                               const statusColors: Record<string, string> = {
-                                'Completed': 'text-emerald-600 bg-emerald-50 border-emerald-100',
-                                'In Progress': 'text-blue-600 bg-blue-50 border-blue-100',
-                                'Pending': 'text-amber-600 bg-amber-50 border-amber-100',
-                                'Deferred': 'text-slate-500 bg-slate-50 border-slate-100',
+                                'Completed': 'text-good bg-good/5 border-good/20',
+                                'In Progress': 'text-ink bg-panel border-rule',
+                                'Pending': 'text-accent bg-accent/5 border-accent/20',
+                                'Deferred': 'text-muted bg-panel border-rule',
                               };
-                              
+
                               return (
-                                <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border whitespace-nowrap", statusColors[linkedTask.status])}>
+                                <span className={cn("font-mono text-[8px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full border whitespace-nowrap", statusColors[linkedTask.status])}>
                                   {linkedTask.status}
                                 </span>
                               );
@@ -239,13 +236,13 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
             </div>
 
             {/* Mobile cards */}
-            <div className="sm:hidden divide-y divide-slate-50">
+            <div className="sm:hidden divide-y divide-rule">
               {filteredData.map(row => (
                 <div key={row.id} className="p-4">
                   <div className="flex justify-between items-start gap-2 mb-1.5">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[var(--text-primary)] text-sm truncate">{row.subject || '—'}</p>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{row.partyName.replace(/\|\|\|/g, ', ')}</p>
+                      <p className="font-serif-body text-ink text-sm truncate">{row.subject || '—'}</p>
+                      <p className="text-xs text-muted mt-0.5 truncate">{row.partyName.replace(/\|\|\|/g, ', ')}</p>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <MobileIconBtn id={`view-mob-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} onClick={() => setViewEntry(row)} color="slate" />
@@ -257,9 +254,9 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="text-[11px] text-slate-400"><span className="font-medium text-slate-500">Date:</span> {row.date}</span>
-                    {row.referenceNumber && <span className="text-[11px] text-slate-400"><span className="font-medium">Dispatch:</span> {row.referenceNumber}</span>}
-                    {row.project && <span className="text-[11px] text-indigo-500 font-semibold">{row.project}</span>}
+                    <span className="font-mono text-[11px] text-muted"><span className="font-mono text-[11px] text-muted">Date:</span> {row.date}</span>
+                    {row.referenceNumber && <span className="font-mono text-[11px] text-muted"><span className="font-mono text-[11px] text-muted">Dispatch:</span> {row.referenceNumber}</span>}
+                    {row.project && <span className="font-mono text-[11px] text-accent">{row.project}</span>}
                   </div>
                 </div>
               ))}
@@ -281,19 +278,19 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
       {/* Delete confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
-          <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-600" />
+          <div className="absolute inset-0 bg-ink/20" onClick={() => setDeleteTarget(null)} />
+          <div className="relative z-10 bg-paper border border-rule p-6 w-full max-w-sm">
+            <div className="w-12 h-12 rounded-full bg-bad/10 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-bad" />
             </div>
-            <h3 className="text-lg font-bold text-slate-800 text-center mb-1">Delete Entry?</h3>
-            <p className="text-sm text-slate-500 text-center mb-5">
-              <span className="font-medium text-slate-700">"{deleteTarget.subject}"</span> will be permanently removed from Dropbox.
+            <h3 className="text-lg font-serif-display text-ink text-center mb-1">Delete Entry?</h3>
+            <p className="text-sm text-muted text-center mb-5">
+              <span className="font-serif-body text-ink">"{deleteTarget.subject}"</span> will be permanently removed from Dropbox.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50">Cancel</button>
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 border border-rule text-muted font-serif-body text-sm hover:bg-panel">Cancel</button>
               <button onClick={handleDelete} disabled={deleteLoading}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                className="flex-1 py-2.5 bg-bad text-white font-serif-body text-sm hover:bg-bad/80 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
                 {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 {deleteLoading ? 'Deleting...' : 'Delete'}
               </button>
@@ -309,17 +306,17 @@ export default DataTable;
 
 function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: React.ReactNode; label: string; onClick: (e: React.MouseEvent) => void; color: string }) {
   const colors: Record<string, string> = {
-    slate: 'bg-slate-100 text-slate-500 hover:bg-slate-200',
-    violet: 'bg-cyber-violet/10 text-cyber-violet hover:bg-cyber-violet/20',
-    indigo: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
-    red: 'bg-red-50 text-red-500 hover:bg-red-100',
+    slate: 'bg-panel text-muted hover:text-ink hover:border-ink',
+    violet: 'bg-accent/10 text-accent hover:bg-accent/20',
+    indigo: 'border border-rule text-muted hover:text-accent hover:border-accent',
+    red: 'border border-rule text-muted hover:text-bad hover:border-bad',
   };
   return (
-    <motion.button 
-      id={id} onClick={onClick} title={label} 
+    <motion.button
+      id={id} onClick={onClick} title={label}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
-      className={cn("p-2 rounded-xl transition-all shadow-sm", colors[color])}
+      className={cn("p-2 transition-all border border-rule", colors[color])}
     >
       {icon}
     </motion.button>
@@ -328,15 +325,15 @@ function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: Reac
 
 function MobileIconBtn({ id, icon, onClick, color }: { id: string; icon: React.ReactNode; onClick: () => void; color: string }) {
   const colors: Record<string, string> = {
-    slate: 'bg-slate-50 text-slate-400',
-    indigo: 'bg-cyber-violet/5 text-cyber-violet',
-    red: 'bg-red-50 text-red-500',
+    slate: 'bg-panel/5 text-muted',
+    indigo: 'bg-accent/5 text-accent',
+    red: 'bg-bad/5 text-bad',
   };
   return (
-    <motion.button 
+    <motion.button
       id={id} onClick={onClick}
       whileTap={{ scale: 0.9 }}
-      className={cn("p-2 rounded-xl transition-all shadow-sm border border-slate-100/50", colors[color])}
+      className={cn("p-2 transition-all border border-rule", colors[color])}
     >
       {icon}
     </motion.button>

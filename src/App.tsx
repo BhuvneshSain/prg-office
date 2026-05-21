@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Heart, Moon, Sun } from 'lucide-react';
-import { getRegisterData, getSettings, updateTask } from './lib/dataService';
+import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw } from 'lucide-react';
+import { getRegisterData, getSettings, updateTask, clearDataCache } from './lib/dataService';
 import type { RegisterEntry, SettingsData, TaskEntry } from './types';
 import EntryForm from './components/EntryForm';
 import DataTable from './components/DataTable';
@@ -42,26 +42,38 @@ const SESSION_DURATION = (Number(import.meta.env.VITE_SESSION_DURATION_HOURS) ||
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const path = window.location.pathname.replace(/^\/+/, '');
+    const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'essential-docs', 'reports', 'settings'];
+    return validTabs.includes(path as Tab) ? path as Tab : 'dashboard';
+  });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('pos_theme') === 'dark');
 
-  // Theme Sync
+  // Sync URL when tab changes
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('pos_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('pos_theme', 'light');
+    const url = activeTab === 'dashboard' ? '/' : `/${activeTab}`;
+    if (window.location.pathname !== url) {
+      window.history.pushState({ tab: activeTab }, '', url);
     }
-  }, [isDarkMode]);
+  }, [activeTab]);
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const onPopState = () => {
+      const path = window.location.pathname.replace(/^\/+/, '');
+      const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'essential-docs', 'reports', 'settings'];
+      const tab = validTabs.includes(path as Tab) ? path as Tab : 'dashboard';
+      setActiveTab(tab);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   // Check authentication on mount
   useEffect(() => {
     const authTime = localStorage.getItem('pos_auth_time');
     const authUser = localStorage.getItem('pos_auth_user');
-    
+
     if (authTime && authUser) {
       const elapsed = Date.now() - Number(authTime);
       if (elapsed < SESSION_DURATION) {
@@ -86,7 +98,7 @@ export default function App() {
             handleLogout();
           }
         }
-      }, 60000); // Check every minute
+      }, 60000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
@@ -131,19 +143,25 @@ export default function App() {
   const [editTask, setEditTask] = useState<TaskEntry | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false, force = false) => {
+    if (force) {
+      clearDataCache();
+    }
+    const isInitial = inwardData.length === 0 && outwardData.length === 0 && staffData.length === 0;
+    if (!silent && isInitial) {
+      setLoading(true);
+    }
     setRefreshing(true);
     setErrorHeader(null);
     try {
       const [inData, outData, ordData, stfData, taskData, docData, setData] = await Promise.all([
-        getRegisterData('inward'),
-        getRegisterData('outward'),
-        getRegisterData('orders'),
-        getRegisterData('staff'),
-        getRegisterData('tasks') as Promise<any>,
-        getRegisterData('essential-docs'),
-        getSettings()
+        getRegisterData('inward', force),
+        getRegisterData('outward', force),
+        getRegisterData('orders', force),
+        getRegisterData('staff', force),
+        getRegisterData('tasks', force) as Promise<any>,
+        getRegisterData('essential-docs', force),
+        getSettings(force)
       ]);
       setInwardData(inData);
       setOutwardData(outData);
@@ -171,17 +189,15 @@ export default function App() {
   const handleToggleTaskStatus = async (task: TaskEntry) => {
     const originalStatus = task.status;
     const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-    
-    // Optimistic Update
+
     setTasksData(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
-    
+
     try {
       const ok = await updateTask({ ...task, status: newStatus });
       if (!ok) throw new Error("Sync failed");
-      fetchData(); // Sync with server source of truth
+      fetchData();
     } catch (err) {
       console.error("Task status sync failed", err);
-      // Rollback on failure
       setTasksData(prev => prev.map(t => t.id === task.id ? { ...t, status: originalStatus } : t));
       alert("Operational error: Network synchronization failed. Status reverted.");
     }
@@ -199,18 +215,18 @@ export default function App() {
         return (
           <div className="space-y-6">
             <EntryForm type="inward" existingDepts={settings?.departments || []} existingProjects={settings?.projects || []} onSuccess={fetchData} />
-            <DataTable 
-              type="inward" 
-              data={inwardData} 
-              loading={loading} 
-              departments={settings?.departments || []} 
-              projects={settings?.projects || []} 
+            <DataTable
+              type="inward"
+              data={inwardData}
+              loading={loading}
+              departments={settings?.departments || []}
+              projects={settings?.projects || []}
               tasks={tasksData}
-              onRefresh={fetchData} 
-              onLinkTask={(doc) => { 
-                setTaskModalDoc(doc); 
+              onRefresh={fetchData}
+              onLinkTask={(doc) => {
+                setTaskModalDoc(doc);
                 setActiveTab('tasks');
-                setShowTaskForm(true); 
+                setShowTaskForm(true);
               }}
             />
           </div>
@@ -240,18 +256,18 @@ export default function App() {
         return (
           <div className="space-y-6">
             {showTaskForm && (
-              <TaskForm 
-                staffNames={staffData.map(s => s.partyName)} 
-                onSuccess={fetchData} 
+              <TaskForm
+                staffNames={staffData.map(s => s.partyName)}
+                onSuccess={fetchData}
                 editTask={editTask}
                 linkedDoc={taskModalDoc}
-                onClose={() => { setShowTaskForm(false); setEditTask(null); setTaskModalDoc(null); }} 
+                onClose={() => { setShowTaskForm(false); setEditTask(null); setTaskModalDoc(null); }}
               />
             )}
-            <TaskManager 
-              tasks={tasksData} 
-              loading={loading} 
-              onRefresh={fetchData} 
+            <TaskManager
+              tasks={tasksData}
+              loading={loading}
+              onRefresh={fetchData}
               onEdit={(t) => { setEditTask(t); setShowTaskForm(true); }}
               onToggleStatus={handleToggleTaskStatus}
               onViewDoc={handleViewLinkedDoc}
@@ -262,29 +278,20 @@ export default function App() {
       case 'essential-docs':
         return <EssentialDocs data={myDocsData} onRefresh={fetchData} />;
       case 'reports':
-        return (
-          <div>
-            <Reports inward={inwardData} outward={outwardData} orders={ordersData} myDocs={myDocsData} />
-          </div>
-        );
+        return <Reports inward={inwardData} outward={outwardData} orders={ordersData} myDocs={myDocsData} />;
       case 'settings':
-        return (
-          <div>
-            {settings
-              ? <Settings settings={settings} onSettingsChange={fetchData} />
-              : <div className="flex justify-center p-16"><div className="w-8 h-8 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" /></div>
-            }
-          </div>
-        );
+        return settings
+          ? <Settings settings={settings} onSettingsChange={fetchData} />
+          : <div className="flex justify-center p-16"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
       default:
-        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} myDocsCount={myDocsData.length} tasksCount={tasksData.length} />;
+        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} myDocsCount={myDocsData.length} tasksCount={tasksData.length} tasksData={tasksData} />;
     }
   };
 
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -293,463 +300,493 @@ export default function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  const totalEntries = inwardData.length + outwardData.length + ordersData.length;
+
   return (
-    <div className="flex bg-[var(--bg-page)] min-h-[100dvh] font-sans text-[var(--text-primary)] selection:bg-cyber-violet/10 selection:text-cyber-violet">
+    <div className="flex flex-col bg-paper min-h-[100dvh] font-serif-body text-ink selection:bg-accent/10 selection:text-accent">
+      {/* Ticker Bar */}
+      <div className="flex justify-between items-center px-6 py-3 border-b border-ink font-mono text-[11px] text-muted tracking-[0.18em] uppercase select-none shrink-0">
+        <div className="flex items-center gap-4">
+          <span className="text-ink font-medium">ProgOffice</span>
+          <span className="opacity-40">·</span>
+          <span>Office Register Suite</span>
+        </div>
+        <div className="hidden sm:block">
+          <span>{totalEntries} entries on file</span>
+        </div>
+      </div>
 
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm md:hidden animate-in fade-in"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar - hidden on mobile, slide-in overlay */}
-      <aside className={cn(
-        "fixed md:relative z-50 h-[100dvh] top-0 left-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col py-6 gap-6 shrink-0",
-        sidebarOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full md:w-24 md:translate-x-0",
-        "bg-[var(--bg-sidebar)] backdrop-blur-3xl border-r border-[var(--glass-border)] shadow-[0_0_40px_rgba(0,0,0,0.02)]"
-      )}>
-        {/* Logo row */}
-        <div className="flex items-center justify-between px-6 mb-2">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <motion.div 
-              whileHover={{ scale: 1.05, rotate: 2 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyber-violet to-cyber-cyan flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyber"
-            >
-              <span className="text-white font-black text-sm">POS</span>
-            </motion.div>
-            {sidebarOpen && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col"
-              >
-                <span className="font-extrabold text-sm tracking-tight text-[var(--text-primary)] leading-none">Programmer</span>
-                <span className="font-bold text-[11px] text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Office Suite</span>
-              </motion.div>
-            )}
-          </div>
-          
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-xl hover:bg-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all active:scale-90 hidden md:flex"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          
-          <button
+      {/* Main Workspace */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile sidebar backdrop */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-ink/20 md:hidden"
             onClick={() => setSidebarOpen(false)}
-            className="p-2 rounded-xl bg-slate-50 text-slate-400 transition-all active:scale-90 md:hidden"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+          />
+        )}
 
-        {/* Nav links */}
-        <nav className="flex-1 flex flex-col gap-1.5 px-4 overflow-y-auto pb-4 custom-scrollbar">
-          {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([tab, label]) => {
-            const icons: Record<Tab, React.ReactNode> = {
-              dashboard: <LayoutDashboard className="w-5 h-5" />,
-              inward: <Inbox className="w-5 h-5" />,
-              outward: <Send className="w-5 h-5" />,
-              orders: <AlertOctagon className="w-5 h-5" />,
-              staff: <Users className="w-5 h-5" />,
-              tasks: <ClipboardList className="w-5 h-5" />,
-              'essential-docs': <FileText className="w-5 h-5" />,
-              reports: <BarChart className="w-5 h-5" />,
-              settings: <SettingsIcon className="w-5 h-5" />,
-            };
-            const counts: Record<string, number> = {
-              inward: inwardData.length,
-              outward: outwardData.length,
-              orders: ordersData.length,
-              staff: staffData.length,
-              tasks: tasksData.filter(t => t.status !== 'Completed').length,
-              'essential-docs': myDocsData.length,
-            };
-
-            return (
-              <NavItem 
-                key={tab}
-                icon={icons[tab]} 
-                label={label} 
-                active={activeTab === tab} 
-                isOpen={sidebarOpen} 
-                onClick={() => handleNavClick(tab)} 
-                badge={counts[tab]} 
-              />
-            );
-          })}
-
-          <div className="flex-1" />
-          
-          <motion.button
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleLogout}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group w-full text-slate-400 hover:text-red-500 hover:bg-red-50/50",
-              !sidebarOpen && "justify-center"
-            )}
-          >
-            <LogOut className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-            {sidebarOpen && <span className="font-bold text-sm">Sign Out</span>}
-          </motion.button>
-        </nav>
-
-        {/* Dropbox status */}
-        <div className="px-4 pb-2">
-          <div className={cn(
-            "p-3 rounded-[24px] bg-[var(--card-bg)] border border-[var(--border-primary)] flex items-center gap-3",
-            !sidebarOpen && "justify-center"
-          )}>
-            <div className="relative flex-shrink-0">
-              <Cloud className="w-5 h-5 text-indigo-400" />
-              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
-            </div>
-            {sidebarOpen && (
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Dropbox Cloud</p>
-                <p className="text-xs font-bold text-slate-700">Healthy</p>
+        {/* Sidebar */}
+        <aside className={cn(
+          "fixed md:relative z-50 h-[100dvh] top-0 left-0 transition-all duration-300 flex flex-col shrink-0 border-r border-ink",
+          sidebarOpen ? "w-[232px] translate-x-0" : "w-[232px] -translate-x-full md:w-24 md:translate-x-0",
+          "bg-paper"
+        )}>
+          {/* Brand */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-rule">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="flex flex-col">
+                <span className="font-serif-display italic text-[22px] leading-none tracking-tight">
+                  prog<span className="text-accent">office</span>
+                </span>
+                {sidebarOpen && (
+                  <span className="font-mono text-[9px] text-muted tracking-[0.18em] uppercase mt-1">register suite</span>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      </aside>
+            </div>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden bg-[var(--bg-page)] relative">
-        {/* Ambient glows */}
-        <div className="absolute top-0 left-0 w-[60%] h-[40%] bg-indigo-400/4 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[50%] h-[40%] bg-purple-400/4 blur-[100px] rounded-full pointer-events-none" />
-
-        {/* Top header bar */}
-        <header className="relative z-10 bg-[var(--bg-sidebar)] backdrop-blur-2xl border-b border-[var(--border-primary)] h-14 flex items-center justify-between px-3 sm:px-6 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            {/* Mobile hamburger */}
             <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 -ml-1 text-slate-500 hover:text-indigo-600 md:hidden transition-colors rounded-xl hover:bg-indigo-50 active:scale-95"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 text-muted hover:text-ink transition-colors hidden md:flex"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </button>
-            <div className="flex flex-col">
-              <motion.h1 
-                key={activeTab}
-                initial={{ y: 5, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="text-lg font-extrabold text-[var(--text-primary)] leading-none tracking-tight"
-              >
-                {TAB_LABELS[activeTab]}
-              </motion.h1>
-              {activeTab !== 'dashboard' && (
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Register</p>
+
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1.5 text-muted hover:text-ink transition-colors md:hidden"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Nav */}
+          <nav className="flex-1 flex flex-col gap-5 px-5 py-5 overflow-y-auto">
+            {/* Home */}
+            <ul className="flex flex-col gap-0.5">
+              <NavItem
+                icon={<LayoutDashboard className="w-4 h-4" />}
+                label="Dashboard"
+                active={activeTab === 'dashboard'}
+                isOpen={sidebarOpen}
+                onClick={() => handleNavClick('dashboard')}
+              />
+            </ul>
+
+            {/* Registers */}
+            <div>
+              <h4 className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-2.5">Registers</h4>
+              <ul className="flex flex-col gap-0.5">
+                {(['inward', 'outward', 'orders'] as Tab[]).map(tab => (
+                  <NavItem
+                    key={tab}
+                    icon={tab === 'inward' ? <Inbox className="w-4 h-4" /> : tab === 'outward' ? <Send className="w-4 h-4" /> : <AlertOctagon className="w-4 h-4" />}
+                    label={TAB_LABELS[tab]}
+                    active={activeTab === tab}
+                    isOpen={sidebarOpen}
+                    onClick={() => handleNavClick(tab)}
+                    badge={tab === 'inward' ? inwardData.length : tab === 'outward' ? outwardData.length : ordersData.length}
+                  />
+                ))}
+              </ul>
+            </div>
+
+            {/* Management */}
+            <div>
+              <h4 className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-2.5">Management</h4>
+              <ul className="flex flex-col gap-0.5">
+                {(['staff', 'tasks', 'essential-docs'] as Tab[]).map(tab => (
+                  <NavItem
+                    key={tab}
+                    icon={tab === 'staff' ? <Users className="w-4 h-4" /> : tab === 'tasks' ? <ClipboardList className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                    label={TAB_LABELS[tab]}
+                    active={activeTab === tab}
+                    isOpen={sidebarOpen}
+                    onClick={() => handleNavClick(tab)}
+                    badge={tab === 'staff' ? staffData.length : tab === 'tasks' ? tasksData.filter(t => t.status !== 'Completed').length : myDocsData.length}
+                  />
+                ))}
+              </ul>
+            </div>
+
+            {/* Analytics */}
+            <div>
+              <h4 className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-2.5">Analytics</h4>
+              <ul className="flex flex-col gap-0.5">
+                {(['reports', 'settings'] as Tab[]).map(tab => (
+                  <NavItem
+                    key={tab}
+                    icon={tab === 'reports' ? <BarChart className="w-4 h-4" /> : <SettingsIcon className="w-4 h-4" />}
+                    label={TAB_LABELS[tab]}
+                    active={activeTab === tab}
+                    isOpen={sidebarOpen}
+                    onClick={() => handleNavClick(tab)}
+                  />
+                ))}
+              </ul>
+            </div>
+          </nav>
+
+          {/* Footer */}
+          <div className="px-5 pb-4 border-t border-rule pt-4">
+            <button
+              onClick={handleLogout}
+              className={cn(
+                "flex items-center gap-3 w-full text-muted hover:text-bad transition-colors py-2",
+                !sidebarOpen && "justify-center"
+              )}
+            >
+              <LogOut className="w-4 h-4" />
+              {sidebarOpen && <span className="font-mono text-[11px] tracking-[0.1em] uppercase">Sign Out</span>}
+            </button>
+
+            {/* Sync status */}
+            <div className={cn(
+              "mt-3 pt-3 border-t border-rule font-mono text-[11px] text-muted",
+              !sidebarOpen && "text-center"
+            )}>
+              {sidebarOpen ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-good" />
+                    <span>online · synced</span>
+                  </div>
+                  <div className="opacity-60 mt-0.5">dropbox cloud</div>
+                </>
+              ) : (
+                <Cloud className="w-4 h-4 mx-auto" />
               )}
             </div>
           </div>
+        </aside>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fetchData}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition-all active:scale-95 disabled:opacity-60"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-xl transition-all active:scale-95 border border-transparent text-slate-400 hover:text-cyber-violet hover:bg-cyber-violet/5 dark:hover:bg-cyber-violet/10"
-              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={() => handleNavClick('settings')}
-              className={`p-2 rounded-xl transition-all active:scale-95 border ${activeTab === 'settings' ? 'bg-cyber-violet/5 text-cyber-violet border-cyber-violet/10' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 border-transparent'}`}
-            >
-              <SettingsIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
-
-        {/* Error banner */}
-        {errorHeader && (
-          <div className="mx-3 sm:mx-6 mt-3 p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 animate-in zoom-in-95 flex-shrink-0">
-            <div className="p-1.5 bg-red-100 text-red-600 rounded-full flex-shrink-0">
-              <AlertOctagon className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-red-800 font-bold text-sm">Connection Error</p>
-              <p className="text-red-600 text-xs font-medium truncate">{errorHeader}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Scrollable content — with bottom padding for mobile tab bar */}
-        <div className="flex-1 overflow-y-auto px-3 py-5 sm:px-8 sm:py-10 pb-28 md:pb-8 custom-scrollbar flex flex-col">
-          <div className="flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="w-full h-full"
-              >
-                {renderContent()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          
-          {/* Footer */}
-          <footer className="mt-8 pt-6 pb-2 border-t border-slate-200/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-medium text-slate-400">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)] flex items-center justify-center shadow-sm">
-                <span className="text-cyber-violet font-black text-[9px]">POS</span>
-              </div>
-              <p>© {new Date().getFullYear()} ProOffice Suite. All rights reserved.</p>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/50 px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
-              <span>Built with</span>
-              <Heart className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" />
-              <span>by</span>
-              <a 
-                href="https://github.com/BhuvneshSain" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-indigo-600 hover:text-indigo-700 font-bold transition-colors underline decoration-indigo-200 underline-offset-2"
-              >
-                Bhuvnesh Sain
-              </a>
-            </div>
-          </footer>
-        </div>
-        {/* Mobile bottom navigation tab bar */}
-        <nav className="md:hidden fixed bottom-6 left-6 right-6 z-40 bg-[var(--bg-sidebar)] backdrop-blur-3xl border border-[var(--glass-border)] flex items-stretch h-16 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] px-2">
-          {(
-            [
-              { tab: 'dashboard', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Home' },
-              { tab: 'inward', icon: <Inbox className="w-5 h-5" />, label: 'Inward' },
-              { tab: 'tasks', icon: <ClipboardList className="w-5 h-5" />, label: 'Tasks' },
-              { tab: 'orders', icon: <AlertOctagon className="w-5 h-5" />, label: 'Orders' },
-              { tab: 'essential-docs', icon: <FileText className="w-5 h-5" />, label: 'Docs' },
-            ] as const
-          ).map(({ tab, icon, label }) => {
-            const isActive = activeTab === tab;
-            return (
+        {/* Main content */}
+        <main className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden bg-paper relative">
+          {/* Header */}
+          <header className="border-b border-ink px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
               <button
-                key={tab}
-                onClick={() => handleNavClick(tab)}
+                onClick={() => setSidebarOpen(true)}
+                className="p-1.5 text-muted hover:text-ink md:hidden transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="min-w-0">
+                <motion.h2
+                  key={activeTab}
+                  initial={{ y: 4, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="font-serif-display italic text-xl sm:text-2xl leading-none tracking-tight"
+                >
+                  {activeTab === 'dashboard' ? 'Dashboard' : TAB_LABELS[activeTab]}
+                </motion.h2>
+                {activeTab !== 'dashboard' && (
+                  <span className="font-mono text-[10px] text-muted tracking-[0.16em] uppercase mt-1 block">
+                    progoffice / {activeTab}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchData(true, true)}
+                disabled={refreshing}
+                className="flex items-center gap-1.5 font-mono text-[11px] text-muted hover:text-ink tracking-[0.1em] uppercase px-3 py-1.5 border border-rule hover:border-ink transition-all disabled:opacity-40"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+              <button
+                onClick={() => handleNavClick('settings')}
                 className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-all relative px-1",
-                  isActive ? "text-cyber-violet" : "text-slate-400"
+                  "p-1.5 transition-colors",
+                  activeTab === 'settings' ? 'text-accent' : 'text-muted hover:text-ink'
                 )}
               >
-                {isActive && (
-                  <motion.div 
-                    layoutId="mobile-nav-active"
-                    className="absolute inset-x-1 inset-y-2 bg-cyber-violet/5 rounded-2xl z-0"
-                  />
-                )}
-                <motion.div 
-                  animate={isActive ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
-                  className="relative z-10"
-                >
-                  {icon}
-                </motion.div>
-                <span className="relative z-10 scale-90">{label}</span>
+                <SettingsIcon className="w-4 h-4" />
               </button>
-            );
-          })}
-        </nav>
-      </main>
-      {/* Global Document Modal */}
-      {globalViewEntry && (
-        <DocumentModal 
-          entry={globalViewEntry} 
-          onClose={() => setGlobalViewEntry(null)} 
-        />
-      )}
+            </div>
+          </header>
+
+          {/* Error banner */}
+          {errorHeader && (
+            <div className="mx-6 mt-4 p-4 border border-bad/30 bg-bad/5 flex items-center gap-3 flex-shrink-0">
+              <AlertOctagon className="w-4 h-4 text-bad flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-bad font-mono text-[11px] tracking-[0.1em] uppercase font-medium">Connection Error</p>
+                <p className="text-bad/70 text-sm mt-0.5 truncate">{errorHeader}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-6 py-8 pb-28 md:pb-8 flex flex-col">
+            <div className="flex-1">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="w-full h-full"
+                >
+                  {renderContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Footer */}
+            <footer className="mt-16 border-t border-rule pt-8 pb-4 shrink-0 select-none">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif-display italic text-sm text-accent">progoffice</span>
+                  <span className="font-mono text-[10px] text-muted tracking-[0.1em]">&copy; {new Date().getFullYear()}</span>
+                </div>
+                <div className="font-mono text-[10px] text-muted tracking-[0.1em]">
+                  <span>built by </span>
+                  <a
+                    href="https://github.com/BhuvneshSain"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent hover:underline"
+                  >
+                    Bhuvnesh Sain
+                  </a>
+                </div>
+              </div>
+            </footer>
+          </div>
+
+          {/* Mobile bottom nav */}
+          <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-paper border border-ink flex items-stretch h-14 px-1">
+            {(
+              [
+                { tab: 'dashboard', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home' },
+                { tab: 'inward', icon: <Inbox className="w-4 h-4" />, label: 'Inward' },
+                { tab: 'tasks', icon: <ClipboardList className="w-4 h-4" />, label: 'Tasks' },
+                { tab: 'orders', icon: <AlertOctagon className="w-4 h-4" />, label: 'Orders' },
+                { tab: 'essential-docs', icon: <FileText className="w-4 h-4" />, label: 'Docs' },
+              ] as const
+            ).map(({ tab, icon, label }) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => handleNavClick(tab)}
+                  className={cn(
+                    "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-mono tracking-[0.1em] uppercase transition-all relative",
+                    isActive ? "text-accent" : "text-muted"
+                  )}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobile-nav-active"
+                      className="absolute inset-x-1 inset-y-1 border border-accent z-0"
+                    />
+                  )}
+                  <div className="relative z-10">{icon}</div>
+                  <span className="relative z-10">{label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </main>
+
+        {/* Global Document Modal */}
+        {globalViewEntry && (
+          <DocumentModal
+            entry={globalViewEntry}
+            onClose={() => setGlobalViewEntry(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function NavItem({ icon, label, isOpen, active = false, onClick, badge }: { icon: React.ReactNode; label: string; isOpen: boolean; active?: boolean; onClick: () => void; badge?: number | null }) {
+function NavItem({ icon, label, active = false, isOpen, onClick, badge }: { icon: React.ReactNode; label: string; active?: boolean; isOpen: boolean; onClick: () => void; badge?: number | null }) {
   return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      title={!isOpen ? label : undefined}
-      className={cn(
-        "flex items-center gap-4 px-4 py-3 rounded-[20px] transition-all duration-300 group w-full relative",
-        active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]",
-        !isOpen && "justify-center px-0"
-      )}
-    >
-      {active && (
-        <motion.div 
-          layoutId="sidebar-active"
-          transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
-          className="absolute inset-0 bg-white shadow-[0_8px_20px_rgba(0,0,0,0.04)] border border-slate-100 rounded-[20px] z-0"
-        />
-      )}
-      
-      <div className={cn(
-        "relative z-10 transition-colors flex-shrink-0",
-        active ? "text-cyber-violet" : "group-hover:text-[var(--text-secondary)]"
-      )}>
-        {icon}
-      </div>
-      
-      {isOpen && (
-        <span className={cn(
-          "relative z-10 font-bold text-sm tracking-tight transition-all",
-          active ? "opacity-100" : "opacity-70 group-hover:opacity-100"
-        )}>
-          {label}
-        </span>
-      )}
-      
-      {isOpen && badge != null && badge > 0 && (
-        <motion.span 
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          className={cn(
-            "relative z-10 text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center ml-auto",
-            active ? "bg-cyber-violet/10 text-cyber-violet/80" : "bg-slate-100 text-slate-400"
-          )}
-        >
-          {badge}
-        </motion.span>
-      )}
-    </motion.button>
+    <li>
+      <button
+        onClick={onClick}
+        title={!isOpen ? label : undefined}
+        className={cn(
+          "flex items-center gap-3 w-full py-1.5 transition-colors text-left",
+          active ? "text-accent" : "text-ink hover:text-accent",
+          !isOpen && "justify-center"
+        )}
+      >
+        {active && <span className="text-accent text-[9px]">&#9679;</span>}
+        {!active && isOpen && <span className="w-[9px]" />}
+        <div className="flex-shrink-0">{icon}</div>
+        {isOpen && (
+          <>
+            <span className={cn(
+              "font-serif-body text-[15px] tracking-tight flex-1",
+              active ? "font-semibold" : ""
+            )}>
+              {label}
+            </span>
+            {badge != null && badge > 0 && (
+              <span className={cn(
+                "font-mono text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
+                active ? "bg-accent text-paper" : "bg-ink text-paper"
+              )}>
+                {badge}
+              </span>
+            )}
+          </>
+        )}
+      </button>
+    </li>
   );
 }
 
-function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount, tasksCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number; tasksCount: number }) {
+function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount, tasksCount, tasksData }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number; tasksCount: number; tasksData: TaskEntry[] }) {
+  const completedTasks = tasksData.filter(t => t.status === 'Completed').length;
+  const pendingTasks = tasksData.filter(t => t.status === 'Pending').length;
+  const inProgressTasks = tasksData.filter(t => t.status === 'In Progress').length;
+
+  // Build a simple bar chart from task data (last 30 entries by creation date)
+  const recentTasks = [...tasksData]
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    .slice(0, 30);
+
   const container: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1
-      }
+      transition: { staggerChildren: 0.06, delayChildren: 0.05 }
     }
   };
 
   const item: Variants = {
-    hidden: { opacity: 0, y: 20, scale: 0.95 },
-    show: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1,
-      transition: { type: "spring", bounce: 0.3, duration: 0.6 } 
-    }
-  };
-
-  const stats = [
-    { label: 'Inward', count: inwardCount, color: 'text-blue-600', bg: 'bg-blue-50/50', border: 'border-blue-100' },
-    { label: 'Outward', count: outwardCount, color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100' },
-    { label: 'Orders', count: ordersCount, color: 'text-amber-600', bg: 'bg-amber-50/50', border: 'border-amber-100' },
-    { label: 'Staff', count: staffCount, color: 'text-violet-600', bg: 'bg-violet-50/50', border: 'border-violet-100' },
-    { label: 'Tasks', count: tasksCount, color: 'text-indigo-600', bg: 'bg-indigo-50/50', border: 'border-indigo-100' },
-    { label: 'Docs', count: myDocsCount, color: 'text-cyber-violet', bg: 'bg-indigo-50/50', border: 'border-indigo-100' },
-  ];
-
-  return (
-    <motion.div 
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="max-w-5xl mx-auto w-full space-y-10 py-4"
-    >
-      <motion.header variants={item} className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="h-[1px] w-8 bg-cyber-violet/30" />
-          <p className="text-[10px] font-black text-cyber-violet uppercase tracking-[0.2em]">Operational Overview</p>
-        </div>
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight leading-[1.1]">
-          System <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-violet to-cyber-cyan">Dashboard</span>
-        </h2>
-        <p className="text-[var(--text-secondary)] text-sm sm:text-lg font-medium max-w-2xl leading-relaxed">
-          Welcome back. Your document repository is fully synchronized and secured.
-        </p>
-      </motion.header>
-
-      {/* Quick stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {stats.map((stat) => (
-          <motion.div 
-            key={stat.label}
-            variants={item}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            className={cn(
-              "group relative overflow-hidden rounded-[32px] p-5 border shadow-sm transition-all duration-300",
-              stat.bg, stat.border
-            )}
-          >
-            <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 blur-2xl rounded-full translate-x-8 -translate-y-8" />
-            <p className={cn("text-3xl sm:text-4xl font-black tracking-tighter", stat.color)}>{stat.count}</p>
-            <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-1">{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Tool cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <ToolCard title="Inward Register" icon={<Inbox className="w-6 h-6" />} desc="Log and manage incoming documents." variant="blue" variants={item} onClick={() => onNavigate('inward')} />
-        <ToolCard title="Outward Register" icon={<Send className="w-6 h-6" />} desc="Track dispatches and recipient info." variant="emerald" variants={item} onClick={() => onNavigate('outward')} />
-        <ToolCard title="Important Orders" icon={<AlertOctagon className="w-6 h-6" />} desc="Log urgent assignments & directives." variant="amber" variants={item} onClick={() => onNavigate('orders')} />
-        <ToolCard title="Staff Directory" icon={<Users className="w-6 h-6" />} desc="Personnel and project allocations." variant="violet" variants={item} onClick={() => onNavigate('staff')} />
-        <ToolCard title="Task Center" icon={<ClipboardList className="w-6 h-6" />} desc="Manage directives and responses." variant="indigo" variants={item} onClick={() => onNavigate('tasks')} />
-        <ToolCard title="Resource Hub" icon={<FileText className="w-6 h-6" />} desc="Essential tools and documentation." variant="indigo" variants={item} onClick={() => onNavigate('essential-docs')} />
-        <ToolCard title="Analytics" icon={<BarChart className="w-6 h-6" />} desc="Aggregated stats and timelines." variant="fuchsia" variants={item} onClick={() => onNavigate('reports')} />
-      </div>
-    </motion.div>
-  );
-}
-
-function ToolCard({ title, icon, desc, variant, variants, onClick }: { title: string; icon: React.ReactNode; desc: string; variant: string; variants: Variants; onClick: () => void }) {
-  const colorVariants: Record<string, { icon: string, glow: string }> = {
-    blue: { icon: 'text-blue-500 bg-blue-50', glow: 'shadow-blue-500/10' },
-    emerald: { icon: 'text-emerald-500 bg-emerald-50', glow: 'shadow-emerald-500/10' },
-    amber: { icon: 'text-amber-500 bg-amber-50', glow: 'shadow-amber-500/10' },
-    violet: { icon: 'text-violet-500 bg-violet-50', glow: 'shadow-violet-500/10' },
-    indigo: { icon: 'text-indigo-500 bg-indigo-50', glow: 'shadow-indigo-500/10' },
-    fuchsia: { icon: 'text-fuchsia-500 bg-fuchsia-50', glow: 'shadow-fuchsia-500/10' },
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
   };
 
   return (
     <motion.div
-      variants={variants}
-      whileHover={{ y: -8, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className={cn(
-        "glass-card group p-6 rounded-[32px] cursor-pointer relative overflow-hidden transition-all duration-500",
-        colorVariants[variant].glow
-      )}
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="max-w-5xl mx-auto w-full space-y-10"
     >
-      <div className="relative z-10 flex flex-col gap-4">
-        <div className={cn(
-          "w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6",
-          colorVariants[variant].icon
-        )}>
-          {icon}
+      {/* KPI Grid */}
+      <motion.section variants={item} className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-6">
+        <StatCard label="Inward entries" value={inwardCount} note="documents received and logged" />
+        <StatCard label="Outward entries" value={outwardCount} note="dispatches recorded" />
+        <StatCard label="Orders on file" value={ordersCount} note="directives and assignments" />
+        <StatCard label="Staff members" value={staffCount} note="active personnel directory" />
+        <StatCard label="Pending tasks" value={pendingTasks} note="awaiting action" variant="accent" />
+        <StatCard label="Completed tasks" value={completedTasks} note="resolved and closed" variant="good" />
+        <StatCard label="In progress" value={inProgressTasks} note="actively being worked on" />
+        <StatCard label="Essential docs" value={myDocsCount} note="tools and references" />
+        <StatCard label="Total entries" value={inwardCount + outwardCount + ordersCount} note="across all registers" />
+      </motion.section>
+
+      {/* Bar Chart Panel */}
+      {recentTasks.length > 0 && (
+        <motion.section variants={item} className="border-t border-ink pt-6 pb-4 border-b border-rule">
+          <div className="flex items-baseline justify-between mb-4">
+            <h3 className="font-serif-display italic text-xl">tasks — <em>recent activity</em></h3>
+            <span className="font-mono text-[10px] text-muted tracking-[0.16em] uppercase">
+              {recentTasks.length} recent entries
+            </span>
+          </div>
+          <svg viewBox="0 0 720 180" preserveAspectRatio="none" className="w-full h-[180px] block" aria-hidden="true">
+            <g fill="#1f1c14">
+              {recentTasks.map((task, i) => {
+                const barWidth = 14;
+                const gap = (720 - recentTasks.length * barWidth) / (recentTasks.length + 1);
+                const x = gap + i * (barWidth + gap);
+                const maxH = 160;
+                // Height based on priority
+                const priorityH: Record<string, number> = { High: maxH, Medium: maxH * 0.65, Low: maxH * 0.35 };
+                const h = priorityH[task.priority] || maxH * 0.5;
+                const y = 180 - h;
+                const isCompleted = task.status === 'Completed';
+                return (
+                  <rect
+                    key={task.id}
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={h}
+                    fill={isCompleted ? '#d6cdb6' : i >= recentTasks.length - 3 ? '#c14a2b' : '#1f1c14'}
+                  />
+                );
+              })}
+            </g>
+          </svg>
+          <div className="flex justify-between font-mono text-[10px] text-muted tracking-[0.1em] uppercase pt-2">
+            <span>Oldest</span>
+            <span>Recent</span>
+            <span>Latest</span>
+          </div>
+        </motion.section>
+      )}
+
+      {/* Trend Panel */}
+      <motion.section variants={item} className="border-t border-ink pt-6 pb-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <h3 className="font-serif-display italic text-xl">overview — <em>at a glance</em></h3>
         </div>
-        <div>
-          <h4 className="font-extrabold text-[var(--text-primary)] text-lg tracking-tight group-hover:text-cyber-violet transition-colors">{title}</h4>
-          <p className="text-sm text-[var(--text-secondary)] font-medium mt-1 leading-relaxed opacity-80">{desc}</p>
+        <p className="font-serif-body italic text-muted text-[15px] leading-relaxed max-w-[70ch]">
+          You have <b className="text-ink not-italic font-semibold">{tasksCount} active tasks</b> across {staffCount} staff members.
+          {completedTasks > 0 && <> {completedTasks} tasks completed — keep the momentum.</>}
+          {pendingTasks > 5 && <> <b className="text-accent not-italic font-semibold">{pendingTasks} pending</b> — consider prioritizing.</>}
+          {inwardCount > 0 && <> {inwardCount} inward entries on file, {outwardCount} dispatched.</>}
+        </p>
+      </motion.section>
+
+      {/* Quick Access */}
+      <motion.section variants={item} className="border-t border-rule pt-6">
+        <h3 className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-4">Quick Access</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { title: 'Inward Register', desc: 'Log and manage incoming documents.', tab: 'inward' as Tab, icon: <Inbox className="w-4 h-4" /> },
+            { title: 'Outward Register', desc: 'Track dispatches and recipient info.', tab: 'outward' as Tab, icon: <Send className="w-4 h-4" /> },
+            { title: 'Important Orders', desc: 'Log urgent assignments & directives.', tab: 'orders' as Tab, icon: <AlertOctagon className="w-4 h-4" /> },
+            { title: 'Staff Directory', desc: 'Personnel and project allocations.', tab: 'staff' as Tab, icon: <Users className="w-4 h-4" /> },
+            { title: 'Task Center', desc: 'Manage directives and responses.', tab: 'tasks' as Tab, icon: <ClipboardList className="w-4 h-4" /> },
+            { title: 'Resource Hub', desc: 'Essential tools and documentation.', tab: 'essential-docs' as Tab, icon: <FileText className="w-4 h-4" /> },
+          ].map(card => (
+            <motion.div
+              key={card.title}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onNavigate(card.tab)}
+              className="border border-rule p-5 cursor-pointer hover:border-accent transition-colors group"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="text-muted group-hover:text-accent transition-colors">{card.icon}</div>
+                <h4 className="font-serif-display text-base tracking-tight group-hover:text-accent transition-colors">{card.title}</h4>
+              </div>
+              <p className="font-serif-body text-sm text-muted leading-relaxed">{card.desc}</p>
+            </motion.div>
+          ))}
         </div>
-      </div>
-      
-      {/* Refined subtle glow edge */}
-      <div className="absolute -bottom-12 -right-12 w-24 h-24 bg-current opacity-[0.03] blur-3xl group-hover:opacity-[0.08] transition-opacity" />
+      </motion.section>
     </motion.div>
+  );
+}
+
+function StatCard({ label, value, note, variant }: { label: string; value: number; note: string; variant?: 'accent' | 'good' | 'bad' }) {
+  const valueClass = variant === 'accent' ? 'text-accent' : variant === 'good' ? 'text-good' : variant === 'bad' ? 'text-bad' : 'text-ink';
+
+  return (
+    <div className="border-b border-rule pb-4">
+      <div className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-1.5">{label}</div>
+      <div className={`font-serif-display text-[48px] leading-[1.05] tracking-tight font-normal ${valueClass}`}
+        style={{ fontFeatureSettings: "'tnum'" }}
+      >
+        {value}
+      </div>
+      <p className="font-serif-body italic text-[13px] text-muted mt-1 leading-snug max-w-[28ch]">{note}</p>
+    </div>
   );
 }

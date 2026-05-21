@@ -3,17 +3,18 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  appType: 'spa',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-icon.png'],
       manifest: {
-        name: 'Programmer Office Suite',
+        name: 'ProgOffice Suite',
         short_name: 'ProgOffice',
-        description: 'Advanced Office Register Management System for Programmers',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        description: 'Office Register Management System',
+        theme_color: '#f4ede0',
+        background_color: '#f4ede0',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',

@@ -51,48 +51,48 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
 
   const getPriorityColor = (p: TaskPriority) => {
     switch (p) {
-      case 'Critical': return 'text-red-600 bg-red-50 border-red-100';
-      case 'High': return 'text-orange-600 bg-orange-50 border-orange-100';
-      case 'Medium': return 'text-blue-600 bg-blue-50 border-blue-100';
-      case 'Low': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+      case 'Critical': return 'text-bad bg-bad/5 border-bad/20';
+      case 'High': return 'text-accent bg-accent/5 border-accent/20';
+      case 'Medium': return 'border border-rule text-muted';
+      case 'Low': return 'text-muted bg-panel border-rule';
     }
   };
 
   const getStatusIcon = (s: TaskStatus) => {
     switch (s) {
-      case 'Completed': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-      case 'In Progress': return <Clock className="w-4 h-4 text-blue-500" />;
-      case 'Deferred': return <Circle className="w-4 h-4 text-slate-400" />;
-      case 'Pending': return <AlertCircle className="w-4 h-4 text-amber-500" />;
+      case 'Completed': return <CheckCircle2 className="w-4 h-4 text-good" />;
+      case 'In Progress': return <Clock className="w-4 h-4 text-accent" />;
+      case 'Deferred': return <Circle className="w-4 h-4 text-muted" />;
+      case 'Pending': return <AlertCircle className="w-4 h-4 text-accent" />;
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Task Controls */}
-      <div className="glass-card rounded-[32px] p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-white/40 shadow-glass bg-[var(--header-bg)] backdrop-blur-md">
+      <div className="border border-rule p-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--header-bg)]">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64 group">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-indigo-500 transition-colors" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-ink transition-colors" />
             <input 
               type="text" 
               placeholder="Search tasks..." 
               value={search} 
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-[var(--border-primary)] rounded-[18px] bg-[var(--input-bg)] text-xs focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all placeholder:text-[var(--text-muted)] font-medium" 
+              className="w-full pl-10 pr-4 py-2 border border-[var(--border-primary)] bg-[var(--input-bg)] text-xs focus:border-ink outline-none transition-all placeholder:text-[var(--text-muted)] font-serif-body"
             />
           </div>
           
-          <div className="flex items-center gap-1 bg-[var(--input-bg)] p-1 rounded-xl border border-[var(--border-primary)]">
-             <button 
+          <div className="flex items-center gap-1 bg-[var(--input-bg)] p-1 border border-[var(--border-primary)]">
+             <button
               onClick={() => setViewMode('list')}
-              className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white shadow-sm text-indigo-600" : "text-slate-400 hover:text-slate-600")}
+              className={cn("p-1.5 transition-all", viewMode === 'list' ? "bg-paper text-accent" : "text-muted hover:text-ink")}
              >
                <List className="w-4 h-4" />
              </button>
-             <button 
+             <button
               onClick={() => setViewMode('grid')}
-              className={cn("p-1.5 rounded-lg transition-all", viewMode === 'grid' ? "bg-white shadow-sm text-indigo-600" : "text-slate-400 hover:text-slate-600")}
+              className={cn("p-1.5 transition-all", viewMode === 'grid' ? "bg-paper text-accent" : "text-muted hover:text-ink")}
              >
                <LayoutGrid className="w-4 h-4" />
              </button>
@@ -100,12 +100,12 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-           <div className="flex items-center gap-2 pr-3 border-r border-slate-200/50 shrink-0">
-             <Filter className="w-3.5 h-3.5 text-slate-400" />
-             <select 
-               value={statusFilter} 
+           <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-primary)] shrink-0">
+             <Filter className="w-3.5 h-3.5 text-muted" />
+             <select
+               value={statusFilter}
                onChange={e => setStatusFilter(e.target.value as any)}
-               className="text-[10px] font-black uppercase tracking-widest bg-transparent text-slate-600 outline-none"
+               className="font-mono text-[11px] tracking-[0.18em] uppercase bg-transparent text-ink outline-none"
              >
                <option value="All">All Status</option>
                <option value="Pending">Pending</option>
@@ -115,11 +115,11 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
              </select>
            </div>
 
-           <motion.button 
+           <motion.button
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
              onClick={onNew}
-             className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-900/10 shrink-0"
+             className="flex items-center gap-2 bg-ink text-white px-4 py-2.5 font-mono text-[11px] tracking-[0.18em] uppercase shrink-0"
            >
              <Plus className="w-3.5 h-3.5" /> Initialize Task
            </motion.button>
@@ -127,18 +127,18 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 animate-pulse">
-          <ClipboardList className="w-10 h-10 text-slate-200" />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Accessing Task Grid...</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <ClipboardList className="w-10 h-10 text-muted" />
+          <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted">Accessing Task Grid...</p>
         </div>
       ) : filteredTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-6 glass-card rounded-[40px] border-dashed border-2 border-slate-200">
-           <div className="w-16 h-16 rounded-[28px] bg-slate-50 flex items-center justify-center">
-             <ClipboardList className="w-8 h-8 text-slate-200" />
+        <div className="flex flex-col items-center justify-center py-24 gap-6 border border-rule border-dashed">
+           <div className="w-16 h-16 bg-panel flex items-center justify-center">
+             <ClipboardList className="w-8 h-8 text-muted" />
            </div>
            <div className="text-center">
-             <h4 className="font-black text-slate-700 tracking-tight">System Idle</h4>
-             <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-tight">No active directives found matching filters.</p>
+             <h4 className="font-serif-display text-ink tracking-tight">System Idle</h4>
+             <p className="text-xs text-muted font-serif-body mt-1 uppercase tracking-tight">No active directives found matching filters.</p>
            </div>
         </div>
       ) : (
@@ -184,7 +184,7 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
       exit={{ opacity: 0 }}
       whileHover={{ y: -2 }}
       className={cn(
-        "glass-card p-5 sm:p-6 rounded-[32px] border-white/60 shadow-glass flex relative overflow-hidden group",
+        "border border-rule p-5 sm:p-6 flex relative overflow-hidden group",
         viewMode === 'list' ? "flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6" : "flex-col gap-4"
       )}
     >
@@ -193,63 +193,63 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-2">
-           <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border", priorityStyles)}>
+           <span className={cn("font-mono text-[11px] tracking-[0.18em] uppercase px-2 py-0.5 border", priorityStyles)}>
              {task.priority}
            </span>
-           <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+           <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] flex items-center gap-1">
              <Calendar className="w-3 h-3" /> {task.dueDate || 'No Deadline'}
            </span>
         </div>
         
-        <h4 className="text-lg font-black text-slate-800 tracking-tight sm:truncate group-hover:text-indigo-600 transition-colors">
+        <h4 className="text-lg font-serif-display text-[var(--text-primary)] tracking-tight sm:truncate group-hover:text-accent transition-colors">
           {task.title}
         </h4>
-        <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">
+        <p className="text-xs text-[var(--text-secondary)] font-serif-body mt-1 line-clamp-2">
           {task.description}
         </p>
 
         <div className="flex flex-wrap gap-2 mt-4">
            {task.assignedTo.map(name => (
-             <span key={name} className="flex items-center gap-1.5 bg-white border border-slate-100 text-[10px] font-black px-2.5 py-1 rounded-xl text-slate-600 shadow-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> {name}
+             <span key={name} className="flex items-center gap-1.5 bg-[var(--bg-surface)] border border-[var(--border-primary)] font-mono text-[11px] tracking-[0.18em] uppercase px-2.5 py-1 text-[var(--text-secondary)]">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent" /> {name}
              </span>
            ))}
-        </div>
+         </div>
       </div>
 
       <div className={cn(
         "flex gap-4 items-center",
-        viewMode === 'list' ? "sm:border-l border-slate-100 sm:pl-6 shrink-0" : "mt-2 sm:mt-4 pt-4 border-t border-slate-100 justify-between"
+        viewMode === 'list' ? "sm:border-l border-[var(--border-primary)] sm:pl-6 shrink-0" : "mt-2 sm:mt-4 pt-4 border-t border-[var(--border-primary)] justify-between"
       )}>
          <div className="flex items-center gap-2">
             {statusIcon}
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{task.status}</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-primary)]">{task.status}</span>
          </div>
 
           <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
-           <button 
-             onClick={onToggleStatus} 
+           <button
+             onClick={onToggleStatus}
              title={task.status === 'Completed' ? "Mark as Pending" : "Mark as Completed"}
              className={cn(
-               "p-2 rounded-xl transition-colors",
-               task.status === 'Completed' ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+               "p-2 transition-colors border border-[var(--border-primary)]",
+               task.status === 'Completed' ? "border-good/20 text-good bg-good/5" : "bg-[var(--bg-page)] text-[var(--text-muted)] hover:text-good hover:bg-good/5"
              )}
            >
              <CheckCircle2 className="w-3.5 h-3.5" />
            </button>
            {task.linkedDocId && (
-             <button 
+             <button
                onClick={onViewDoc}
-               title="View Linked Document" 
-               className="p-2 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+               title="View Linked Document"
+               className="p-2 bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 transition-colors"
              >
                <ExternalLink className="w-3.5 h-3.5" />
              </button>
            )}
-           <button onClick={onEdit} className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-200 transition-colors">
+           <button onClick={onEdit} className="p-2 bg-[var(--bg-page)] text-[var(--text-secondary)] hover:bg-[var(--border-primary)] border border-[var(--border-primary)] transition-colors">
              <Pencil className="w-3.5 h-3.5" />
            </button>
-           <button onClick={onDelete} className="p-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+           <button onClick={onDelete} className="p-2 bg-bad/10 text-bad hover:bg-bad/20 border border-bad/20 transition-colors">
              <Trash2 className="w-3.5 h-3.5" />
            </button>
          </div>

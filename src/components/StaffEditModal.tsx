@@ -58,7 +58,7 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl" 
+        className="absolute inset-0 bg-ink/20"
         onClick={onClose} 
       />
 
@@ -67,16 +67,16 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative z-10 w-full max-w-xl bg-white/70 backdrop-blur-2xl rounded-[40px] shadow-glass border border-white/60 overflow-hidden"
+        className="relative z-10 w-full max-w-xl bg-paper border border-rule overflow-hidden"
       >
-        <div className="px-8 py-6 border-b border-white/40 flex items-center justify-between">
+        <div className="px-8 py-6 border-b border-[var(--border-primary)] bg-[var(--header-bg)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyber-violet/10 flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-cyber-violet" />
+            <div className="w-10 h-10 bg-accent/10 flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-accent" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-800 tracking-tight">Modify Personnel</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 flex items-center gap-1.5">
+              <h3 className="text-sm font-serif-display text-[var(--text-primary)] tracking-tight">Modify Personnel</h3>
+              <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] mt-0.5 flex items-center gap-1.5">
                 <Sparkles className="w-2.5 h-2.5" /> Personnel Database Edit
               </p>
             </div>
@@ -85,7 +85,7 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose} 
-            className="w-10 h-10 rounded-full bg-slate-100/50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+            className="w-10 h-10 rounded-full bg-[var(--bg-page)] flex items-center justify-center text-[var(--text-muted)] hover:text-bad transition-colors border border-rule"
           >
             <X className="w-5 h-5" />
           </motion.button>
@@ -94,31 +94,31 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
         <form onSubmit={handleSave} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Operator Name</label>
+              <label className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] ml-2">Operator Name</label>
               <input required className={INPUT} value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Identifier</label>
+              <label className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] ml-2">Identifier</label>
               <input className={INPUT} value={empId} onChange={e => setEmpId(e.target.value)} placeholder="ID" />
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Deployment Rank</label>
+              <label className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] ml-2">Deployment Rank</label>
               <select required className={cn(INPUT, "appearance-none")} value={post} onChange={e => setPost(e.target.value)}>
                 <option value="">Select Post...</option>
                 {posts.map((p: string) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Mobile Terminal</label>
+              <label className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] ml-2">Mobile Terminal</label>
               <input className={INPUT} value={mobile} onChange={e => setMobile(e.target.value)} placeholder="Mobile" />
             </div>
           </div>
 
           <div className="space-y-2.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Assigned Projects</label>
+            <label className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] ml-2">Assigned Projects</label>
             <MultiComboBox 
               values={selectedProjects}
               onChange={(vals) => setSelectedProjects(vals)}
@@ -127,13 +127,13 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
             />
           </div>
 
-          <div className="flex gap-4 pt-4 border-t border-white/40">
+          <div className="flex gap-4 pt-4 border-t border-[var(--border-primary)]">
             <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="button" 
               onClick={onClose} 
-              className="flex-1 py-4 border border-slate-200/60 bg-white rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm"
+              className="flex-1 py-4 border border-rule font-mono text-[11px] tracking-[0.16em] uppercase text-muted hover:bg-[var(--bg-page)] transition-all"
             >
               Abort
             </motion.button>
@@ -143,7 +143,7 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
               type="submit" 
               disabled={loading} 
               className={cn(
-                "flex-1 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center gap-2",
+                "flex-1 py-4 bg-ink text-paper font-mono text-[11px] tracking-[0.18em] uppercase transition-all flex items-center justify-center gap-2",
                 loading && "opacity-60"
               )}
             >
@@ -157,4 +157,4 @@ export default function StaffEditModal({ entry, projects, posts, onClose, onSucc
   );
 }
 
-const INPUT = "w-full px-5 py-3.5 bg-white/60 border border-slate-200/60 rounded-[22px] text-sm font-bold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:bg-white focus:ring-4 focus:ring-cyber-violet/5 focus:border-cyber-violet";
+const INPUT = "w-full px-5 py-3.5 bg-panel border border-rule font-serif-body text-sm outline-none transition-all placeholder:text-[var(--text-muted)] text-[var(--text-primary)] focus:bg-[var(--bg-surface)] focus:outline-none focus:border-ink";

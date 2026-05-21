@@ -105,7 +105,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-400/20 backdrop-blur-xl dark:bg-slate-900/60" 
+        className="absolute inset-0 bg-ink/20"
         onClick={onClose} 
       />
       
@@ -115,17 +115,17 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 40 }}
         transition={{ duration: 0.3 }}
-        className="relative bg-[var(--card-bg)] backdrop-blur-xl rounded-none md:rounded-[40px] shadow-glass border-none md:border border-[var(--glass-border)] w-full md:max-w-[85vw] h-full md:h-[90vh] flex flex-col overflow-hidden"
+        className="relative bg-paper border-none md:border border-rule w-full md:max-w-[85vw] h-full md:h-[90vh] flex flex-col overflow-hidden"
       >
         {/* Header */}
         <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-[var(--border-primary)] flex items-center justify-between bg-[var(--header-bg)] shrink-0">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-cyber-violet/10 flex items-center justify-center shrink-0 border border-cyber-violet/10">
-                <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-cyber-violet" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 flex items-center justify-center shrink-0 border border-accent/10">
+                <FileCheck className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight leading-tight truncate">Asset Inspection</h2>
-                <p className="text-[9px] sm:text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-1.5 mt-0.5 sm:mt-1">
+                <h2 className="text-base sm:text-xl font-serif-display text-[var(--text-primary)] tracking-tight leading-tight truncate">Asset Inspection</h2>
+                <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] flex items-center gap-1.5 mt-0.5 sm:mt-1">
                   <Globe className="w-2.5 h-2.5" /> <span className="truncate">Dropbox Secure Preview</span>
                 </p>
              </div>
@@ -139,7 +139,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                 href={fileLink} 
                 target="_blank" 
                 rel="noreferrer"
-                className="hidden sm:flex items-center gap-3 px-6 py-3.5 bg-slate-900 text-white rounded-[20px] font-black text-[10px] uppercase tracking-widest shadow-xl"
+                className="hidden sm:flex items-center gap-3 px-6 py-3.5 bg-ink text-paper font-mono text-[11px] tracking-[0.18em] uppercase"
               >
                 <Download className="w-4 h-4" />
                 {fileType === 'pdf' ? 'Extract PDF' : 'Download'}
@@ -149,7 +149,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
               whileHover={{ rotate: 90, scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={onClose} 
-              className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[var(--bg-page)] text-[var(--text-muted)] border border-[var(--border-primary)]"
+              className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[var(--bg-page)] text-[var(--text-muted)] border border-rule"
             >
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.button>
@@ -165,8 +165,8 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveAttachmentIndex(idx)}
                 className={cn(
-                  "px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-tight transition-all whitespace-nowrap",
-                  activeAttachmentIndex === idx ? "bg-cyber-violet text-white shadow-lg shadow-cyber-violet/20" : "bg-[var(--bg-surface)] border border-[var(--border-primary)] text-[var(--text-muted)]"
+                  "px-4 sm:px-5 py-2 sm:py-2.5 font-mono text-[11px] tracking-[0.18em] uppercase transition-all whitespace-nowrap",
+                  activeAttachmentIndex === idx ? "bg-ink text-paper" : "bg-[var(--bg-surface)] border border-rule text-[var(--text-muted)]"
                 )}
               >
                 Unit {idx + 1}: {att.name}
@@ -180,11 +180,11 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
           {/* Metadata Sidebar */}
           <div className="w-full md:w-80 lg:w-96 p-5 sm:p-8 overflow-y-auto border-b md:border-b-0 md:border-r border-[var(--border-primary)] bg-[var(--header-bg)] shrink-0 custom-scrollbar">
              <div className="flex items-center gap-2 mb-4 sm:mb-6">
-                <Sparkles className="w-4 h-4 text-cyber-violet" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)]">Contextual Data</p>
+                <Sparkles className="w-4 h-4 text-accent" />
+                <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)]">Contextual Data</p>
              </div>
              
-             <h3 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-6 sm:mb-8 tracking-tight leading-tight">
+             <h3 className="text-xl sm:text-2xl font-serif-display text-[var(--text-primary)] mb-6 sm:mb-8 tracking-tight leading-tight">
                {entry.type === 'orders' ? entry.subject : entry.referenceNumber || "ID UNSPECIFIED"}
              </h3>
              
@@ -192,19 +192,19 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                 <MetaItem icon={<Calendar />} label="Log Timestamp" value={entry.date} />
                 <MetaItem icon={<LayoutGrid />} label={entry.type === 'orders' ? 'Primary Focus' : 'Strategic Project'} value={entry.type === 'orders' ? entry.subject : (entry.project || 'Global Cluster')} />
                 
-                <div className="sm:col-span-2 md:col-span-1 p-5 sm:p-6 bg-[var(--bg-surface)] rounded-[28px] border border-[var(--border-primary)] shadow-sm relative group overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 text-[var(--border-primary)] group-hover:text-cyber-violet/20 transition-colors">
+                <div className="sm:col-span-2 md:col-span-1 p-5 sm:p-6 bg-[var(--bg-surface)] border border-rule relative group overflow-hidden">
+                  <div className="absolute top-0 right-0 p-3 text-[var(--border-primary)] group-hover:text-accent/20 transition-colors">
                     <Share2 className="w-8 h-8" />
                   </div>
-                  <p className="text-[10px] font-black text-[var(--text-muted)] mb-2 uppercase tracking-widest relative z-10">{entry.type === 'inward' ? 'Origin Point' : entry.type === 'outward' ? 'Target Destination' : 'Source Authority'}</p>
-                  <p className="text-base sm:text-lg text-[var(--text-primary)] font-black leading-tight tracking-tight relative z-10">{entry.partyName.replace(/\|\|\|/g, ', ')}</p>
+                  <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] mb-2 relative z-10">{entry.type === 'inward' ? 'Origin Point' : entry.type === 'outward' ? 'Target Destination' : 'Source Authority'}</p>
+                  <p className="text-base sm:text-lg text-[var(--text-primary)] font-serif-body leading-tight tracking-tight relative z-10">{entry.partyName.replace(/\|\|\|/g, ', ')}</p>
                 </div>
 
                 {entry.remarks && (
                    <div className="sm:col-span-2 md:col-span-1 space-y-2">
-                     <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">Annotations</p>
-                     <div className="p-4 sm:p-5 bg-[var(--bg-page)] rounded-[22px] border border-[var(--border-primary)]">
-                        <p className="text-xs font-bold text-[var(--text-secondary)] leading-relaxed italic">"{entry.remarks}"</p>
+                     <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] ml-1">Annotations</p>
+                     <div className="p-4 sm:p-5 bg-[var(--bg-page)] border border-rule">
+                        <p className="text-xs font-serif-body text-[var(--text-secondary)] leading-relaxed italic">"{entry.remarks}"</p>
                      </div>
                    </div>
                 )}
@@ -215,43 +215,43 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
           <div className="flex-1 bg-[var(--bg-page)] flex flex-col relative overflow-y-auto custom-scrollbar">
              {!hasAttachment ? (
                <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] p-8 text-center animate-in fade-in zoom-in-95">
-                 <div className="w-24 h-24 rounded-[40px] bg-[var(--bg-surface)] shadow-sm flex items-center justify-center mb-6 border border-[var(--border-primary)]">
+                 <div className="w-24 h-24 bg-[var(--bg-surface)] flex items-center justify-center mb-6 border border-rule">
                     <FileText className="w-10 h-10 opacity-20" />
                  </div>
-                 <h3 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Deployment Blank</h3>
-                 <p className="text-sm font-bold text-[var(--text-muted)] mt-2">No linked assets detected for this record index.</p>
+                 <h3 className="text-xl font-serif-display text-[var(--text-primary)] tracking-tight">Deployment Blank</h3>
+                 <p className="text-sm font-serif-body text-[var(--text-muted)] mt-2">No linked assets detected for this record index.</p>
                </div>
              ) : (
-               <div className="w-full h-full db-embed-container bg-white/40 relative flex items-center justify-center">
+               <div className="w-full h-full db-embed-container bg-paper/40 relative flex items-center justify-center">
                  {loading && (
-                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md">
-                      <div className="w-16 h-16 bg-white rounded-3xl shadow-glass flex items-center justify-center mb-4">
-                        <Loader2 className="w-8 h-8 text-cyber-violet animate-spin" />
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-paper/80">
+                      <div className="w-16 h-16 bg-paper flex items-center justify-center mb-4">
+                        <Loader2 className="w-8 h-8 text-accent animate-spin" />
                       </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Establishing Uplink...</p>
+                      <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)]">Establishing Uplink...</p>
                     </div>
                  )}
 
                    {fileType === 'pdf' && (sharedUrl || fileLink) ? (
                     isMobile ? (
                       <div className="flex flex-col items-center justify-center min-h-full w-full bg-[var(--bg-page)] p-6 sm:p-8 text-center">
-                        <motion.div 
+                        <motion.div
                           initial={{ scale: 0.9 }}
                           animate={{ scale: 1 }}
-                          className="w-24 h-24 bg-cyber-violet/10 rounded-[40px] flex items-center justify-center mb-8 shadow-inner border border-cyber-violet/10"
+                          className="w-24 h-24 bg-accent/10 flex items-center justify-center mb-8 border border-accent/10"
                         >
-                          <FileText className="w-12 h-12 text-cyber-violet" />
+                          <FileText className="w-12 h-12 text-accent" />
                         </motion.div>
-                        <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-3">Payload Inspection</h3>
-                        <p className="text-[var(--text-muted)] text-sm font-bold mb-10 max-w-xs mx-auto leading-relaxed">
+                        <h3 className="text-2xl font-serif-display text-[var(--text-primary)] tracking-tight mb-3">Payload Inspection</h3>
+                        <p className="text-[var(--text-muted)] text-sm font-serif-body mb-10 max-w-xs mx-auto leading-relaxed">
                           Mobile security protocols require native environment execution for PDF streaming.
                         </p>
-                        <motion.a 
+                        <motion.a
                           whileTap={{ scale: 0.95 }}
-                          href={fileLink || sharedUrl || '#'} 
-                          target="_blank" 
+                          href={`https://docs.google.com/gview?url=${encodeURIComponent(fileLink || sharedUrl || '')}&embedded=true`}
+                          target="_blank"
                           rel="noreferrer"
-                          className="w-full max-w-[280px] flex items-center justify-center gap-3 px-8 py-4 sm:py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-900/20 mb-4"
+                          className="w-full max-w-[280px] flex items-center justify-center gap-3 px-8 py-4 sm:py-5 bg-ink text-paper font-mono text-[11px] tracking-[0.18em] uppercase mb-4"
                         >
                           Launch Viewer
                         </motion.a>
@@ -260,13 +260,13 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                       <>
                         {!iframeLoaded && !loading && (
                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-page)] z-10">
-                            <Loader2 className="w-10 h-10 text-cyber-violet animate-spin mb-4" />
-                            <p className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Rendering Interface...</p>
+                            <Loader2 className="w-10 h-10 text-accent animate-spin mb-4" />
+                            <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)]">Rendering Interface...</p>
                           </div>
                         )}
-                        <iframe 
-                          src={(sharedUrl || fileLink || "").replace('dl=0', 'raw=1')}
-                          className="w-full h-full border-none bg-white"
+                        <iframe
+                          src={`https://docs.google.com/gview?url=${encodeURIComponent(fileLink || '')}&embedded=true`}
+                          className="w-full h-full border-none bg-paper"
                           onLoad={() => setIframeLoaded(true)}
                           title="PDF Preview"
                         />
@@ -278,30 +278,30 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                       animate={{ opacity: 1, scale: 1 }}
                       src={fileLink} 
                       alt="Attachment" 
-                      className="max-w-[90%] max-h-[90%] object-contain rounded-3xl shadow-2xl transition-all"
+                      className="max-w-[90%] max-h-[90%] object-contain transition-all"
                     />
                  ) : fileType === 'video' && fileLink ? (
                     <video 
                       controls 
                       src={fileLink} 
-                      className="max-w-[90%] max-h-[90%] rounded-3xl shadow-2xl bg-black"
+                      className="max-w-[90%] max-h-[90%] bg-black"
                       autoPlay
                     />
                  ) : sharedUrl && window.Dropbox ? (
                     <div ref={embedRef} className="w-full h-full" />
                  ) : (
                     <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-[var(--bg-page)]">
-                        <div className="w-24 h-24 rounded-[40px] bg-red-500/10 text-red-500 flex items-center justify-center mb-8 shadow-inner border border-red-500/10">
+                        <div className="w-24 h-24 bg-bad/5 text-bad flex items-center justify-center mb-8 border border-bad/30">
                             <AlertOctagon className="w-12 h-12" />
                         </div>
-                        <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-3">Preview Protocol Failure</h3>
-                        <p className="text-sm font-bold text-[var(--text-muted)] max-w-sm mx-auto leading-relaxed mb-10">
+                        <h3 className="text-2xl font-serif-display text-[var(--text-primary)] tracking-tight mb-3">Preview Protocol Failure</h3>
+                        <p className="text-sm font-serif-body text-[var(--text-muted)] max-w-sm mx-auto leading-relaxed mb-10">
                           Cloud extraction for this entity type is restricted. Local execution required.
                         </p>
                         <motion.a 
                           whileTap={{ scale: 0.95 }}
                           href={fileLink || '#'} 
-                          className="flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10"
+                          className="flex items-center gap-3 px-8 py-4 bg-ink text-paper font-mono text-[11px] tracking-[0.18em] uppercase"
                         >
                           <Download className="w-5 h-5" />
                           Acquire Payload
@@ -323,12 +323,12 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
 function MetaItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
   return (
     <div className="flex gap-4 items-start group">
-      <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-primary)] flex items-center justify-center shrink-0 text-[var(--text-muted)] group-hover:text-cyber-violet transition-colors shadow-sm">
+      <div className="w-10 h-10 bg-[var(--bg-surface)] border border-rule flex items-center justify-center shrink-0 text-[var(--text-muted)] group-hover:text-accent transition-colors">
         {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: "w-5 h-5" }) : icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-black text-[var(--text-muted)] mb-1 uppercase tracking-widest">{label}</p>
-        <p className="text-base font-black text-[var(--text-primary)] tracking-tight whitespace-pre-wrap break-words">{value}</p>
+        <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] mb-1">{label}</p>
+        <p className="text-base font-serif-body text-[var(--text-primary)] tracking-tight whitespace-pre-wrap break-words">{value}</p>
       </div>
     </div>
   )

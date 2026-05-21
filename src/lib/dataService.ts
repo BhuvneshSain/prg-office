@@ -6,12 +6,24 @@ import type { RegisterEntry, SettingsData, AuditEntry, AuditAction, TaskEntry } 
 
 export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
 
+// Client-side cache for JSON data files
+const cache: Record<string, any> = {};
+
+export const clearDataCache = () => {
+  for (const key in cache) {
+    delete cache[key];
+  }
+};
+
 const sortEntriesByDate = (entries: RegisterEntry[]) => {
   return [...entries].sort((a, b) => b.date.localeCompare(a.date));
 };
 
-export const getRegisterData = async (type: RegisterType): Promise<RegisterEntry[]> => {
+export const getRegisterData = async (type: RegisterType, force = false): Promise<RegisterEntry[]> => {
   if (!checkConfig()) return [];
+  if (!force && cache[type]) {
+    return cache[type] as RegisterEntry[];
+  }
   const path = `/data/${type}.json`;
   
   try {
@@ -19,14 +31,18 @@ export const getRegisterData = async (type: RegisterType): Promise<RegisterEntry
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as RegisterEntry[];
-    return type === 'staff' || type === 'tasks' ? data : sortEntriesByDate(data);
+    const sorted = type === 'staff' || type === 'tasks' ? data : sortEntriesByDate(data);
+    cache[type] = sorted;
+    return sorted;
   } catch (error) {
-    const handled = handleDbxError(error, `getRegisterData(${type})`);
-    return handled === null ? [] : [];
+    handleDbxError(error, `getRegisterData(${type})`);
+    cache[type] = [];
+    return [];
   }
 };
 
 export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]): Promise<boolean> => {
+  cache[type] = data;
   if (!checkConfig()) return false;
   const path = `/data/${type}.json`;
   const content = JSON.stringify(data, null, 2);
@@ -50,7 +66,7 @@ export const addRegisterEntry = async (entry: RegisterEntry): Promise<boolean> =
   const finalData = entry.type === 'staff' ? existingData : sortEntriesByDate(existingData);
   const success = await saveRegisterData(entry.type, finalData);
   if (success) {
-    await logAction('ADD', entry.type, entry.id, `Created ${entry.type} record: ${entry.subject || entry.referenceNumber}`);
+    logAction('ADD', entry.type, entry.id, `Created ${entry.type} record: ${entry.subject || entry.referenceNumber}`);
   }
   return success;
 };
@@ -63,7 +79,7 @@ export const updateRegisterEntry = async (entry: RegisterEntry): Promise<boolean
   const finalData = entry.type === 'staff' ? existingData : sortEntriesByDate(existingData);
   const success = await saveRegisterData(entry.type, finalData);
   if (success) {
-    await logAction('UPDATE', entry.type, entry.id, `Modified ${entry.type} record: ${entry.subject || entry.referenceNumber}`);
+    logAction('UPDATE', entry.type, entry.id, `Modified ${entry.type} record: ${entry.subject || entry.referenceNumber}`);
   }
   return success;
 };
@@ -75,25 +91,33 @@ export const deleteRegisterEntry = async (id: string, type: RegisterType): Promi
   if (filtered.length === existingData.length) return false;
   const success = await saveRegisterData(type, filtered);
   if (success && targetEntry) {
-    await logAction('DELETE', type, id, `Archived ${type} record: ${targetEntry.subject || targetEntry.referenceNumber}`);
+    logAction('DELETE', type, id, `Archived ${type} record: ${targetEntry.subject || targetEntry.referenceNumber}`);
   }
   return success;
 };
 
-export const getSettings = async (): Promise<SettingsData> => {
+export const getSettings = async (force = false): Promise<SettingsData> => {
   if (!checkConfig()) return { departments: [], projects: [], posts: [] };
+  if (!force && cache.settings) {
+    return cache.settings;
+  }
   try {
     const response = await dbx.filesDownload({ path: '/data/settings.json' });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
-    return JSON.parse(text) as SettingsData;
+    const data = JSON.parse(text) as SettingsData;
+    cache.settings = data;
+    return data;
   } catch (error) {
-    const handled = handleDbxError(error, 'getSettings');
-    return handled === null ? { departments: [], projects: [], posts: [] } : { departments: [], projects: [], posts: [] };
+    handleDbxError(error, 'getSettings');
+    const fallback = { departments: [], projects: [], posts: [] };
+    cache.settings = fallback;
+    return fallback;
   }
 };
 
 export const saveSettings = async (settings: SettingsData): Promise<boolean> => {
+  cache.settings = settings;
   if (!checkConfig()) return false;
   const content = JSON.stringify(settings, null, 2);
   try {
@@ -109,16 +133,22 @@ export const saveSettings = async (settings: SettingsData): Promise<boolean> => 
   }
 };
 
-export const getAuditLogs = async (): Promise<AuditEntry[]> => {
+export const getAuditLogs = async (force = false): Promise<AuditEntry[]> => {
   if (!checkConfig()) return [];
+  if (!force && cache['audit-logs']) {
+    return cache['audit-logs'];
+  }
   const path = '/data/audit-logs.json';
   try {
     const response = await dbx.filesDownload({ path });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
-    return JSON.parse(text) as AuditEntry[];
+    const data = JSON.parse(text) as AuditEntry[];
+    cache['audit-logs'] = data;
+    return data;
   } catch (error) {
     handleDbxError(error, 'getAuditLogs');
+    cache['audit-logs'] = [];
     return [];
   }
 };
@@ -133,11 +163,13 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
     type,
     targetId,
     details,
-    user: 'Cyber Admin' // Multi-user support can be added later
+    user: 'Cyber Admin'
   };
   
   logs.unshift(entry);
-  const content = JSON.stringify(logs.slice(0, 1000), null, 2); // Keep last 1000 logs
+  const updatedLogs = logs.slice(0, 1000);
+  cache['audit-logs'] = updatedLogs;
+  const content = JSON.stringify(updatedLogs, null, 2);
   
   try {
     await dbx.filesUpload({
@@ -153,22 +185,29 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
 };
 
 // Task specific methods
-export const getTasks = async (): Promise<TaskEntry[]> => {
+export const getTasks = async (force = false): Promise<TaskEntry[]> => {
   if (!checkConfig()) return [];
+  if (!force && cache.tasks) {
+    return cache.tasks;
+  }
   const path = '/data/tasks.json';
   try {
     const response = await dbx.filesDownload({ path });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as TaskEntry[];
-    return data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const sorted = data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    cache.tasks = sorted;
+    return sorted;
   } catch (error) {
     handleDbxError(error, 'getTasks');
+    cache.tasks = [];
     return [];
   }
 };
 
 export const saveTasks = async (tasks: TaskEntry[]): Promise<boolean> => {
+  cache.tasks = tasks;
   if (!checkConfig()) return false;
   const content = JSON.stringify(tasks, null, 2);
   try {
@@ -189,7 +228,7 @@ export const addTask = async (task: TaskEntry): Promise<boolean> => {
   tasks.unshift(task);
   const success = await saveTasks(tasks);
   if (success) {
-    await logAction('ADD', 'tasks', task.id, `Created task: ${task.title}`);
+    logAction('ADD', 'tasks', task.id, `Created task: ${task.title}`);
   }
   return success;
 };
@@ -199,9 +238,10 @@ export const updateTask = async (task: TaskEntry): Promise<boolean> => {
   const idx = tasks.findIndex(t => t.id === task.id);
   if (idx === -1) return false;
   tasks[idx] = { ...task, updatedAt: new Date().toISOString() };
-  const success = await saveTasks(tasks);
+  const sortedTasks = tasks.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const success = await saveTasks(sortedTasks);
   if (success) {
-    await logAction('UPDATE', 'tasks', task.id, `Updated task: ${task.title}`);
+    logAction('UPDATE', 'tasks', task.id, `Updated task: ${task.title}`);
   }
   return success;
 };
@@ -213,7 +253,7 @@ export const deleteTask = async (id: string): Promise<boolean> => {
   if (filtered.length === tasks.length) return false;
   const success = await saveTasks(filtered);
   if (success && target) {
-    await logAction('DELETE', 'tasks', id, `Deleted task: ${target.title}`);
+    logAction('DELETE', 'tasks', id, `Deleted task: ${target.title}`);
   }
   return success;
 };

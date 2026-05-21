@@ -3,23 +3,21 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { RegisterEntry } from '../types';
 import { motion } from 'framer-motion';
 
-export default function VisualAnalytics({ 
-  inward, outward, orders, myDocs 
-}: { 
-  inward: RegisterEntry[], 
-  outward: RegisterEntry[], 
-  orders: RegisterEntry[], 
-  myDocs: RegisterEntry[] 
+export default function VisualAnalytics({
+  inward, outward, orders, myDocs
+}: {
+  inward: RegisterEntry[],
+  outward: RegisterEntry[],
+  orders: RegisterEntry[],
+  myDocs: RegisterEntry[]
 }) {
-  // Aggregate monthly data for the last 6 months
   const trendData = useMemo(() => {
     const months: string[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
-      months.push(d.toISOString().slice(0, 7)); // YYYY-MM
+      months.push(d.toISOString().slice(0, 7));
     }
-
     return months.map(m => {
       const name = new Date(m + '-01').toLocaleDateString('default', { month: 'short' });
       return {
@@ -32,115 +30,89 @@ export default function VisualAnalytics({
     });
   }, [inward, outward]);
 
-  // Aggregate project data for PieChart
   const projectData = useMemo(() => {
     const allEntries = [...inward, ...outward, ...orders, ...myDocs];
     const counts: Record<string, number> = {};
-    
     allEntries.forEach(e => {
       const p = e.project || 'Global/Other';
       counts[p] = (counts[p] || 0) + 1;
     });
-
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5); // Top 5 projects
+      .slice(0, 5);
   }, [inward, outward, orders, myDocs]);
 
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe'];
+  const COLORS = ['#c14a2b', '#1f1c14', '#7a7264', '#406b3a', '#d6cdb6'];
+
+  const tooltipStyle = {
+    backgroundColor: '#f9f3e7',
+    border: '1px solid #d6cdb6',
+    borderRadius: '0',
+    fontWeight: 'normal' as const,
+    fontSize: '11px',
+    fontFamily: "'IBM Plex Mono', monospace",
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Trend Area Chart */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="lg:col-span-2 glass-card p-5 sm:p-8 rounded-[40px] border-[var(--border-primary)] shadow-glass h-[400px]"
+        className="lg:col-span-2 border border-rule p-5 sm:p-6 h-[360px]"
       >
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Temporal Vector</h3>
-            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Operational Flow Analysis (6M)</p>
+            <h3 className="font-serif-display italic text-lg">entries — <em>last 6 months</em></h3>
+            <p className="font-mono text-[10px] text-muted tracking-[0.16em] uppercase mt-1">Inward + Outward trend</p>
           </div>
           <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500/20 border border-blue-500" />
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Inward</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 bg-accent" />
+              <span className="font-mono text-[10px] text-muted uppercase">Inward</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500" />
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Outward</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 bg-ink" />
+              <span className="font-mono text-[10px] text-muted uppercase">Outward</span>
             </div>
           </div>
         </div>
 
-        <div className="h-[280px] w-full">
+        <div className="h-[260px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trendData}>
               <defs>
                 <linearGradient id="colorInward" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#c14a2b" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#c14a2b" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorOutward" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#1f1c14" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#1f1c14" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 'bold' }} 
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 'bold' }} 
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '16px', 
-                  border: 'none', 
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-                  fontWeight: 'bold',
-                  fontSize: '12px'
-                }} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="inward" 
-                stroke="#3b82f6" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorInward)" 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="outward" 
-                stroke="#10b981" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorOutward)" 
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="#d6cdb6" vertical={false} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#7a7264', fontSize: 10 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#7a7264', fontSize: 10 }} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Area type="monotone" dataKey="inward" stroke="#c14a2b" strokeWidth={2} fillOpacity={1} fill="url(#colorInward)" />
+              <Area type="monotone" dataKey="outward" stroke="#1f1c14" strokeWidth={2} fillOpacity={1} fill="url(#colorOutward)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </motion.div>
 
       {/* Project Pie Chart */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="glass-card p-5 sm:p-8 rounded-[40px] border-[var(--border-primary)] shadow-glass h-[400px] flex flex-col"
+        className="border border-rule p-5 sm:p-6 h-[360px] flex flex-col"
       >
-        <div className="mb-8 text-center sm:text-left">
-          <h3 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Strategic Spread</h3>
-          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Payload Distribution by Segment</p>
+        <div className="mb-6">
+          <h3 className="font-serif-display italic text-lg">projects — <em>distribution</em></h3>
+          <p className="font-mono text-[10px] text-muted tracking-[0.16em] uppercase mt-1">Top 5 by entry count</p>
         </div>
 
         <div className="flex-1 min-h-0">
@@ -150,35 +122,27 @@ export default function VisualAnalytics({
                 data={projectData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
+                innerRadius={50}
+                outerRadius={70}
+                paddingAngle={3}
                 dataKey="value"
               >
                 {projectData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '16px', 
-                  border: 'none', 
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-                  fontWeight: 'bold',
-                  fontSize: '11px'
-                }} 
-              />
-              <Legend 
-                verticalAlign="bottom" 
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend
+                verticalAlign="bottom"
                 height={36}
-                iconType="circle"
-                wrapperStyle={{ 
-                  fontSize: '9px', 
-                  fontWeight: 'bold', 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.05em',
-                  paddingTop: '20px'
+                iconType="square"
+                iconSize={8}
+                wrapperStyle={{
+                  fontSize: '10px',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  paddingTop: '16px'
                 }}
               />
             </PieChart>

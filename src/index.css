@@ -1,102 +1,88 @@
 @import "tailwindcss";
 
 @theme {
-  /* Cyber Palette */
-  --color-cyber-violet: #7c3aed;
-  --color-cyber-cyan: #22d3ee;
-  --color-cyber-fuchsia: #d946ef;
-  --color-cyber-slate: #0f172a;
+  /* Editorial Palette */
+  --color-paper: #f4ede0;
+  --color-panel: #f9f3e7;
+  --color-ink: #1f1c14;
+  --color-muted: #7a7264;
+  --color-rule: #d6cdb6;
+  --color-accent: #c14a2b;
+  --color-good: #406b3a;
+  --color-bad: #b6422f;
 
-  /* Premium Shadows */
-  --shadow-cyber: 0 10px 40px -10px rgba(124, 58, 237, 0.2);
-  --shadow-cyan: 0 10px 40px -10px rgba(34, 211, 238, 0.2);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-
-  /* Roundedness */
-  --radius-3xl: 1.5rem;
-  --radius-4xl: 2rem;
-
-  /* Custom Transitions */
-  --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Font Families */
+  --font-serif-display: 'DM Serif Display', 'Iowan Old Style', Georgia, serif;
+  --font-serif-body: 'DM Serif Text', 'Iowan Old Style', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 :root {
-  --bg-page: #f8fafc;
-  --bg-sidebar: rgba(255, 255, 255, 0.7);
-  --bg-surface: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border-primary: rgba(0, 0, 0, 0.05);
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --input-bg: rgba(255, 255, 255, 0.5);
-  --card-bg: rgba(255, 255, 255, 0.8);
-  --header-bg: rgba(248, 250, 252, 0.8);
-  --table-head: #f8fafc;
-}
-
-.dark {
-  --bg-page: #020617;
-  --bg-sidebar: rgba(15, 23, 42, 0.82);
-  --bg-surface: #0f172a;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-primary: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(15, 23, 42, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --input-bg: rgba(30, 41, 59, 0.5);
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --header-bg: rgba(15, 23, 42, 0.8);
-  --table-head: #1e293b;
+  --bg-page: #f4ede0;
+  --bg-sidebar: #f4ede0;
+  --bg-surface: #f9f3e7;
+  --text-primary: #1f1c14;
+  --text-secondary: #7a7264;
+  --text-muted: #7a7264;
+  --border-primary: #d6cdb6;
+  --border-ink: #1f1c14;
+  --glass-bg: #f9f3e7;
+  --glass-border: #d6cdb6;
+  --input-bg: #f9f3e7;
+  --card-bg: #f9f3e7;
+  --header-bg: #f4ede0;
+  --table-head: #f9f3e7;
 }
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
-
   body {
     margin: 0;
     padding: 0;
     overflow: hidden;
     background-color: var(--bg-page);
     color: var(--text-primary);
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'DM Serif Text', 'Iowan Old Style', Georgia, serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'DM Serif Display', 'Iowan Old Style', Georgia, serif;
   }
 }
 
 @layer components {
   .glass-card {
     background-color: var(--glass-bg);
-    backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
   }
 
   .glass-nav {
     background-color: var(--bg-sidebar);
-    backdrop-filter: blur(16px);
-    border-right: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
+    border-right: 1px solid var(--border-ink);
   }
 
-  .mesh-gradient {
-    background-color: var(--bg-page);
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.08) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(34, 211, 238, 0.08) 0px, transparent 50%);
-    transition: background-color 0.3s ease;
+  /* Editorial mono label */
+  .mono-label {
+    font: 11px/1.4 'IBM Plex Mono', ui-monospace, monospace;
+    color: var(--text-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
   }
 
-  .cyber-glow-hover {
-    @apply transition-all duration-300 hover:shadow-cyber hover:-translate-y-1 active:scale-95;
+  /* Editorial stat numeral */
+  .stat-numeral {
+    font: 800 56px/1.05 'DM Serif Display', Georgia, serif;
+    letter-spacing: -0.01em;
+    font-feature-settings: 'tnum';
+  }
+
+  /* Editorial panel */
+  .editorial-panel {
+    padding: 18px 0 24px;
+    border-top: 1px solid var(--border-ink);
+    border-bottom: 1px solid var(--border-primary);
+    margin-bottom: 18px;
   }
 }
 
@@ -109,7 +95,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-indigo-300 transition-colors;
+  background: var(--border-primary);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* Animations */

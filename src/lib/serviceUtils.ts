@@ -21,6 +21,29 @@ export const checkConfig = () => {
   return true;
 };
 
+let refreshPromise: Promise<void> | null = null;
+
+export const ensureValidToken = async (): Promise<void> => {
+  if (!checkConfig()) return;
+  
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  
+  refreshPromise = (async () => {
+    try {
+      await (dbx as any).auth.checkAndRefreshAccessToken();
+    } catch (err) {
+      console.error("[Dropbox] Token refresh failed:", err);
+      throw err;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
+};
+
 export const handleDbxError = (error: unknown, context: string) => {
   const dbxError = error as { status?: number; error?: { error_summary?: string } };
   const summary = dbxError?.error?.error_summary || "";

@@ -2,7 +2,7 @@ import { useState, memo } from 'react';
 import { 
   ClipboardList, Search, Plus, Calendar, Clock, AlertCircle, 
   CheckCircle2, Trash2, Pencil, ExternalLink, Filter, 
-  Circle, LayoutGrid, List
+  Circle, LayoutGrid, List, RefreshCw
 } from 'lucide-react';
 import type { TaskEntry, TaskStatus, TaskPriority } from '../types';
 import { deleteTask } from '../lib/dataService';
@@ -30,6 +30,42 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
   const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [showFutureTasks, setShowFutureTasks] = useState(false);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const isTaskVisible = (task: TaskEntry): boolean => {
+    if (showFutureTasks) return true;
+    if (task.status !== 'Pending') return true;
+    if (!task.isRecurring || !task.recurrenceInterval || task.recurrenceInterval === 'none') return true;
+    if (!task.dueDate) return true;
+
+    // Daily tasks: visible on or after due date
+    if (task.recurrenceInterval === 'daily') {
+      return todayStr >= task.dueDate;
+    }
+
+    // Weekly tasks: visible starting Monday of the week containing the due date
+    if (task.recurrenceInterval === 'weekly') {
+      const dateD = new Date(task.dueDate);
+      if (isNaN(dateD.getTime())) return true;
+      const day = dateD.getUTCDay();
+      const mondayDate = new Date(dateD);
+      mondayDate.setUTCDate(mondayDate.getUTCDate() - (day === 0 ? 6 : day - 1));
+      const mondayStr = mondayDate.toISOString().split('T')[0];
+      return todayStr >= mondayStr;
+    }
+
+    // Monthly tasks: visible starting 1st of the month containing the due date
+    if (task.recurrenceInterval === 'monthly') {
+      const parts = task.dueDate.split('-');
+      if (parts.length < 3) return true;
+      const startOfMonthStr = `${parts[0]}-${parts[1]}-01`;
+      return todayStr >= startOfMonthStr;
+    }
+
+    return true;
+  };
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = 
@@ -38,8 +74,9 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
       task.assignedTo.some(name => name.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
     const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
+    const matchesVisibility = isTaskVisible(task);
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesVisibility;
   });
 
   const handleDelete = async (id: string) => {
@@ -100,20 +137,32 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-           <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-primary)] shrink-0">
-             <Filter className="w-3.5 h-3.5 text-muted" />
-             <select
-               value={statusFilter}
-               onChange={e => setStatusFilter(e.target.value as any)}
-               className="font-mono text-[11px] tracking-[0.18em] uppercase bg-transparent text-ink outline-none"
-             >
-               <option value="All">All Status</option>
-               <option value="Pending">Pending</option>
-               <option value="In Progress">Working</option>
-               <option value="Completed">Done</option>
-               <option value="Deferred">Deferred</option>
-             </select>
-           </div>
+            <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-primary)] shrink-0">
+              <Filter className="w-3.5 h-3.5 text-muted" />
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as any)}
+                className="font-mono text-[11px] tracking-[0.18em] uppercase bg-transparent text-ink outline-none"
+              >
+                <option value="All">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">Working</option>
+                <option value="Completed">Done</option>
+                <option value="Deferred">Deferred</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 pr-3 border-r border-[var(--border-primary)] shrink-0 select-none">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showFutureTasks}
+                  onChange={e => setShowFutureTasks(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-rule text-accent bg-panel focus:ring-accent"
+                />
+                <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted hover:text-ink transition-colors">Future Tasks</span>
+              </label>
+            </div>
 
            <motion.button
              whileHover={{ scale: 1.05 }}
@@ -199,6 +248,11 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
            <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] flex items-center gap-1">
              <Calendar className="w-3 h-3" /> {task.dueDate || 'No Deadline'}
            </span>
+           {task.isRecurring && task.recurrenceInterval && task.recurrenceInterval !== 'none' && (
+             <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-accent bg-accent/5 border border-accent/20 px-2 py-0.5 flex items-center gap-1.5 rounded-sm">
+               <RefreshCw className="w-3 h-3 animate-[spin_4s_linear_infinite]" /> {task.recurrenceInterval}
+             </span>
+           )}
         </div>
         
         <h4 className="text-lg font-serif-display text-[var(--text-primary)] tracking-tight sm:truncate group-hover:text-accent transition-colors">

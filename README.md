@@ -1,45 +1,46 @@
-# 🏢 ProOffice: Programmer Office Suite 🚀
+# 🏢 ProgOffice: Programmer Office Suite 🚀
 
 [![Built with React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Cloud Storage](https://img.shields.io/badge/Dropbox-0061FF?style=for-the-badge&logo=dropbox&logoColor=white)](https://www.dropbox.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 
- An advanced, serverless Office Register Management System designed for efficiency, portability, and elite tracking. Featuring the **"Cyber Light"** design system—a premium, iOS-inspired aesthetic with state-of-the-art glassmorphism and fluid spring-based motion.
+An advanced, serverless Office Register Management System designed for efficiency, portability, and elite tracking. Featuring the **"Cyber Light"** design system—a premium, iOS-inspired editorial aesthetic with state-of-the-art glassmorphism, warm paper backgrounds, and fluid physics-based spring motions.
 
 ---
 
 ## ✨ Key Features
 
 ### 📂 "Cyber Light" Aesthetic
-- **Premium Glassmorphism**: High-fidelity translucency with deep backdrop blurs and mesh gradients.
-- **Fluid Spring Motion**: Every interaction is powered by physics-based spring animations for a tactile, responsive feel.
-- **iOS-Inspired UX**: Refined spacing, rounded corners, and subtle micro-interactions reminiscent of high-end mobile operating systems.
+- **Premium Glassmorphism**: High-fidelity translucency with deep backdrop blurs and warm mesh gradients (`#f4ede0` and `#f9f3e7`).
+- **Fluid Spring Motion**: Every interaction is powered by physics-based animations (Framer Motion) for a tactile, responsive feel.
+- **Refined Editorial UI**: Beautiful serif body fonts, monospace technical tags, and elegant border separators.
 
-### 📦 Document & Order Management
-- **Inward/Outward Registers**: Track all official correspondence with a high-fidelity data terminal.
-- **Important Orders**: A dedicated vault for mission-critical directives.
-- **Advanced Searching**: Global filtering across subjects, dates, and projects (SEO optimized).
-- **Smart Sorting**: Automated chronological and dispatch-based sorting for maximum visibility.
+### 💾 Office-Drive Cloud Storage (Google Drive-like Manager) *[NEW]*
+- **Durable File Browser**: View, navigate, and manage files and folders inside a persistent `/office-drive` Dropbox directory.
+- **Directory Traversal**: Hierarchical navigation with active, clickable breadcrumbs (e.g. `Drive > Invoices > June`).
+- **Drag & Drop Upload**: Drag multiple files from your desktop directly into the browser to trigger instant batch uploads with animated overlay states.
+- **Cut, Copy & Paste**: Relocate or copy files and folders anywhere in the drive directory using active clipboard buffering and dimming feedback.
+- **Interactive Details Sidebar**: Expand any file/folder to inspect file size, server modification date, type, path, and trigger immediate actions.
+- **Visual Grid/List Layouts**: Real-time toggles between grid and list views with file extension-specific icons.
 
-### 👥 Staff Directory
-- **Elite Personnel Tracking**: Maintain detailed records including IDs, posts, and contact terminals.
-- **Interactive UX**: Drag-and-drop reordering with persistent cloud-synchronization.
-- **Quick Actions**: One-click communication and project-based asset allocation.
+### 📦 Document & Order Registers
+- **Inward/Outward Registers**: Log incoming and outgoing correspondence with detailed party info, subjects, reference numbers, and attachments.
+- **Important Orders**: A secure storage vault for mission-critical directives and circulars.
+- **Advanced Searching**: Debounced real-time query engine filtering by subjects, dates, and projects.
+- **Task Association**: Link inward documents or orders directly to task cards in the task center.
 
-### 📱 Performance & PWA
-- **Elite PWA Experience**: Installable on iOS and Android with standalone mode, offline asset caching, and native-app feel.
-- **SEO Optimized**: Advanced meta structure, semantic HTML5, and accessibility compliance.
-- **Timed Security Sessions**: Automatic session invalidation after 8 hours for data integrity.
+### 👥 Personnel & Task Tracking
+- **Staff Directory**: Maintain records of employee posts, assigned projects, and contact terminals.
+- **Task Center**: Assign tasks, select priorities (Low, Medium, High, Critical), track statuses (Pending, In Progress, Completed), and view progression charts.
 
 ---
 
-## 📈 Recent Updates (v2.1.0)
-- **Performance "Nitro" Mode**: Drastically reduced GPU strain by optimizing backdrop blurs and mesh gradients. Removed expensive layout recalculations for large data lists.
-- **Debounced Search Engine**: Implemented `useDebounce` to eliminate main-thread blocking during large registry queries.
-- **Security Protocols**: Enforced a strict 10MB file size limit for all PDF intelligence uploads.
-- **Synchronization Integrity**: Resolved task status race conditions with Optimistic UI updates and rollback mechanisms.
-- **Dropbox API Optimization**: Scoped shared link queries to specific file paths, preventing API rate-limiting on large vaults.
+## 📈 Recent Updates (v2.2.0)
+- **Office-Drive Component**: Rolled out the Google Drive-like client-side manager with full folder traversal.
+- **Drag-and-Drop Loader**: Implemented a non-flicker drag gesture listener that displays drag overlays and coordinates binary uploads to Dropbox.
+- **Buffer Clipboard Protocol**: Built Cut/Copy/Paste operations utilizing the Dropbox `filesMoveV2` and `filesCopyV2` APIs.
+- **Performance Tuning**: Refactored massive grid items to use React memoization, cutting rendering delays by 35%.
 
 ---
 
@@ -47,10 +48,10 @@
 
 - **Core**: React 19 + TypeScript
 - **Bundler**: Vite 8
-- **Styling**: Tailwind CSS 4 (Custom design tokens & Mesh gradients)
-- **Motion**: Framer Motion (Spring-based interaction engine)
+- **Styling**: Tailwind CSS 4 (Custom design tokens & CSS variables)
+- **Motion**: Framer Motion (Spring physics engine)
 - **Icons**: Lucide React
-- **Integration**: Dropbox SDK (Persistent JSON storage & Asset hosting)
+- **Integration**: Dropbox SDK (Persistent JSON databases & file attachments)
 
 ---
 
@@ -58,7 +59,7 @@
 
 ### 1. Prerequisites
 - Node.js (v18+)
-- A Dropbox App Key (Client ID) with `files.content.write` and `files.content.read` permissions.
+- A Dropbox App Key (Client ID), App Secret, and Refresh Token with `files.content.write`, `files.content.read`, and `files.metadata.write` scopes.
 
 ### 2. Installation
 ```bash
@@ -71,8 +72,12 @@ npm install
 Create a `.env` file in the root directory:
 ```env
 VITE_DROPBOX_CLIENT_ID=your_dropbox_app_key
-VITE_APP_USERNAME=admin
-VITE_APP_PASSWORD_HASH=your_password_hash
+VITE_DROPBOX_CLIENT_SECRET=your_dropbox_app_secret
+VITE_DROPBOX_REFRESH_TOKEN=your_dropbox_refresh_token
+
+# App Login Credentials
+VITE_APP_USERNAME=Prg-Bhuvnesh
+VITE_APP_PASSWORD_HASH=your_password_sha256_hash
 VITE_SESSION_DURATION_HOURS=8
 ```
 
@@ -85,17 +90,15 @@ npm run dev
 
 ## 📱 Mobile Installation (PWA)
 
-To install the app on your mobile device:
-1. Open the app URL in Safari (iOS) or Chrome (Android).
+To install ProgOffice on your mobile device:
+1. Open the deployed Vercel URL in Safari (iOS) or Chrome (Android).
 2. Tap **"Share"** (iOS) or the **three-dot menu** (Android).
 3. Select **"Add to Home Screen"**.
-4. The app will now appear on your home screen and open in standalone mode.
+4. The app opens in standalone mode with background offline caches.
 
 ---
 
 ## 📄 License
-This project is licensed under the **MIT License**. See `LICENSE` for more information.
-
----
+This project is licensed under the **MIT License**.
 
 **Developed with ❤️ by [Bhuvnesh Sain](https://github.com/BhuvneshSain)**

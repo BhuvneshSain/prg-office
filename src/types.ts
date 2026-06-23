@@ -9,6 +9,8 @@ export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essentia
 export type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Deferred';
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical';
 
+export type RecurrenceInterval = 'daily' | 'weekly' | 'monthly' | 'none';
+
 export interface TaskEntry {
   id: string;
   title: string;
@@ -19,6 +21,8 @@ export interface TaskEntry {
   assignedTo: string[]; // Names of staff members
   linkedDocId?: string; // Reference to inward/order id
   linkedDocType?: 'inward' | 'orders';
+  isRecurring?: boolean;
+  recurrenceInterval?: RecurrenceInterval;
   createdAt: string;
   updatedAt: string;
 }

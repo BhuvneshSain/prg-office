@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClipboardList, CheckCircle2, XCircle, Loader2, Plus, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { TaskEntry, TaskStatus, TaskPriority, RegisterEntry } from '../types';
+import type { TaskEntry, TaskStatus, TaskPriority, RegisterEntry, RecurrenceInterval } from '../types';
 import { addTask, updateTask } from '../lib/dataService';
 import { MultiComboBox } from './ComboBox';
 import { clsx, type ClassValue } from 'clsx';
@@ -33,6 +33,8 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
     priority: 'Medium' as TaskPriority,
     status: 'Pending' as TaskStatus,
     dueDate: '',
+    isRecurring: false,
+    recurrenceInterval: 'none' as RecurrenceInterval,
   });
 
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -45,6 +47,8 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
         priority: editTask.priority,
         status: editTask.status,
         dueDate: editTask.dueDate || '',
+        isRecurring: editTask.isRecurring || false,
+        recurrenceInterval: editTask.recurrenceInterval || 'none',
       });
       setSelectedAssignees(editTask.assignedTo);
     } else if (linkedDoc) {
@@ -52,6 +56,8 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
         ...f,
         title: `Reply to: ${linkedDoc.subject}`,
         description: `Follow up on inward document from ${linkedDoc.partyName} (Ref: ${linkedDoc.referenceNumber})`,
+        isRecurring: false,
+        recurrenceInterval: 'none',
       }));
     }
   }, [editTask, linkedDoc]);
@@ -90,7 +96,7 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
         setSuccessMsg('New task initialized.');
 
         if (!onClose) {
-          setForm({ title: '', description: '', priority: 'Medium', status: 'Pending', dueDate: '' });
+          setForm({ title: '', description: '', priority: 'Medium', status: 'Pending', dueDate: '', isRecurring: false, recurrenceInterval: 'none' });
           setSelectedAssignees([]);
         }
       }
@@ -162,6 +168,49 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
             <label className={LABEL_CLS}>Due Date</label>
             <input type="date" className={INPUT_CLS} value={form.dueDate} onChange={e => set('dueDate', e.target.value)} />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-rule pt-4">
+          <div className="flex items-center gap-3 h-full min-h-[44px]">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={form.isRecurring}
+                onChange={e => {
+                  const checked = e.target.checked;
+                  setForm(f => ({
+                    ...f,
+                    isRecurring: checked,
+                    recurrenceInterval: checked ? (f.recurrenceInterval === 'none' ? 'daily' : f.recurrenceInterval) : 'none'
+                  }));
+                }}
+                className="w-4 h-4 rounded border-rule text-accent bg-panel focus:ring-accent"
+              />
+              <span className="font-mono text-[11px] text-ink tracking-[0.18em] uppercase">Recurring Task</span>
+            </label>
+          </div>
+
+          <AnimatePresence>
+            {form.isRecurring && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-1.5"
+              >
+                <label className={LABEL_CLS}>Recurrence Interval</label>
+                <select
+                  className={INPUT_CLS}
+                  value={form.recurrenceInterval}
+                  onChange={e => set('recurrenceInterval', e.target.value as any)}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="space-y-1.5">

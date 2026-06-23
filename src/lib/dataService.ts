@@ -1,7 +1,7 @@
 /**
  * Service for managing Register and settings data (JSON) in Dropbox
  */
-import { dbx, checkConfig, handleDbxError } from './serviceUtils';
+import { dbx, checkConfig, handleDbxError, ensureValidToken } from './serviceUtils';
 import type { RegisterEntry, SettingsData, AuditEntry, AuditAction, TaskEntry } from '../types';
 
 export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
@@ -27,6 +27,7 @@ export const getRegisterData = async (type: RegisterType, force = false): Promis
   const path = `/data/${type}.json`;
   
   try {
+    await ensureValidToken();
     const response = await dbx.filesDownload({ path });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
@@ -48,6 +49,7 @@ export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]
   const content = JSON.stringify(data, null, 2);
   
   try {
+    await ensureValidToken();
     await dbx.filesUpload({
       path,
       contents: content,
@@ -102,6 +104,7 @@ export const getSettings = async (force = false): Promise<SettingsData> => {
     return cache.settings;
   }
   try {
+    await ensureValidToken();
     const response = await dbx.filesDownload({ path: '/data/settings.json' });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
@@ -121,6 +124,7 @@ export const saveSettings = async (settings: SettingsData): Promise<boolean> => 
   if (!checkConfig()) return false;
   const content = JSON.stringify(settings, null, 2);
   try {
+    await ensureValidToken();
     await dbx.filesUpload({
       path: '/data/settings.json',
       contents: content,
@@ -140,6 +144,7 @@ export const getAuditLogs = async (force = false): Promise<AuditEntry[]> => {
   }
   const path = '/data/audit-logs.json';
   try {
+    await ensureValidToken();
     const response = await dbx.filesDownload({ path });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
@@ -172,6 +177,7 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
   const content = JSON.stringify(updatedLogs, null, 2);
   
   try {
+    await ensureValidToken();
     await dbx.filesUpload({
       path: '/data/audit-logs.json',
       contents: content,
@@ -192,6 +198,7 @@ export const getTasks = async (force = false): Promise<TaskEntry[]> => {
   }
   const path = '/data/tasks.json';
   try {
+    await ensureValidToken();
     const response = await dbx.filesDownload({ path });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
@@ -211,6 +218,7 @@ export const saveTasks = async (tasks: TaskEntry[]): Promise<boolean> => {
   if (!checkConfig()) return false;
   const content = JSON.stringify(tasks, null, 2);
   try {
+    await ensureValidToken();
     await dbx.filesUpload({
       path: '/data/tasks.json',
       contents: content,

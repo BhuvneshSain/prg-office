@@ -20,7 +20,6 @@ import OrdersTable from './components/OrdersTable';
 import Settings from './components/Settings';
 import StaffForm from './components/StaffForm';
 import StaffTable from './components/StaffTable';
-import EssentialDocs from './components/EssentialDocs';
 import TaskManager from './components/TaskManager';
 import TaskForm from './components/TaskForm';
 import { Users, FileText, LogOut, Loader2, ClipboardList } from 'lucide-react';
@@ -36,7 +35,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'tasks' | 'essential-docs' | 'reports' | 'settings' | 'office-drive';
+type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'tasks' | 'reports' | 'settings' | 'office-drive';
 
 const TAB_LABELS: Record<Tab, string> = {
   dashboard: 'Dashboard',
@@ -45,7 +44,6 @@ const TAB_LABELS: Record<Tab, string> = {
   orders: 'Important Orders',
   staff: 'Staff Management',
   tasks: 'Task Management',
-  'essential-docs': 'Essential Tools / Docs',
   reports: 'Reports',
   settings: 'Settings',
   'office-drive': 'Office-Drive',
@@ -57,7 +55,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const path = window.location.pathname.replace(/^\/+/, '');
-    const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'essential-docs', 'reports', 'settings', 'office-drive'];
+    const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'reports', 'settings', 'office-drive'];
     return validTabs.includes(path as Tab) ? path as Tab : 'dashboard';
   });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -74,7 +72,7 @@ export default function App() {
   useEffect(() => {
     const onPopState = () => {
       const path = window.location.pathname.replace(/^\/+/, '');
-      const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'essential-docs', 'reports', 'settings', 'office-drive'];
+      const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'reports', 'settings', 'office-drive'];
       const tab = validTabs.includes(path as Tab) ? path as Tab : 'dashboard';
       setActiveTab(tab);
     };
@@ -146,7 +144,6 @@ export default function App() {
   const [ordersData, setOrdersData] = useState<RegisterEntry[]>([]);
   const [staffData, setStaffData] = useState<RegisterEntry[]>([]);
   const [tasksData, setTasksData] = useState<TaskEntry[]>([]);
-  const [myDocsData, setMyDocsData] = useState<RegisterEntry[]>([]);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -251,13 +248,12 @@ export default function App() {
     setRefreshing(true);
     setErrorHeader(null);
     try {
-      const [inData, outData, ordData, stfData, taskData, docData, setData] = await Promise.all([
+      const [inData, outData, ordData, stfData, taskData, setData] = await Promise.all([
         getRegisterData('inward', force),
         getRegisterData('outward', force),
         getRegisterData('orders', force),
         getRegisterData('staff', force),
         getRegisterData('tasks', force) as Promise<any>,
-        getRegisterData('essential-docs', force),
         getSettings(force)
       ]);
       setInwardData(inData);
@@ -265,7 +261,6 @@ export default function App() {
       setOrdersData(ordData);
       setStaffData(stfData);
       setTasksData(taskData);
-      setMyDocsData(docData);
       setSettings(setData);
     } catch (err: unknown) {
       const error = err as Error;
@@ -428,18 +423,16 @@ export default function App() {
             />
           </div>
         );
-      case 'essential-docs':
-        return <EssentialDocs data={myDocsData} onRefresh={fetchData} />;
       case 'office-drive':
         return <OfficeDrive onRefresh={fetchData} />;
       case 'reports':
-        return <Reports inward={inwardData} outward={outwardData} orders={ordersData} myDocs={myDocsData} />;
+        return <Reports inward={inwardData} outward={outwardData} orders={ordersData} />;
       case 'settings':
         return settings
           ? <Settings settings={settings} onSettingsChange={fetchData} />
           : <div className="flex justify-center p-16"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
       default:
-        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} myDocsCount={myDocsData.length} tasksCount={tasksData.length} tasksData={tasksData} />;
+        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} tasksCount={tasksData.length} tasksData={tasksData} />;
     }
   };
 
@@ -634,14 +627,13 @@ export default function App() {
             <div>
               <h4 className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-2.5">Management</h4>
               <ul className="flex flex-col gap-0.5">
-                {(['staff', 'tasks', 'essential-docs', 'office-drive'] as Tab[]).map(tab => (
+                {(['staff', 'tasks', 'office-drive'] as Tab[]).map(tab => (
                   <NavItem
                     key={tab}
                     icon={
                       tab === 'staff' ? <Users className="w-4 h-4" /> :
                       tab === 'tasks' ? <ClipboardList className="w-4 h-4" /> :
-                      tab === 'office-drive' ? <HardDrive className="w-4 h-4" /> :
-                      <FileText className="w-4 h-4" />
+                      <HardDrive className="w-4 h-4" />
                     }
                     label={TAB_LABELS[tab]}
                     active={activeTab === tab}
@@ -650,8 +642,7 @@ export default function App() {
                     badge={
                       tab === 'staff' ? staffData.length :
                       tab === 'tasks' ? tasksData.filter(t => t.status !== 'Completed').length :
-                      tab === 'office-drive' ? null :
-                      myDocsData.length
+                      null
                     }
                   />
                 ))}
@@ -817,7 +808,7 @@ export default function App() {
                 { tab: 'inward', icon: <Inbox className="w-4 h-4" />, label: 'Inward' },
                 { tab: 'tasks', icon: <ClipboardList className="w-4 h-4" />, label: 'Tasks' },
                 { tab: 'orders', icon: <AlertOctagon className="w-4 h-4" />, label: 'Orders' },
-                { tab: 'essential-docs', icon: <FileText className="w-4 h-4" />, label: 'Docs' },
+                { tab: 'office-drive', icon: <HardDrive className="w-4 h-4" />, label: 'Drive' },
               ] as const
             ).map(({ tab, icon, label }) => {
               const isActive = activeTab === tab;
@@ -894,7 +885,7 @@ function NavItem({ icon, label, active = false, isOpen, onClick, badge }: { icon
   );
 }
 
-function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, myDocsCount, tasksCount, tasksData }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; myDocsCount: number; tasksCount: number; tasksData: TaskEntry[] }) {
+function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, tasksCount, tasksData }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; tasksCount: number; tasksData: TaskEntry[] }) {
   const completedTasks = tasksData.filter(t => t.status === 'Completed').length;
   const pendingTasks = tasksData.filter(t => t.status === 'Pending').length;
   const inProgressTasks = tasksData.filter(t => t.status === 'In Progress').length;
@@ -933,7 +924,6 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
         <StatCard label="Pending tasks" value={pendingTasks} note="awaiting action" variant="accent" />
         <StatCard label="Completed tasks" value={completedTasks} note="resolved and closed" variant="good" />
         <StatCard label="In progress" value={inProgressTasks} note="actively being worked on" />
-        <StatCard label="Essential docs" value={myDocsCount} note="tools and references" />
         <StatCard label="Total entries" value={inwardCount + outwardCount + ordersCount} note="across all registers" />
       </motion.section>
 
@@ -1002,7 +992,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
             { title: 'Important Orders', desc: 'Log urgent assignments & directives.', tab: 'orders' as Tab, icon: <AlertOctagon className="w-4 h-4" /> },
             { title: 'Staff Directory', desc: 'Personnel and project allocations.', tab: 'staff' as Tab, icon: <Users className="w-4 h-4" /> },
             { title: 'Task Center', desc: 'Manage directives and responses.', tab: 'tasks' as Tab, icon: <ClipboardList className="w-4 h-4" /> },
-            { title: 'Resource Hub', desc: 'Essential tools and documentation.', tab: 'essential-docs' as Tab, icon: <FileText className="w-4 h-4" /> },
+            { title: 'Office Drive', desc: 'Traverse and manage office files.', tab: 'office-drive' as Tab, icon: <HardDrive className="w-4 h-4" /> },
           ].map(card => (
             <motion.div
               key={card.title}

@@ -4,12 +4,11 @@ import type { RegisterEntry } from '../types';
 import { motion } from 'framer-motion';
 
 export default function VisualAnalytics({
-  inward, outward, orders, myDocs
+  inward, outward, orders
 }: {
   inward: RegisterEntry[],
   outward: RegisterEntry[],
-  orders: RegisterEntry[],
-  myDocs: RegisterEntry[]
+  orders: RegisterEntry[]
 }) {
   const trendData = useMemo(() => {
     const months: string[] = [];
@@ -31,7 +30,7 @@ export default function VisualAnalytics({
   }, [inward, outward]);
 
   const projectData = useMemo(() => {
-    const allEntries = [...inward, ...outward, ...orders, ...myDocs];
+    const allEntries = [...inward, ...outward, ...orders];
     const counts: Record<string, number> = {};
     allEntries.forEach(e => {
       const p = e.project || 'Global/Other';
@@ -41,7 +40,7 @@ export default function VisualAnalytics({
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
-  }, [inward, outward, orders, myDocs]);
+  }, [inward, outward, orders]);
 
   const COLORS = ['#c14a2b', '#1f1c14', '#7a7264', '#406b3a', '#d6cdb6'];
 

@@ -4,7 +4,7 @@
 import { dbx, checkConfig, handleDbxError, ensureValidToken } from './serviceUtils';
 import type { RegisterEntry, SettingsData, AuditEntry, AuditAction, TaskEntry } from '../types';
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'tasks';
 
 // Client-side cache for JSON data files
 const cache: Record<string, any> = {};

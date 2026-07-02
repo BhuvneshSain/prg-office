@@ -93,6 +93,10 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<DropboxEntry | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   
   // Modals & inputs
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
@@ -119,6 +123,46 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
       loadDirectory(currentPath);
     }
   }, [currentPath]);
+
+  // Fetch preview link when selection changes
+  useEffect(() => {
+    if (!selectedItem || selectedItem['.tag'] !== 'file') {
+      setPreviewUrl(null);
+      return;
+    }
+    
+    const ext = selectedItem.name.split('.').pop()?.toLowerCase() || '';
+    const isPreviewable = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'mp4', 'mov', 'avi', 'mkv', 'pdf'].includes(ext);
+    
+    if (!isPreviewable) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchPreview = async () => {
+      setLoadingPreview(true);
+      setPreviewUrl(null);
+      try {
+        await ensureValidToken();
+        const response = await dbx.filesGetTemporaryLink({ path: selectedItem.path_display || '' });
+        if (isMounted) {
+          setPreviewUrl(response.result.link);
+        }
+      } catch (err) {
+        console.error("Error fetching preview link:", err);
+      } finally {
+        if (isMounted) {
+          setLoadingPreview(false);
+        }
+      }
+    };
+
+    fetchPreview();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedItem]);
 
   const loadDirectory = async (path: string) => {
     setLoading(true);
@@ -647,10 +691,69 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
                   <X className="w-4 h-4" />
                 </button>
 
-                <div className="flex justify-center py-4 border-b border-rule">
-                  <div className="scale-125">
-                    {getFileIcon(selectedItem.name, selectedItem['.tag'])}
-                  </div>
+                <div className="border-b border-rule pb-4 flex justify-center w-full overflow-hidden">
+                  {selectedItem['.tag'] === 'folder' ? (
+                    <div className="py-4 scale-125">
+                      {getFileIcon(selectedItem.name, selectedItem['.tag'])}
+                    </div>
+                  ) : (() => {
+                    const ext = selectedItem.name.split('.').pop()?.toLowerCase() || '';
+                    if (loadingPreview) {
+                      return (
+                        <div className="w-full aspect-video flex flex-col items-center justify-center bg-paper border border-rule gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin text-accent" />
+                          <span className="font-mono text-[9px] text-muted uppercase tracking-wider">Generating Preview...</span>
+                        </div>
+                      );
+                    }
+                    if (previewUrl) {
+                      if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) {
+                        return (
+                          <div 
+                            onClick={() => setShowPreviewModal(true)}
+                            className="relative group w-full aspect-video border border-rule bg-paper flex items-center justify-center cursor-pointer overflow-hidden"
+                          >
+                            <img src={previewUrl} alt={selectedItem.name} className="max-h-full max-w-full object-contain transition-transform group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-ink/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-paper font-mono text-[9px] uppercase tracking-wider">
+                              Click to Zoom
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) {
+                        return (
+                          <div 
+                            onClick={() => setShowPreviewModal(true)}
+                            className="relative group w-full aspect-video border border-rule bg-paper flex items-center justify-center cursor-pointer overflow-hidden"
+                          >
+                            <video src={previewUrl} muted playsInline className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-ink/30 flex items-center justify-center group-hover:bg-ink/50 transition-colors">
+                              <div className="p-2.5 rounded-full bg-paper text-ink border border-ink shadow-sm scale-90 group-hover:scale-100 transition-transform">
+                                <Video className="w-4 h-4 text-accent fill-accent/10" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (ext === 'pdf') {
+                        return (
+                          <div 
+                            onClick={() => setShowPreviewModal(true)}
+                            className="relative group w-full aspect-video border border-rule bg-paper flex flex-col items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <FileText className="w-8 h-8 text-bad shrink-0" />
+                            <span className="font-mono text-[9px] text-muted uppercase tracking-wider">Click to Read PDF</span>
+                            <div className="absolute inset-0 bg-ink/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        );
+                      }
+                    }
+                    return (
+                      <div className="py-4 scale-125">
+                        {getFileIcon(selectedItem.name, selectedItem['.tag'])}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-3 min-w-0">
@@ -683,6 +786,15 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
                 </div>
 
                 <div className="border-t border-rule pt-4 grid grid-cols-2 gap-2">
+                  {selectedItem['.tag'] === 'file' && ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'mp4', 'mov', 'avi', 'mkv', 'pdf'].includes(selectedItem.name.split('.').pop()?.toLowerCase() || '') && (
+                    <button
+                      onClick={() => setShowPreviewModal(true)}
+                      className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-accent text-paper font-mono text-[9px] tracking-widest uppercase hover:bg-accent/90 transition-colors cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Preview / Play
+                    </button>
+                  )}
                   <button
                     onClick={() => handleOpen(selectedItem)}
                     className="flex items-center justify-center gap-1.5 py-2.5 bg-ink text-paper font-mono text-[9px] tracking-widest uppercase hover:bg-ink/90 transition-colors cursor-pointer"
@@ -836,6 +948,108 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
                   Save Rename
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PREVIEW / PLAY MODAL */}
+      <AnimatePresence>
+        {showPreviewModal && selectedItem && previewUrl && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-ink/75 backdrop-blur-sm"
+              onClick={() => setShowPreviewModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative bg-paper w-full max-w-4xl border border-ink overflow-hidden z-10 flex flex-col max-h-[90vh]"
+            >
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-rule flex justify-between items-center bg-panel shrink-0">
+                <div className="flex items-center gap-2 min-w-0 pr-4">
+                  <HardDrive className="w-4 h-4 text-accent shrink-0" />
+                  <h3 className="font-serif-display italic text-base truncate" title={selectedItem.name}>
+                    {selectedItem.name}
+                  </h3>
+                  <span className="font-mono text-[9px] text-muted px-1.5 py-0.5 bg-ink/5 border border-rule">
+                    {formatBytes(selectedItem.size)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <a
+                    href={previewUrl}
+                    download={selectedItem.name}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1.5 text-muted hover:text-accent transition-colors flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider"
+                    title="Download File"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Download</span>
+                  </a>
+                  <button 
+                    onClick={() => setShowPreviewModal(false)} 
+                    className="p-1.5 text-muted hover:text-bad transition-colors"
+                  >
+                    <X className="w-4.5 h-4.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-auto p-6 bg-paper flex items-center justify-center min-h-[300px]">
+                {(() => {
+                  const ext = selectedItem.name.split('.').pop()?.toLowerCase() || '';
+                  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) {
+                    return (
+                      <img 
+                        src={previewUrl} 
+                        alt={selectedItem.name} 
+                        className="max-h-[70vh] max-w-full object-contain select-none shadow-sm" 
+                      />
+                    );
+                  }
+                  if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) {
+                    return (
+                      <video 
+                        src={previewUrl} 
+                        controls 
+                        autoPlay 
+                        className="max-h-[70vh] w-full max-w-3xl outline-none shadow-sm" 
+                      />
+                    );
+                  }
+                  if (ext === 'pdf') {
+                    return (
+                      <iframe 
+                        src={`${previewUrl}#toolbar=0`}
+                        title={selectedItem.name} 
+                        className="w-full h-[70vh] border-0 bg-panel shadow-inner" 
+                      />
+                    );
+                  }
+                  return (
+                    <div className="flex flex-col items-center gap-3 py-12">
+                      {getFileIcon(selectedItem.name, selectedItem['.tag'])}
+                      <p className="font-serif-body text-sm text-ink font-medium">No preview available for this format.</p>
+                      <a 
+                        href={previewUrl} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="font-mono text-[10px] text-accent hover:underline uppercase tracking-wider"
+                      >
+                        Download File instead
+                      </a>
+                    </div>
+                  );
+                })()}
+              </div>
             </motion.div>
           </div>
         )}

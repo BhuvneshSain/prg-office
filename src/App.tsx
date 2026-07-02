@@ -476,7 +476,7 @@ export default function App() {
       case 'office-drive':
         return <OfficeDrive onRefresh={fetchData} />;
       case 'reports':
-        return <Reports inward={inwardData} outward={outwardData} orders={ordersData} myDocs={[]} />;
+        return <Reports inward={inwardData} outward={outwardData} orders={ordersData} />;
       case 'settings':
         return settings
           ? <Settings settings={settings} onSettingsChange={fetchData} />
@@ -1049,7 +1049,7 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
             { title: 'Important Orders', desc: 'Log urgent assignments & directives.', tab: 'orders' as Tab, icon: <AlertOctagon className="w-4 h-4" /> },
             { title: 'Staff Directory', desc: 'Personnel and project allocations.', tab: 'staff' as Tab, icon: <Users className="w-4 h-4" /> },
             { title: 'Task Center', desc: 'Manage directives and responses.', tab: 'tasks' as Tab, icon: <ClipboardList className="w-4 h-4" /> },
-            { title: 'Office Drive', desc: 'Browse and traverse office cloud drive.', tab: 'office-drive' as Tab, icon: <HardDrive className="w-4 h-4" /> },
+            { title: 'Office Drive', desc: 'Traverse and manage office files.', tab: 'office-drive' as Tab, icon: <HardDrive className="w-4 h-4" /> },
           ].map(card => (
             <motion.div
               key={card.title}

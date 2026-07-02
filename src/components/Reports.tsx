@@ -7,35 +7,32 @@ import AuditLogs from './AuditLogs';
 import VisualAnalytics from './VisualAnalytics';
 
 const Reports = memo(function Reports({
-  inward, outward, orders, myDocs
+  inward, outward, orders
 }: {
   inward: RegisterEntry[],
   outward: RegisterEntry[],
-  orders: RegisterEntry[],
-  myDocs: RegisterEntry[]
+  orders: RegisterEntry[]
 }) {
   const stats = React.useMemo(() => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const totalInward = inward.length;
     const totalOutward = outward.length;
     const totalOrders = orders.length;
-    const totalMyDocs = myDocs.length;
-    const totalDocs = totalInward + totalOutward + totalOrders + totalMyDocs;
+    const totalDocs = totalInward + totalOutward + totalOrders;
 
     const thisMonthInward = inward.filter(i => i.date.startsWith(currentMonth)).length;
     const thisMonthOutward = outward.filter(o => o.date.startsWith(currentMonth)).length;
     const thisMonthOrders = orders.filter(o => o.date.startsWith(currentMonth)).length;
-    const thisMonthMyDocs = myDocs.filter(m => m.date.startsWith(currentMonth)).length;
 
     return {
-      totalInward, totalOutward, totalOrders, totalMyDocs, totalDocs,
-      thisMonthInward, thisMonthOutward, thisMonthOrders, thisMonthMyDocs
+      totalInward, totalOutward, totalOrders, totalDocs,
+      thisMonthInward, thisMonthOutward, thisMonthOrders
     };
-  }, [inward, outward, orders, myDocs]);
+  }, [inward, outward, orders]);
 
   const {
-    totalInward, totalOutward, totalOrders, totalMyDocs, totalDocs,
-    thisMonthInward, thisMonthOutward, thisMonthOrders, thisMonthMyDocs
+    totalInward, totalOutward, totalOrders, totalDocs,
+    thisMonthInward, thisMonthOutward, thisMonthOrders
   } = stats;
 
   const [selectedEntry, setSelectedEntry] = useState<RegisterEntry | null>(null);
@@ -64,12 +61,11 @@ const Reports = memo(function Reports({
       </div>
 
       {/* Stat Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard title="Total Entries" value={totalDocs} icon={<Hash />} subtitle="All registers" />
         <StatCard title="Inward" value={totalInward} icon={<TrendingUp />} subtitle={`${thisMonthInward} this month`} />
         <StatCard title="Outward" value={totalOutward} icon={<TrendingUp className="rotate-180" />} subtitle={`${thisMonthOutward} this month`} />
         <StatCard title="Orders" value={totalOrders} icon={<AlertOctagon />} subtitle={`${thisMonthOrders} this month`} />
-        <StatCard title="Docs" value={totalMyDocs} icon={<Files />} subtitle={`${thisMonthMyDocs} this month`} />
       </div>
 
       {/* Visual Analytics */}
@@ -77,7 +73,6 @@ const Reports = memo(function Reports({
         inward={inward}
         outward={outward}
         orders={orders}
-        myDocs={myDocs}
       />
 
       {/* Audit Log */}

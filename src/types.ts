@@ -4,7 +4,7 @@ export interface AttachmentsData {
   link?: string; // Optional temporary download link fetched from dbx
 }
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'tasks';
 
 export type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Deferred';
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical';

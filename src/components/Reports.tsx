@@ -1,6 +1,6 @@
 import React, { useState, memo } from 'react';
 import type { RegisterEntry } from '../types';
-import { BarChart3, TrendingUp, Hash, AlertOctagon, Files } from 'lucide-react';
+import { BarChart3, TrendingUp, Hash, AlertOctagon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import DocumentModal from './DocumentModal';
 import AuditLogs from './AuditLogs';

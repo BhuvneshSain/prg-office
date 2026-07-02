@@ -208,7 +208,7 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
-    const cleanName = newFolderName.trim().replace(/[\/\\?%*:|"<>]/g, '_');
+    const cleanName = newFolderName.trim().replace(new RegExp('[/\\\\?%*:|"<>]', 'g'), '_');
     const folderPath = `${currentPath}/${cleanName}`;
     try {
       await ensureValidToken();
@@ -226,7 +226,7 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
   const handleRename = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!renameTarget || !renameNewName.trim()) return;
-    const cleanName = renameNewName.trim().replace(/[\/\\?%*:|"<>]/g, '_');
+    const cleanName = renameNewName.trim().replace(new RegExp('[/\\\\?%*:|"<>]', 'g'), '_');
     const parentPath = renameTarget.path_display?.substring(0, renameTarget.path_display.lastIndexOf('/'));
     const newPath = `${parentPath}/${cleanName}`;
     try {

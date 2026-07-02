@@ -14,6 +14,8 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
   const [departments, setDepartments] = useState<string[]>(settings.departments);
   const [projects, setProjects] = useState<string[]>(settings.projects);
   const [posts, setPosts] = useState<string[]>(settings.posts ?? []);
+  const [whatsappApiKey, setWhatsappApiKey] = useState(settings.whatsappApiKey ?? '');
+  const [whatsappRecipientPhone, setWhatsappRecipientPhone] = useState(settings.whatsappRecipientPhone ?? '');
   const [newDept, setNewDept] = useState('');
   const [newProject, setNewProject] = useState('');
   const [newPost, setNewPost] = useState('');
@@ -58,10 +60,44 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
   const handleSave = async () => {
     setSaving(true);
     setSuccess(false);
-    const newSettings: SettingsData = { departments, projects, posts };
+
+    // Apply any active edits that haven't been blurred/committed to local state yet
+    let currentDepts = departments;
+    if (editingDept && editingDept.new.trim()) {
+      currentDepts = departments.map(d => d === editingDept.old ? editingDept.new.trim() : d);
+    }
+    let currentProjects = projects;
+    if (editingProject && editingProject.new.trim()) {
+      currentProjects = projects.map(p => p === editingProject.old ? editingProject.new.trim() : p);
+    }
+    let currentPosts = posts;
+    if (editingPost && editingPost.new.trim()) {
+      currentPosts = posts.map(p => p === editingPost.old ? editingPost.new.trim() : p);
+    }
+
+    const newSettings: SettingsData = { 
+      departments: currentDepts, 
+      projects: currentProjects, 
+      posts: currentPosts,
+      whatsappApiKey: whatsappApiKey.trim() || undefined,
+      whatsappRecipientPhone: whatsappRecipientPhone.trim() || undefined
+    };
     const ok = await saveDropboxSettings(newSettings);
-    if (ok) { setSuccess(true); onSettingsChange(); setTimeout(() => setSuccess(false), 3000); }
-    else alert('Sync failed.');
+    if (ok) {
+      if (editingDept && editingDept.new.trim()) setDepartments(currentDepts);
+      if (editingProject && editingProject.new.trim()) setProjects(currentProjects);
+      if (editingPost && editingPost.new.trim()) setPosts(currentPosts);
+
+      setEditingDept(null);
+      setEditingProject(null);
+      setEditingPost(null);
+
+      setSuccess(true);
+      onSettingsChange();
+      setTimeout(() => setSuccess(false), 3000);
+    } else {
+      alert('Sync failed.');
+    }
     setSaving(false);
   };
 
@@ -141,6 +177,39 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
           placeholder="New rank..."
           emptyMsg="No ranks defined."
         />
+      </div>
+
+      {/* WhatsApp Configuration */}
+      <div className="border border-rule p-6 space-y-4">
+        <h3 className="font-serif-display text-xl tracking-tight">WhatsApp Alerts Integration</h3>
+        <p className="font-serif-body text-xs text-muted leading-relaxed">
+          Configure background WhatsApp notification alerts for assigned staff. Using CallMeBot's free gateway services, the system will send automated message notifications when a task is assigned.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">Recipient/Sender Phone Number (e.g. +919988776655)</label>
+            <input
+              type="text"
+              value={whatsappRecipientPhone}
+              onChange={(e) => setWhatsappRecipientPhone(e.target.value)}
+              placeholder="+1234567890"
+              className="w-full px-3 py-2 border border-rule bg-[var(--input-bg)] text-ink font-mono text-sm focus:border-accent outline-none"
+            />
+          </div>
+          <div>
+            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">CallMeBot WhatsApp API Key</label>
+            <input
+              type="password"
+              value={whatsappApiKey}
+              onChange={(e) => setWhatsappApiKey(e.target.value)}
+              placeholder="Enter CallMeBot API Key"
+              className="w-full px-3 py-2 border border-rule bg-[var(--input-bg)] text-ink font-mono text-sm focus:border-accent outline-none"
+            />
+          </div>
+        </div>
+        <p className="font-mono text-[10px] text-muted leading-normal">
+          * Get your key by sending <code className="bg-rule/30 px-1 font-semibold text-accent">I allow callmebot to send me messages</code> via WhatsApp to <code className="bg-rule/30 px-1 font-semibold text-accent">+34 644 97 50 14</code>.
+        </p>
       </div>
     </div>
   );

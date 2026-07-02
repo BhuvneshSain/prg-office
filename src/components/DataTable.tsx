@@ -2,6 +2,7 @@ import { useState, memo } from 'react';
 import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, ClipboardList } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import type { RegisterEntry, TaskEntry } from '../types';
+import { formatDate } from '../utils/dateUtils';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
 import { deleteRegisterEntry } from '../lib/dataService';
@@ -173,7 +174,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                         className="transition-colors group cursor-default hover:bg-panel/50"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-xs font-serif-body text-muted">{row.date}</span>
+                          <span className="text-xs font-serif-body text-muted">{formatDate(row.date)}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-mono text-[10px] text-muted bg-panel px-2 py-0.5 border border-rule">
@@ -254,8 +255,8 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="font-mono text-[11px] text-muted"><span className="font-mono text-[11px] text-muted">Date:</span> {row.date}</span>
-                    {row.referenceNumber && <span className="font-mono text-[11px] text-muted"><span className="font-mono text-[11px] text-muted">Dispatch:</span> {row.referenceNumber}</span>}
+                    <span className="font-mono text-[11px] text-muted">Date: {formatDate(row.date)}</span>
+                    {row.referenceNumber && <span className="font-mono text-[11px] text-muted">Dispatch: {row.referenceNumber}</span>}
                     {row.project && <span className="font-mono text-[11px] text-accent">{row.project}</span>}
                   </div>
                 </div>

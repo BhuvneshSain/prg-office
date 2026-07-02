@@ -2,10 +2,11 @@ import { useState, memo } from 'react';
 import { 
   ClipboardList, Search, Plus, Calendar, Clock, AlertCircle, 
   CheckCircle2, Trash2, Pencil, ExternalLink, Filter, 
-  Circle, LayoutGrid, List, RefreshCw
+  Circle, LayoutGrid, List, RefreshCw, MessageSquare
 } from 'lucide-react';
-import type { TaskEntry, TaskStatus, TaskPriority } from '../types';
+import type { TaskEntry, TaskStatus, TaskPriority, RegisterEntry, SettingsData } from '../types';
 import { deleteTask } from '../lib/dataService';
+import { formatDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -23,9 +24,11 @@ interface TaskManagerProps {
   onToggleStatus: (task: TaskEntry) => void;
   onViewDoc: (id: string, type: 'inward' | 'orders') => void;
   onNew: () => void;
+  staffData?: RegisterEntry[];
+  settings?: SettingsData;
 }
 
-const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdit, onToggleStatus, onViewDoc, onNew }: TaskManagerProps) {
+const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdit, onToggleStatus, onViewDoc, onNew, staffData = [], settings }: TaskManagerProps) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
@@ -207,6 +210,8 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
                 onDelete={() => handleDelete(task.id)} 
                 priorityStyles={getPriorityColor(task.priority)}
                 statusIcon={getStatusIcon(task.status)}
+                staffData={staffData}
+                settings={settings}
               />
             ))}
           </AnimatePresence>
@@ -216,7 +221,9 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
   );
 });
 
-function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete, priorityStyles, statusIcon }: { 
+function TaskItem({ 
+  task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete, priorityStyles, statusIcon, staffData = [], settings 
+}: { 
   task: TaskEntry; 
   viewMode: 'grid' | 'list';
   onEdit: () => void; 
@@ -225,7 +232,32 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
   onDelete: () => void; 
   priorityStyles: string;
   statusIcon: React.ReactNode;
+  staffData?: RegisterEntry[];
+  settings?: SettingsData;
 }) {
+  const handleManualWhatsApp = () => {
+    // Find the first assignee with a mobile number
+    const firstAssignee = task.assignedTo
+      .map(name => staffData.find(s => s.partyName === name))
+      .find(staff => !!staff && !!staff.mobile);
+
+    const targetPhone = firstAssignee?.mobile || settings?.whatsappRecipientPhone;
+    if (!targetPhone) {
+      alert("No phone number found for this assignee. Please configure their mobile in Staff Management, or add a default Recipient Phone in Settings.");
+      return;
+    }
+
+    const messageText = `⚠️ *ProgOffice Task Reminder*
+*Directive:* ${task.title}
+*Priority:* ${task.priority}
+*Due Date:* ${task.dueDate ? formatDate(task.dueDate) : 'No specific deadline'}
+*Assigned To:* ${task.assignedTo.join(', ')}
+_Description: ${task.description || 'No description provided.'}_`;
+
+    const cleanPhone = targetPhone.replace(/[+\s-]/g, '');
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`;
+    window.open(url, '_blank');
+  };
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -246,7 +278,7 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
              {task.priority}
            </span>
            <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] flex items-center gap-1">
-             <Calendar className="w-3 h-3" /> {task.dueDate || 'No Deadline'}
+             <Calendar className="w-3 h-3" /> {task.dueDate ? formatDate(task.dueDate) : 'No Deadline'}
            </span>
            {task.isRecurring && task.recurrenceInterval && task.recurrenceInterval !== 'none' && (
              <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-accent bg-accent/5 border border-accent/20 px-2 py-0.5 flex items-center gap-1.5 rounded-sm">
@@ -281,6 +313,13 @@ function TaskItem({ task, viewMode, onEdit, onToggleStatus, onViewDoc, onDelete,
          </div>
 
           <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
+           <button
+             onClick={handleManualWhatsApp}
+             title="Send WhatsApp Alert"
+             className="p-2 bg-good/10 text-good hover:bg-good/20 border border-good/20 transition-colors"
+           >
+             <MessageSquare className="w-3.5 h-3.5" />
+           </button>
            <button
              onClick={onToggleStatus}
              title={task.status === 'Completed' ? "Mark as Pending" : "Mark as Completed"}

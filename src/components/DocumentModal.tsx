@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Download, Calendar, FileCheck, Loader2, FileText, Sparkles, LayoutGrid, Share2, Globe, AlertOctagon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { RegisterEntry } from '../types';
+import { formatDate } from '../utils/dateUtils';
 import { getFileLink, getSharedLink } from '../lib/fileService';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -189,7 +190,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
              </h3>
              
              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6 sm:gap-8">
-                <MetaItem icon={<Calendar />} label="Log Timestamp" value={entry.date} />
+                <MetaItem icon={<Calendar />} label="Log Timestamp" value={formatDate(entry.date)} />
                 <MetaItem icon={<LayoutGrid />} label={entry.type === 'orders' ? 'Primary Focus' : 'Strategic Project'} value={entry.type === 'orders' ? entry.subject : (entry.project || 'Global Cluster')} />
                 
                 <div className="sm:col-span-2 md:col-span-1 p-5 sm:p-6 bg-[var(--bg-surface)] border border-rule relative group overflow-hidden">
@@ -248,7 +249,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                         </p>
                         <motion.a
                           whileTap={{ scale: 0.95 }}
-                          href={`https://docs.google.com/gview?url=${encodeURIComponent(fileLink || sharedUrl || '')}&embedded=true`}
+                          href={sharedUrl ? sharedUrl.replace('?dl=0', '?raw=1').replace('&dl=0', '&raw=1') : fileLink || ''}
                           target="_blank"
                           rel="noreferrer"
                           className="w-full max-w-[280px] flex items-center justify-center gap-3 px-8 py-4 sm:py-5 bg-ink text-paper font-mono text-[11px] tracking-[0.18em] uppercase mb-4"
@@ -265,7 +266,7 @@ export default function DocumentModal({ entry, onClose }: DocumentModalProps) {
                           </div>
                         )}
                         <iframe
-                          src={`https://docs.google.com/gview?url=${encodeURIComponent(fileLink || '')}&embedded=true`}
+                          src={sharedUrl ? sharedUrl.replace('?dl=0', '?raw=1').replace('&dl=0', '&raw=1') : fileLink || ''}
                           className="w-full h-full border-none bg-paper"
                           onLoad={() => setIframeLoaded(true)}
                           title="PDF Preview"

@@ -44,6 +44,8 @@ export interface SettingsData {
   departments: string[];
   projects: string[];
   posts: string[];
+  whatsappApiKey?: string;
+  whatsappRecipientPhone?: string;
 }
 
 export type AuditAction = 'ADD' | 'UPDATE' | 'DELETE' | 'TASK_LINK';

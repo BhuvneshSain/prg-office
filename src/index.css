@@ -34,6 +34,32 @@
   --table-head: #f9f3e7;
 }
 
+:root.dark {
+  --color-paper: #161512;
+  --color-panel: #1c1a17;
+  --color-ink: #f4ede0;
+  --color-muted: #9c9281;
+  --color-rule: #3c3830;
+  --color-accent: #e0603f;
+  --color-good: #63a05b;
+  --color-bad: #e25841;
+
+  --bg-page: #161512;
+  --bg-sidebar: #161512;
+  --bg-surface: #1c1a17;
+  --text-primary: #f4ede0;
+  --text-secondary: #9c9281;
+  --text-muted: #9c9281;
+  --border-primary: #3c3830;
+  --border-ink: #f4ede0;
+  --glass-bg: #1c1a17;
+  --glass-border: #3c3830;
+  --input-bg: #1c1a17;
+  --card-bg: #1c1a17;
+  --header-bg: #161512;
+  --table-head: #1c1a17;
+}
+
 @layer base {
   body {
     margin: 0;

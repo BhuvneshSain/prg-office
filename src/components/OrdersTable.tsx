@@ -2,6 +2,7 @@ import { useState, memo } from 'react';
 import { Loader2, Search, AlertOctagon, Maximize2, Pencil, Trash2, FileSpreadsheet, FileDown } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import type { RegisterEntry } from '../types';
+import { formatDate } from '../utils/dateUtils';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
 import { deleteRegisterEntry } from '../lib/dataService';
@@ -143,7 +144,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                         className="transition-colors group cursor-default"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-xs font-serif-body text-[var(--text-secondary)]">{row.date}</span>
+                          <span className="text-xs font-serif-body text-[var(--text-secondary)]">{formatDate(row.date)}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-mono text-[11px] text-[var(--text-muted)] bg-[var(--card-bg)] px-2 py-0.5 border border-[var(--border-primary)]">
@@ -192,7 +193,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="text-[11px] text-muted"><span className="font-mono">Date:</span> {row.date}</span>
+                    <span className="text-[11px] text-muted"><span className="font-mono">Date:</span> {formatDate(row.date)}</span>
                     {row.remarks && <span className="text-[11px] text-muted"><span className="font-mono">RajKaj:</span> {row.remarks}</span>}
                     {row.project && <span className="text-[11px] text-accent font-serif-body">{row.project}</span>}
                   </div>

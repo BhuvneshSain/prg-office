@@ -3,6 +3,7 @@
  */
 import { dbx, checkConfig, handleDbxError, ensureValidToken } from './serviceUtils';
 import type { RegisterEntry, SettingsData, AuditEntry, AuditAction, TaskEntry } from '../types';
+import { getCachedData, setCachedData, setSyncNeeded, getAllUnsyncedKeys } from './indexedDb';
 
 export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'essential-docs' | 'tasks';
 
@@ -20,7 +21,10 @@ const sortEntriesByDate = (entries: RegisterEntry[]) => {
 };
 
 export const getRegisterData = async (type: RegisterType, force = false): Promise<RegisterEntry[]> => {
-  if (!checkConfig()) return [];
+  if (!checkConfig()) {
+    const cached = await getCachedData<RegisterEntry[]>(type);
+    return cached || [];
+  }
   if (!force && cache[type]) {
     return cache[type] as RegisterEntry[];
   }
@@ -33,9 +37,19 @@ export const getRegisterData = async (type: RegisterType, force = false): Promis
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as RegisterEntry[];
     const sorted = type === 'staff' || type === 'tasks' ? data : sortEntriesByDate(data);
+    
+    // Persist to local IndexedDB cache
+    await setCachedData(type, sorted);
+    
     cache[type] = sorted;
     return sorted;
   } catch (error) {
+    console.warn(`[Dropbox] getRegisterData(${type}) failed, loading from local cache...`);
+    const cached = await getCachedData<RegisterEntry[]>(type);
+    if (cached) {
+      cache[type] = cached;
+      return cached;
+    }
     handleDbxError(error, `getRegisterData(${type})`);
     cache[type] = [];
     return [];
@@ -44,7 +58,12 @@ export const getRegisterData = async (type: RegisterType, force = false): Promis
 
 export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]): Promise<boolean> => {
   cache[type] = data;
-  if (!checkConfig()) return false;
+  await setCachedData(type, data); // cache locally first
+  
+  if (!checkConfig()) {
+    await setSyncNeeded(type, true);
+    return false;
+  }
   const path = `/data/${type}.json`;
   const content = JSON.stringify(data, null, 2);
   
@@ -55,9 +74,11 @@ export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]
       contents: content,
       mode: { '.tag': 'overwrite' }
     });
+    await setSyncNeeded(type, false);
     return true;
-  } catch (error) {
-    handleDbxError(error, `saveRegisterData(${type})`);
+  } catch {
+    console.warn(`[Dropbox] saveRegisterData(${type}) failed, queued for background sync.`);
+    await setSyncNeeded(type, true);
     return false;
   }
 };
@@ -99,7 +120,10 @@ export const deleteRegisterEntry = async (id: string, type: RegisterType): Promi
 };
 
 export const getSettings = async (force = false): Promise<SettingsData> => {
-  if (!checkConfig()) return { departments: [], projects: [], posts: [] };
+  if (!checkConfig()) {
+    const cached = await getCachedData<SettingsData>('settings');
+    return cached || { departments: [], projects: [], posts: [] };
+  }
   if (!force && cache.settings) {
     return cache.settings;
   }
@@ -109,9 +133,18 @@ export const getSettings = async (force = false): Promise<SettingsData> => {
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as SettingsData;
+    
+    await setCachedData('settings', data);
+    
     cache.settings = data;
     return data;
   } catch (error) {
+    console.warn("[Dropbox] getSettings failed, loading local cache...");
+    const cached = await getCachedData<SettingsData>('settings');
+    if (cached) {
+      cache.settings = cached;
+      return cached;
+    }
     handleDbxError(error, 'getSettings');
     const fallback = { departments: [], projects: [], posts: [] };
     cache.settings = fallback;
@@ -121,7 +154,12 @@ export const getSettings = async (force = false): Promise<SettingsData> => {
 
 export const saveSettings = async (settings: SettingsData): Promise<boolean> => {
   cache.settings = settings;
-  if (!checkConfig()) return false;
+  await setCachedData('settings', settings);
+  
+  if (!checkConfig()) {
+    await setSyncNeeded('settings', true);
+    return false;
+  }
   const content = JSON.stringify(settings, null, 2);
   try {
     await ensureValidToken();
@@ -130,15 +168,20 @@ export const saveSettings = async (settings: SettingsData): Promise<boolean> => 
       contents: content,
       mode: { '.tag': 'overwrite' }
     });
+    await setSyncNeeded('settings', false);
     return true;
-  } catch (error) {
-    handleDbxError(error, 'saveSettings');
+  } catch {
+    console.warn("[Dropbox] saveSettings failed, queued for background sync.");
+    await setSyncNeeded('settings', true);
     return false;
   }
 };
 
 export const getAuditLogs = async (force = false): Promise<AuditEntry[]> => {
-  if (!checkConfig()) return [];
+  if (!checkConfig()) {
+    const cached = await getCachedData<AuditEntry[]>('audit-logs');
+    return cached || [];
+  }
   if (!force && cache['audit-logs']) {
     return cache['audit-logs'];
   }
@@ -149,9 +192,18 @@ export const getAuditLogs = async (force = false): Promise<AuditEntry[]> => {
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as AuditEntry[];
+    
+    await setCachedData('audit-logs', data);
+    
     cache['audit-logs'] = data;
     return data;
   } catch (error) {
+    console.warn("[Dropbox] getAuditLogs failed, loading local cache...");
+    const cached = await getCachedData<AuditEntry[]>('audit-logs');
+    if (cached) {
+      cache['audit-logs'] = cached;
+      return cached;
+    }
     handleDbxError(error, 'getAuditLogs');
     cache['audit-logs'] = [];
     return [];
@@ -159,7 +211,6 @@ export const getAuditLogs = async (force = false): Promise<AuditEntry[]> => {
 };
 
 export const logAction = async (action: AuditAction, type: RegisterType, targetId: string, details: string): Promise<boolean> => {
-  if (!checkConfig()) return false;
   const logs = await getAuditLogs();
   const entry: AuditEntry = {
     id: Date.now().toString(),
@@ -174,6 +225,12 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
   logs.unshift(entry);
   const updatedLogs = logs.slice(0, 1000);
   cache['audit-logs'] = updatedLogs;
+  await setCachedData('audit-logs', updatedLogs);
+  
+  if (!checkConfig()) {
+    await setSyncNeeded('audit-logs', true);
+    return false;
+  }
   const content = JSON.stringify(updatedLogs, null, 2);
   
   try {
@@ -183,16 +240,21 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
       contents: content,
       mode: { '.tag': 'overwrite' }
     });
+    await setSyncNeeded('audit-logs', false);
     return true;
-  } catch (error) {
-    handleDbxError(error, 'logAction');
+  } catch {
+    console.warn("[Dropbox] logAction failed, queued for background sync.");
+    await setSyncNeeded('audit-logs', true);
     return false;
   }
 };
 
 // Task specific methods
 export const getTasks = async (force = false): Promise<TaskEntry[]> => {
-  if (!checkConfig()) return [];
+  if (!checkConfig()) {
+    const cached = await getCachedData<TaskEntry[]>('tasks');
+    return cached || [];
+  }
   if (!force && cache.tasks) {
     return cache.tasks;
   }
@@ -204,9 +266,18 @@ export const getTasks = async (force = false): Promise<TaskEntry[]> => {
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as TaskEntry[];
     const sorted = data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    
+    await setCachedData('tasks', sorted);
+    
     cache.tasks = sorted;
     return sorted;
   } catch (error) {
+    console.warn("[Dropbox] getTasks failed, loading local cache...");
+    const cached = await getCachedData<TaskEntry[]>('tasks');
+    if (cached) {
+      cache.tasks = cached;
+      return cached;
+    }
     handleDbxError(error, 'getTasks');
     cache.tasks = [];
     return [];
@@ -215,7 +286,12 @@ export const getTasks = async (force = false): Promise<TaskEntry[]> => {
 
 export const saveTasks = async (tasks: TaskEntry[]): Promise<boolean> => {
   cache.tasks = tasks;
-  if (!checkConfig()) return false;
+  await setCachedData('tasks', tasks);
+  
+  if (!checkConfig()) {
+    await setSyncNeeded('tasks', true);
+    return false;
+  }
   const content = JSON.stringify(tasks, null, 2);
   try {
     await ensureValidToken();
@@ -224,9 +300,11 @@ export const saveTasks = async (tasks: TaskEntry[]): Promise<boolean> => {
       contents: content,
       mode: { '.tag': 'overwrite' }
     });
+    await setSyncNeeded('tasks', false);
     return true;
-  } catch (error) {
-    handleDbxError(error, 'saveTasks');
+  } catch {
+    console.warn("[Dropbox] saveTasks failed, queued for background sync.");
+    await setSyncNeeded('tasks', true);
     return false;
   }
 };
@@ -264,4 +342,57 @@ export const deleteTask = async (id: string): Promise<boolean> => {
     logAction('DELETE', 'tasks', id, `Deleted task: ${target.title}`);
   }
   return success;
+};
+
+// Sync Offline local databases back to Dropbox
+export const syncOfflineData = async (): Promise<boolean> => {
+  if (!checkConfig()) return false;
+  const dirtyKeys = await getAllUnsyncedKeys();
+  if (dirtyKeys.length === 0) return true;
+  
+  console.log(`[Sync] Found ${dirtyKeys.length} dirty registers. Syncing...`, dirtyKeys);
+  let allSuccess = true;
+  
+  for (const key of dirtyKeys) {
+    try {
+      if (key === 'settings') {
+        const data = await getCachedData<SettingsData>(key);
+        if (data) {
+          const content = JSON.stringify(data, null, 2);
+          await ensureValidToken();
+          await dbx.filesUpload({ path: '/data/settings.json', contents: content, mode: { '.tag': 'overwrite' } });
+          await setSyncNeeded(key, false);
+        }
+      } else if (key === 'tasks') {
+        const data = await getCachedData<TaskEntry[]>(key);
+        if (data) {
+          const content = JSON.stringify(data, null, 2);
+          await ensureValidToken();
+          await dbx.filesUpload({ path: '/data/tasks.json', contents: content, mode: { '.tag': 'overwrite' } });
+          await setSyncNeeded(key, false);
+        }
+      } else if (key === 'audit-logs') {
+        const data = await getCachedData<AuditEntry[]>(key);
+        if (data) {
+          const content = JSON.stringify(data, null, 2);
+          await ensureValidToken();
+          await dbx.filesUpload({ path: '/data/audit-logs.json', contents: content, mode: { '.tag': 'overwrite' } });
+          await setSyncNeeded(key, false);
+        }
+      } else {
+        // Register types (inward, outward, orders, staff)
+        const data = await getCachedData<RegisterEntry[]>(key);
+        if (data) {
+          const content = JSON.stringify(data, null, 2);
+          await ensureValidToken();
+          await dbx.filesUpload({ path: `/data/${key}.json`, contents: content, mode: { '.tag': 'overwrite' } });
+          await setSyncNeeded(key, false);
+        }
+      }
+    } catch (err) {
+      console.error(`[Sync] Sync failed for register: ${key}`, err);
+      allSuccess = false;
+    }
+  }
+  return allSuccess;
 };

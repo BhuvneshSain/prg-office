@@ -15,6 +15,7 @@ export default function VisualAnalytics({
     const months: string[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
+      d.setDate(1); // Avoid overflow issues on month-end dates (e.g. 31st)
       d.setMonth(d.getMonth() - i);
       months.push(d.toISOString().slice(0, 7));
     }

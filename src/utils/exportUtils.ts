@@ -52,8 +52,8 @@ export const exportToPDF = (data: RegisterEntry[], title: string, filename: stri
     columns,
     body: rows,
     theme: 'striped',
-    headStyles: { fillColor: [124, 58, 237] }, // cyber-violet
-    alternateRowStyles: { fillColor: [245, 243, 255] },
+    headStyles: { fillColor: [193, 74, 43] }, // cyber-rust
+    alternateRowStyles: { fillColor: [249, 243, 231] },
     margin: { top: 40 },
     styles: { font: 'helvetica', fontSize: 9 },
   });

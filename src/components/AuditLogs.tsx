@@ -23,7 +23,19 @@ export default function AuditLogs() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchLogs(); }, []);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      await Promise.resolve();
+      if (active) {
+        fetchLogs();
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {

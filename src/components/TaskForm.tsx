@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, CheckCircle2, XCircle, Loader2, Plus, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskEntry, TaskStatus, TaskPriority, RegisterEntry, RecurrenceInterval } from '../types';
-import { addTask, updateTask } from '../lib/dataService';
+import { addTask, updateTask, getSettings, getRegisterData } from '../lib/dataService';
+import { triggerTaskWhatsAppAlerts } from '../lib/whatsappService';
 import { MultiComboBox } from './ComboBox';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -81,6 +82,17 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
         const ok = await updateTask(updated);
         if (!ok) throw new Error('Failed to update task.');
         setSuccessMsg('Task updated successfully.');
+        
+        // Trigger background WhatsApp alert
+        try {
+          const [settingsData, staffList] = await Promise.all([
+            getSettings(),
+            getRegisterData('staff')
+          ]);
+          await triggerTaskWhatsAppAlerts(updated, staffList, settingsData);
+        } catch (e) {
+          console.error("WhatsApp trigger failed:", e);
+        }
       } else {
         const newTask: TaskEntry = {
           id: Date.now().toString(),
@@ -94,6 +106,17 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
         const ok = await addTask(newTask);
         if (!ok) throw new Error('Failed to save task.');
         setSuccessMsg('New task initialized.');
+
+        // Trigger background WhatsApp alert
+        try {
+          const [settingsData, staffList] = await Promise.all([
+            getSettings(),
+            getRegisterData('staff')
+          ]);
+          await triggerTaskWhatsAppAlerts(newTask, staffList, settingsData);
+        } catch (e) {
+          console.error("WhatsApp trigger failed:", e);
+        }
 
         if (!onClose) {
           setForm({ title: '', description: '', priority: 'Medium', status: 'Pending', dueDate: '', isRecurring: false, recurrenceInterval: 'none' });

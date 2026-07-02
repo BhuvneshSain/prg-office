@@ -1,8 +1,8 @@
 import React, { useState, memo } from 'react';
-import { Files, Upload, Trash2, Download, Search, Loader2, Plus, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight } from 'lucide-react';
+import { Files, Upload, Trash2, Search, Loader2, Plus, X, Wrench, FileCheck, Edit, Sparkles, FolderDown, ArrowRight, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addRegisterEntry, deleteRegisterEntry } from '../lib/dataService';
-import { batchUploadAttachments, getFileLink } from '../lib/fileService';
+import { batchUploadAttachments } from '../lib/fileService';
 import type { RegisterEntry } from '../types';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
@@ -189,7 +189,7 @@ const EssentialDocs = memo(function EssentialDocs({ data, onRefresh, departments
                     {doc.attachments.length > 1 ? <Files className="w-5 h-5 text-muted group-hover:text-paper transition-colors" /> : <Wrench className="w-5 h-5 text-muted group-hover:text-paper transition-colors" />}
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={async () => { if (doc.attachments.length > 1) { setViewDoc(doc); } else { const link = await getFileLink(doc.attachments[0].id); if (link) window.open(`https://docs.google.com/gview?url=${encodeURIComponent(link)}&embedded=true`, '_blank'); } }} className="p-1.5 text-muted hover:text-ink transition-colors" title="View"><Download className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setViewDoc(doc)} className="p-1.5 text-muted hover:text-ink transition-colors" title="View"><Eye className="w-3.5 h-3.5" /></button>
                     <button onClick={() => setEditingDoc(doc)} className="p-1.5 text-muted hover:text-ink transition-colors" title="Edit"><Edit className="w-3.5 h-3.5" /></button>
                     <button onClick={async (e) => { e.stopPropagation(); if (confirm('Delete this resource?')) { await deleteRegisterEntry(doc.id, 'essential-docs'); onRefresh(); } }} className="p-1.5 text-muted hover:text-bad transition-colors" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>

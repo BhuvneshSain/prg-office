@@ -2,22 +2,49 @@ import type { TaskEntry, RegisterEntry, SettingsData } from '../types';
 import { formatDate } from '../utils/dateUtils';
 
 /**
- * Sends a WhatsApp alert in the background via CallMeBot gateway
+ * Sends a WhatsApp alert in the background via go-wppserver API gateway
  */
-export const sendCallMeBotAlert = async (phone: string, text: string, apiKey: string): Promise<boolean> => {
-  if (!apiKey || !phone) return false;
-  // Clean phone number (remove +, spaces, leading zeros)
+export const sendWppServerAlert = async (
+  phone: string,
+  text: string,
+  serverUrl: string,
+  token: string
+): Promise<boolean> => {
+  if (!serverUrl || !phone) return false;
+
+  // Clean phone number (remove +, spaces, leading zeros, dashes)
   const cleanPhone = phone.replace(/[+\s-]/g, '');
-  const encodedText = encodeURIComponent(text);
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanPhone}&text=${encodedText}&apikey=${apiKey}`;
+  
+  // Trim trailing slashes from serverUrl
+  const baseUrl = serverUrl.replace(/\/+$/, '');
+  const url = `${baseUrl}/v1/chat/send/text`;
 
   try {
-    await fetch(url, { mode: 'no-cors' });
-    // Note: CallMeBot API sometimes returns a text response that doesn't permit CORS,
-    // using mode 'no-cors' lets the request go through safely.
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        phone: cleanPhone,
+        body: text
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[WhatsApp Service] Server responded with error status ${response.status}:`, errorText);
+      return false;
+    }
+
     return true;
   } catch (error) {
-    console.error("[WhatsApp Service] CallMeBot dispatch failed:", error);
+    console.error("[WhatsApp Service] go-wppserver dispatch failed:", error);
     return false;
   }
 };
@@ -38,9 +65,11 @@ export const triggerTaskWhatsAppAlerts = async (
   allStaff: RegisterEntry[],
   settings: SettingsData
 ): Promise<void> => {
+  const serverUrl = settings.whatsappServerUrl || 'http://localhost:8786';
   const apiKey = settings.whatsappApiKey;
+
   if (!apiKey) {
-    console.log("[WhatsApp Service] Background alert skipped: no CallMeBot API key configured.");
+    console.log("[WhatsApp Service] Background alert skipped: no WhatsApp API Key/Token configured.");
     return;
   }
 
@@ -69,6 +98,6 @@ _Description: ${task.description || 'No description provided.'}_`;
 
   console.log(`[WhatsApp Service] Triggering alerts to ${targetPhones.length} phone(s)...`);
   for (const phone of targetPhones) {
-    await sendCallMeBotAlert(phone, messageText, apiKey);
+    await sendWppServerAlert(phone, messageText, serverUrl, apiKey);
   }
 };

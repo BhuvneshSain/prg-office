@@ -1,10 +1,11 @@
 import { useState, memo } from 'react';
-import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, ClipboardList } from 'lucide-react';
+import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, ClipboardList, MessageSquare } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
-import type { RegisterEntry, TaskEntry } from '../types';
+import type { RegisterEntry, TaskEntry, SettingsData } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
+import ShareWhatsAppModal from './ShareWhatsAppModal';
 import { deleteRegisterEntry } from '../lib/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
@@ -24,14 +25,17 @@ interface Props {
   tasks?: TaskEntry[];
   onRefresh: () => void;
   onLinkTask?: (entry: RegisterEntry) => void;
+  staffData?: RegisterEntry[];
+  settings?: SettingsData;
 }
 
-const DataTable = memo(function DataTable({ data, type, loading, departments, projects, tasks = [], onRefresh, onLinkTask }: Props) {
+const DataTable = memo(function DataTable({ data, type, loading, departments, projects, tasks = [], onRefresh, onLinkTask, staffData = [], settings }: Props) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
+  const [shareEntry, setShareEntry] = useState<RegisterEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'subject-asc' | 'subject-desc' | 'party-asc' | 'party-desc' | 'dispatch-asc' | 'dispatch-desc'>(type === 'outward' ? 'dispatch-desc' : 'date-desc');
 
@@ -225,6 +229,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                             {type === 'inward' && onLinkTask && (
                               <ActionBtn id={`task-${row.id}`} icon={<ClipboardList className="w-3.5 h-3.5" />} label="Link to Task" onClick={() => onLinkTask(row)} color="indigo" />
                             )}
+                            <ActionBtn id={`share-${row.id}`} icon={<MessageSquare className="w-3.5 h-3.5" />} label="Share Alert" onClick={() => setShareEntry(row)} color="teal" />
                             <ActionBtn id={`edit-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} label="Modify" onClick={() => setEditEntry(row)} color="violet" />
                             <ActionBtn id={`delete-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
                           </div>
@@ -250,6 +255,7 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                       {type === 'inward' && onLinkTask && (
                         <MobileIconBtn id={`task-mob-${row.id}`} icon={<ClipboardList className="w-3.5 h-3.5" />} onClick={() => onLinkTask(row)} color="indigo" />
                       )}
+                      <MobileIconBtn id={`share-mob-${row.id}`} icon={<MessageSquare className="w-3.5 h-3.5" />} onClick={() => setShareEntry(row)} color="teal" />
                       <MobileIconBtn id={`edit-mob-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} onClick={() => setEditEntry(row)} color="indigo" />
                       <MobileIconBtn id={`delete-mob-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} onClick={() => setDeleteTarget(row)} color="red" />
                     </div>
@@ -268,6 +274,15 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
 
       {/* Modals */}
       {viewEntry && <DocumentModal entry={viewEntry} onClose={() => setViewEntry(null)} />}
+      {shareEntry && (
+        <ShareWhatsAppModal
+          entry={shareEntry}
+          type={type}
+          staffData={staffData}
+          settings={settings}
+          onClose={() => setShareEntry(null)}
+        />
+      )}
       {editEntry && (
         <EditModal
           entry={editEntry} departments={departments} projects={projects}
@@ -311,6 +326,7 @@ function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: Reac
     violet: 'bg-accent/10 text-accent hover:bg-accent/20',
     indigo: 'border border-rule text-muted hover:text-accent hover:border-accent',
     red: 'border border-rule text-muted hover:text-bad hover:border-bad',
+    teal: 'bg-good/10 text-good hover:bg-good/20 border-good/20 hover:border-good',
   };
   return (
     <motion.button
@@ -329,6 +345,7 @@ function MobileIconBtn({ id, icon, onClick, color }: { id: string; icon: React.R
     slate: 'bg-panel/5 text-muted',
     indigo: 'bg-accent/5 text-accent',
     red: 'bg-bad/5 text-bad',
+    teal: 'bg-good/5 text-good',
   };
   return (
     <motion.button

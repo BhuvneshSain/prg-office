@@ -277,7 +277,7 @@ export default function App() {
         getRegisterData('outward', force),
         getRegisterData('orders', force),
         getRegisterData('staff', force),
-        getRegisterData('tasks', force) as Promise<any>,
+        getRegisterData('tasks', force) as unknown as Promise<TaskEntry[]>,
         getSettings(force)
       ]);
       setInwardData(inData);
@@ -424,6 +424,8 @@ export default function App() {
                 setActiveTab('tasks');
                 setShowTaskForm(true);
               }}
+              staffData={staffData}
+              settings={settings || { departments: [], projects: [], posts: [] }}
             />
           </div>
         );
@@ -431,14 +433,30 @@ export default function App() {
         return (
           <div className="space-y-6">
             <EntryForm type="outward" existingDepts={settings?.departments || []} existingProjects={settings?.projects || []} onSuccess={fetchData} />
-            <DataTable type="outward" data={outwardData} loading={loading} departments={settings?.departments || []} projects={settings?.projects || []} onRefresh={fetchData} />
+            <DataTable 
+              type="outward" 
+              data={outwardData} 
+              loading={loading} 
+              departments={settings?.departments || []} 
+              projects={settings?.projects || []} 
+              onRefresh={fetchData}
+              staffData={staffData}
+              settings={settings || { departments: [], projects: [], posts: [] }}
+            />
           </div>
         );
       case 'orders':
         return (
           <div className="space-y-6">
             <OrderForm existingProjects={settings?.projects || []} onSuccess={fetchData} />
-            <OrdersTable data={ordersData} loading={loading} projects={settings?.projects || []} onRefresh={fetchData} />
+            <OrdersTable 
+              data={ordersData} 
+              loading={loading} 
+              projects={settings?.projects || []} 
+              onRefresh={fetchData}
+              staffData={staffData}
+              settings={settings || { departments: [], projects: [], posts: [] }}
+            />
           </div>
         );
       case 'staff':

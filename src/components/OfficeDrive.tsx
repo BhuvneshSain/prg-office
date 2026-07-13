@@ -171,8 +171,8 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
       await ensureValidToken();
       const response = await dbx.filesListFolder({ path });
       setEntries(response.result.entries as DropboxEntry[]);
-    } catch (err: any) {
-      const summary = err?.error?.error_summary || "";
+    } catch (err: unknown) {
+      const summary = (err as { error?: { error_summary?: string } })?.error?.error_summary || "";
       // Auto-create drive root folder if missing
       if (path === '/office-drive' && (err?.status === 409 || summary.includes('not_found'))) {
         try {
@@ -322,7 +322,7 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
     }
   };
 
-  const uploadWithRetry = async (path: string, contents: File, retries = 3, delay = 1500): Promise<any> => {
+  const uploadWithRetry = async (path: string, contents: File, retries = 3, delay = 1500): Promise<unknown> => {
     try {
       await ensureValidToken();
       return await dbx.filesUpload({
@@ -330,8 +330,8 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
         contents,
         mode: { '.tag': 'overwrite' }
       });
-    } catch (err: any) {
-      const summary = err?.error?.error_summary || "";
+    } catch (err: unknown) {
+      const summary = (err as { error?: { error_summary?: string }; status?: number })?.error?.error_summary || "";
       const status = err?.status;
       
       // Retry on lock contention or rate limits

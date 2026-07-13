@@ -14,6 +14,7 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
   const [departments, setDepartments] = useState<string[]>(settings.departments);
   const [projects, setProjects] = useState<string[]>(settings.projects);
   const [posts, setPosts] = useState<string[]>(settings.posts ?? []);
+  const [whatsappServerUrl, setWhatsappServerUrl] = useState(settings.whatsappServerUrl ?? 'http://localhost:8786');
   const [whatsappApiKey, setWhatsappApiKey] = useState(settings.whatsappApiKey ?? '');
   const [whatsappRecipientPhone, setWhatsappRecipientPhone] = useState(settings.whatsappRecipientPhone ?? '');
   const [newDept, setNewDept] = useState('');
@@ -79,6 +80,7 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
       departments: currentDepts, 
       projects: currentProjects, 
       posts: currentPosts,
+      whatsappServerUrl: whatsappServerUrl.trim() || undefined,
       whatsappApiKey: whatsappApiKey.trim() || undefined,
       whatsappRecipientPhone: whatsappRecipientPhone.trim() || undefined
     };
@@ -181,34 +183,44 @@ export default function Settings({ settings, onSettingsChange }: { settings: Set
 
       {/* WhatsApp Configuration */}
       <div className="border border-rule p-6 space-y-4">
-        <h3 className="font-serif-display text-xl tracking-tight">WhatsApp Alerts Integration</h3>
+        <h3 className="font-serif-display text-xl tracking-tight">go-wppserver WhatsApp Integration</h3>
         <p className="font-serif-body text-xs text-muted leading-relaxed">
-          Configure background WhatsApp notification alerts for assigned staff. Using CallMeBot's free gateway services, the system will send automated message notifications when a task is assigned.
+          Configure automated WhatsApp notifications for task assignments. Enter your running <code>go-wppserver</code> instance (local or hosted in the cloud, e.g. on Hugging Face Spaces) and the authentication credentials.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">Recipient/Sender Phone Number (e.g. +919988776655)</label>
+            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">go-wppserver URL</label>
             <input
               type="text"
-              value={whatsappRecipientPhone}
-              onChange={(e) => setWhatsappRecipientPhone(e.target.value)}
-              placeholder="+1234567890"
+              value={whatsappServerUrl}
+              onChange={(e) => setWhatsappServerUrl(e.target.value)}
+              placeholder="http://localhost:8786"
               className="w-full px-3 py-2 border border-rule bg-[var(--input-bg)] text-ink font-mono text-sm focus:border-accent outline-none"
             />
           </div>
           <div>
-            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">CallMeBot WhatsApp API Key</label>
+            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">API Key / Access Token</label>
             <input
               type="password"
               value={whatsappApiKey}
               onChange={(e) => setWhatsappApiKey(e.target.value)}
-              placeholder="Enter CallMeBot API Key"
+              placeholder="Enter JWT / Access Token"
+              className="w-full px-3 py-2 border border-rule bg-[var(--input-bg)] text-ink font-mono text-sm focus:border-accent outline-none"
+            />
+          </div>
+          <div>
+            <label className="block font-mono text-[10px] text-muted tracking-wider uppercase mb-1.5">Backup Recipient Phone Number</label>
+            <input
+              type="text"
+              value={whatsappRecipientPhone}
+              onChange={(e) => setWhatsappRecipientPhone(e.target.value)}
+              placeholder="+919988776655"
               className="w-full px-3 py-2 border border-rule bg-[var(--input-bg)] text-ink font-mono text-sm focus:border-accent outline-none"
             />
           </div>
         </div>
         <p className="font-mono text-[10px] text-muted leading-normal">
-          * Get your key by sending <code className="bg-rule/30 px-1 font-semibold text-accent">I allow callmebot to send me messages</code> via WhatsApp to <code className="bg-rule/30 px-1 font-semibold text-accent">+34 644 97 50 14</code>.
+          * Ensure your WhatsApp account is connected by visiting the Swagger interface on your server (e.g. <code className="bg-rule/30 px-1 font-semibold text-accent">{whatsappServerUrl || 'http://localhost:8786'}/docs/api/</code>) and logging in via the <code className="bg-rule/30 px-1 font-semibold text-accent">/device/login</code> route.
         </p>
       </div>
     </div>

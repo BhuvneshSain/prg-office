@@ -144,7 +144,7 @@ const TaskManager = memo(function TaskManager({ tasks, loading, onRefresh, onEdi
               <Filter className="w-3.5 h-3.5 text-muted" />
               <select
                 value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as any)}
+                onChange={e => setStatusFilter(e.target.value as TaskStatus | 'All')}
                 className="font-mono text-[11px] tracking-[0.18em] uppercase bg-transparent text-ink outline-none"
               >
                 <option value="All">All Status</option>

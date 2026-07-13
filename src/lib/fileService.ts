@@ -87,8 +87,8 @@ export const getSharedLink = async (path: string): Promise<string | null> => {
         settings: { requested_visibility: { '.tag': 'public' } }
       });
       return createResponse.result.url;
-    } catch (createError: any) {
-      const summary = createError?.error?.error_summary || "";
+    } catch (createError: unknown) {
+      const summary = (createError as { error?: { error_summary?: string } })?.error?.error_summary || "";
       if (summary.includes('shared_link_already_exists')) {
         // Last resort: list links for this path specifically
         const retryLinks = await dbx.sharingListSharedLinks({ path: fullPath });
@@ -110,7 +110,7 @@ export const getFileBlob = async (path: string): Promise<Blob | null> => {
   const fullPath = (path.startsWith('/') || path.startsWith('id:')) ? path.trim() : `/attachments/${path.trim()}`;
   try {
     const response = await dbx.filesDownload({ path: fullPath });
-    return (response.result as any).fileBlob;
+    return (response.result as unknown as { fileBlob: Blob }).fileBlob;
   } catch (error) {
     handleDbxError(error, `getFileBlob(${path})`);
     return null;

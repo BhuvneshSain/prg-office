@@ -63,6 +63,11 @@ ProgOffice features a custom **"Cyber Light"** design language: a premium editor
 - **Task Cards**: Track titles, descriptions, priorities (Low to Critical), assigned staff, and completion statuses.
 - **Status toggles**: Tick checkbox to mark tasks complete, featuring instant database saves and rollback states if network errors occur.
 
+### 4.7. Client-Side Manual WhatsApp Alerts
+- **100% Serverless alerts**: Generates preformatted notifications containing record details (Inward/Outward registers, Important Orders, Task Assignments).
+- **Interactive Share Modal**: Enables choosing target staff members, auto-populating their registered mobile numbers, and editing/previewing the message contents before redirecting.
+- **Zero Dependency**: Requires no local or cloud background servers, running completely client-side in the browser via native `wa.me` links.
+
 ---
 
 ## 5. Security & Session Protocols

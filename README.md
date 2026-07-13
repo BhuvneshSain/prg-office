@@ -34,6 +34,12 @@ An advanced, serverless Office Register Management System designed for efficienc
 - **Staff Directory**: Maintain records of employee posts, assigned projects, and contact terminals.
 - **Task Center**: Assign tasks, select priorities (Low, Medium, High, Critical), track statuses (Pending, In Progress, Completed), and view progression charts.
 
+### 💬 Client-Side WhatsApp Alert Dispatcher
+- **Task Alerts**: Instantly send preformatted reminders to assigned operators.
+- **Register Alerts**: Share inward/outward circular metadata or important orders directly with staff.
+- **Interactive Previews**: Select staff recipients from a dropdown, auto-populate mobile numbers, and preview/edit the text before opening in WhatsApp.
+- **100% Free & Serverless**: Built using lightweight client-side redirection (`wa.me`) with zero external API dependencies or background servers.
+
 ---
 
 ## 📈 Recent Updates (v2.2.0)

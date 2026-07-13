@@ -1,10 +1,11 @@
 import { useState, memo } from 'react';
-import { Loader2, Search, AlertOctagon, Maximize2, Pencil, Trash2, FileSpreadsheet, FileDown } from 'lucide-react';
+import { Loader2, Search, AlertOctagon, Maximize2, Pencil, Trash2, FileSpreadsheet, FileDown, MessageSquare } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
-import type { RegisterEntry } from '../types';
+import type { RegisterEntry, SettingsData } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
+import ShareWhatsAppModal from './ShareWhatsAppModal';
 import { deleteRegisterEntry } from '../lib/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
@@ -20,14 +21,17 @@ interface Props {
   loading: boolean;
   projects: string[];
   onRefresh: () => void;
+  staffData?: RegisterEntry[];
+  settings?: SettingsData;
 }
 
-const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefresh }: Props) {
+const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefresh, staffData = [], settings }: Props) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
   const [editEntry, setEditEntry] = useState<RegisterEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisterEntry | null>(null);
+  const [shareEntry, setShareEntry] = useState<RegisterEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const filteredData = data.filter(item =>
@@ -166,6 +170,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                             <ActionBtn id={`view-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} label="Quick View" onClick={() => setViewEntry(row)} color="slate" />
+                            <ActionBtn id={`share-${row.id}`} icon={<MessageSquare className="w-3.5 h-3.5" />} label="Share Alert" onClick={() => setShareEntry(row)} color="teal" />
                             <ActionBtn id={`edit-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} label="Modify" onClick={() => setEditEntry(row)} color="amber" />
                             <ActionBtn id={`delete-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
                           </div>
@@ -188,6 +193,7 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <MobileIconBtn id={`view-mob-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} onClick={() => setViewEntry(row)} color="slate" />
+                      <MobileIconBtn id={`share-mob-${row.id}`} icon={<MessageSquare className="w-3.5 h-3.5" />} onClick={() => setShareEntry(row)} color="teal" />
                       <MobileIconBtn id={`edit-mob-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} onClick={() => setEditEntry(row)} color="amber" />
                       <MobileIconBtn id={`delete-mob-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} onClick={() => setDeleteTarget(row)} color="red" />
                     </div>
@@ -206,6 +212,15 @@ const OrdersTable = memo(function OrdersTable({ data, loading, projects, onRefre
 
       {/* Modals */}
       {viewEntry && <DocumentModal entry={viewEntry} onClose={() => setViewEntry(null)} />}
+      {shareEntry && (
+        <ShareWhatsAppModal
+          entry={shareEntry}
+          type="orders"
+          staffData={staffData}
+          settings={settings}
+          onClose={() => setShareEntry(null)}
+        />
+      )}
       {editEntry && (
         <EditModal
           entry={editEntry} departments={[]} projects={projects}
@@ -248,6 +263,7 @@ function ActionBtn({ id, icon, label, onClick, color }: { id: string; icon: Reac
     slate: 'text-muted hover:text-ink',
     amber: 'text-accent bg-accent/5',
     red: 'text-muted hover:text-bad',
+    teal: 'bg-good/10 text-good hover:bg-good/20 border border-good/20 hover:border-good',
   };
   return (
     <motion.button 
@@ -266,6 +282,7 @@ function MobileIconBtn({ id, icon, onClick, color }: { id: string; icon: React.R
     slate: 'text-muted',
     amber: 'text-accent bg-accent/5',
     red: 'text-muted hover:text-bad',
+    teal: 'bg-good/5 text-good',
   };
   return (
     <motion.button 

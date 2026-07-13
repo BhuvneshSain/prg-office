@@ -325,7 +325,7 @@ function MetaItem({ icon, label, value }: { icon: React.ReactNode, label: string
   return (
     <div className="flex gap-4 items-start group">
       <div className="w-10 h-10 bg-[var(--bg-surface)] border border-rule flex items-center justify-center shrink-0 text-[var(--text-muted)] group-hover:text-accent transition-colors">
-        {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: "w-5 h-5" }) : icon}
+        {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-5 h-5" }) : icon}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[var(--text-muted)] mb-1">{label}</p>

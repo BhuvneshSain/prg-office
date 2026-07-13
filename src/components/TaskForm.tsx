@@ -63,7 +63,7 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
     }
   }, [editTask, linkedDoc]);
 
-  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,8 +127,8 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
       onSuccess();
       if (onClose) setTimeout(onClose, 1500);
 
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Operation failed.');
+    } catch (err: unknown) {
+      setErrorMsg((err as Error).message || 'Operation failed.');
     } finally {
       setLoading(false);
     }
@@ -225,7 +225,7 @@ export default function TaskForm({ staffNames, onSuccess, editTask, linkedDoc, o
                 <select
                   className={INPUT_CLS}
                   value={form.recurrenceInterval}
-                  onChange={e => set('recurrenceInterval', e.target.value as any)}
+                  onChange={e => set('recurrenceInterval', e.target.value as RecurrenceInterval)}
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>

@@ -32,7 +32,7 @@ export const ensureValidToken = async (): Promise<void> => {
   
   refreshPromise = (async () => {
     try {
-      await (dbx as any).auth.checkAndRefreshAccessToken();
+      await (dbx as unknown as { auth: { checkAndRefreshAccessToken: () => Promise<void> } }).auth.checkAndRefreshAccessToken();
     } catch (err) {
       console.error("[Dropbox] Token refresh failed:", err);
       throw err;

@@ -44,6 +44,7 @@ export interface SettingsData {
   departments: string[];
   projects: string[];
   posts: string[];
+  whatsappServerUrl?: string;
   whatsappApiKey?: string;
   whatsappRecipientPhone?: string;
 }

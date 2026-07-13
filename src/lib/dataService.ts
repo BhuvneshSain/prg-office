@@ -8,7 +8,7 @@ import { getCachedData, setCachedData, setSyncNeeded, getAllUnsyncedKeys } from 
 export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'tasks';
 
 // Client-side cache for JSON data files
-const cache: Record<string, any> = {};
+const cache: Record<string, RegisterEntry[] | TaskEntry[] | SettingsData | null> = {};
 
 export const clearDataCache = () => {
   for (const key in cache) {

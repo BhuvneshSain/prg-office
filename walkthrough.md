@@ -1,6 +1,6 @@
-# Walkthrough — Task Management Removal, File Consolidation & Database Folder Migration
+# Walkthrough — Task Management & go-wppserver Removal, File Consolidation & Database Migration
 
-All requested changes, file renaming consolidation, and the database folder migration have been successfully completed.
+All requested changes, file renaming consolidation, database migration, and the removal of the automated WhatsApp server wrapper have been successfully completed and pushed to GitHub.
 
 ## Changes Made
 
@@ -22,7 +22,16 @@ All requested changes, file renaming consolidation, and the database folder migr
   - Cleaned up the Dashboard: removed visual cards for pending, completed, in-progress tasks, task bar charts, and trends.
   - Removed task alarm notification logic and bell dropdown.
 
-### 2. Consolidated Storage & Filename Formatting
+### 2. go-wppserver WhatsApp Integration Removal
+- **UI Removal** (`src/components/Settings.tsx`):
+  - Removed the `go-wppserver WhatsApp Integration` inputs and configuration block entirely.
+  - Cleaned up settings form state hook bindings (`whatsappServerUrl`, `whatsappApiKey`, `whatsappRecipientPhone`).
+- **Code Cleanups**:
+  - Deleted the backend wrapper alert dispatcher `sendWppServerAlert` from `src/lib/whatsappService.ts`.
+  - Retained `getWhatsAppLink` to maintain manual client-initiated WhatsApp browser redirects (`wa.me`).
+  - Removed unused Prop typings and cleaned up components (`ShareWhatsAppModal.tsx`, `DataTable.tsx`, `OrdersTable.tsx`, `App.tsx`, `types.ts`).
+
+### 3. Consolidated Storage & Filename Formatting
 - **Consolidation Target**: All register attachments (Inward, Outward, Orders) are stored directly in `/office-drive/Office Letter` in Dropbox.
 - **Filename Naming Convention**: Filenames are formatted dynamically with category indicators (`_i` for Inward, `_o` for Outward, `_or` for Orders) appended before the file extension:
   `Ltr No. {dispatch_no} {Project Name} Project regarding {subject}_{uniqueId}{indicator}.{extension}`
@@ -31,9 +40,9 @@ All requested changes, file renaming consolidation, and the database folder migr
   - `OrderForm.tsx`: Passes remarks (RajKaj ID) and subject.
   - `EditModal.tsx`: Passes edited reference number and subject.
 
-### 3. Database Folder Migration
+### 4. Database Folder Migration
 - **Redirected Storage**: Updated `dataService.ts` and `reset_dbx.ts` to store all project databases (`inward.json`, `outward.json`, `orders.json`, `staff.json`, `settings.json`, `audit-logs.json`, `tasks.json`, `essential-docs.json`, `my-documents.json`) in the `/office-drive/Office Letter/` directory instead of `/data/`.
-- **Database Relocation**: Executed a migration script that successfully moved all 9 database JSON files from `/data/` to `/office-drive/Office Letter/` inside Dropbox, and deleted the now-empty `/data/` folder on Dropbox.
+- **Database Relocation**: Relocated all 9 database JSON files from `/data/` to `/office-drive/Office Letter/` inside Dropbox, and deleted the `/data/` folder on Dropbox.
 
 ---
 

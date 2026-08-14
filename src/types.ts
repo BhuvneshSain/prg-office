@@ -4,28 +4,7 @@ export interface AttachmentsData {
   link?: string; // Optional temporary download link fetched from dbx
 }
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'tasks';
-
-export type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'Deferred';
-export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical';
-
-export type RecurrenceInterval = 'daily' | 'weekly' | 'monthly' | 'none';
-
-export interface TaskEntry {
-  id: string;
-  title: string;
-  description: string;
-  priority: TaskPriority;
-  status: TaskStatus;
-  dueDate?: string;
-  assignedTo: string[]; // Names of staff members
-  linkedDocId?: string; // Reference to inward/order id
-  linkedDocType?: 'inward' | 'orders';
-  isRecurring?: boolean;
-  recurrenceInterval?: RecurrenceInterval;
-  createdAt: string;
-  updatedAt: string;
-}
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff';
 
 export interface RegisterEntry {
   id: string; // Unique ID (e.g. timestamp or UUID)

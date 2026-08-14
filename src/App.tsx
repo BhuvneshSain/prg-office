@@ -1,17 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Bell, BellRing, Trash2, AlertCircle, Sun, Moon } from 'lucide-react';
-import { getRegisterData, getSettings, updateTask, addTask, clearDataCache, syncOfflineData } from './lib/dataService';
-import type { RegisterEntry, SettingsData, TaskEntry, RecurrenceInterval } from './types';
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  type: 'overdue' | 'due-today' | 'info';
-  taskId: string;
-}
-
-const sessionNotifiedIds = new Set<string>();
+import { Settings as SettingsIcon, Menu, X, Cloud, LayoutDashboard, Inbox, Send, BarChart, AlertOctagon, RefreshCw, Sun, Moon } from 'lucide-react';
+import { getRegisterData, getSettings, clearDataCache, syncOfflineData } from './lib/dataService';
+import type { RegisterEntry, SettingsData } from './types';
 import EntryForm from './components/EntryForm';
 import DataTable from './components/DataTable';
 import Reports from './components/Reports';
@@ -20,9 +10,7 @@ import OrdersTable from './components/OrdersTable';
 import Settings from './components/Settings';
 import StaffForm from './components/StaffForm';
 import StaffTable from './components/StaffTable';
-import TaskManager from './components/TaskManager';
-import TaskForm from './components/TaskForm';
-import { Users, LogOut, Loader2, ClipboardList } from 'lucide-react';
+import { Users, LogOut, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -35,7 +23,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'tasks' | 'reports' | 'settings' | 'office-drive';
+type Tab = 'dashboard' | 'inward' | 'outward' | 'orders' | 'staff' | 'reports' | 'settings' | 'office-drive';
 
 const TAB_LABELS: Record<Tab, string> = {
   dashboard: 'Dashboard',
@@ -43,7 +31,6 @@ const TAB_LABELS: Record<Tab, string> = {
   outward: 'Outward Register',
   orders: 'Important Orders',
   staff: 'Staff Management',
-  tasks: 'Task Management',
   reports: 'Reports',
   settings: 'Settings',
   'office-drive': 'Office-Drive',
@@ -55,7 +42,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const path = window.location.pathname.replace(/^\/+/, '');
-    const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'reports', 'settings', 'office-drive'];
+    const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'reports', 'settings', 'office-drive'];
     return validTabs.includes(path as Tab) ? path as Tab : 'dashboard';
   });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -72,7 +59,7 @@ export default function App() {
   useEffect(() => {
     const onPopState = () => {
       const path = window.location.pathname.replace(/^\/+/, '');
-      const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'tasks', 'reports', 'settings', 'office-drive'];
+      const validTabs: Tab[] = ['dashboard', 'inward', 'outward', 'orders', 'staff', 'reports', 'settings', 'office-drive'];
       const tab = validTabs.includes(path as Tab) ? path as Tab : 'dashboard';
       setActiveTab(tab);
     };
@@ -166,99 +153,13 @@ export default function App() {
   const [outwardData, setOutwardData] = useState<RegisterEntry[]>([]);
   const [ordersData, setOrdersData] = useState<RegisterEntry[]>([]);
   const [staffData, setStaffData] = useState<RegisterEntry[]>([]);
-  const [tasksData, setTasksData] = useState<TaskEntry[]>([]);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorHeader, setErrorHeader] = useState<string | null>(null);
   const [globalViewEntry, setGlobalViewEntry] = useState<RegisterEntry | null>(null);
-  const [taskModalDoc, setTaskModalDoc] = useState<RegisterEntry | null>(null);
-  const [editTask, setEditTask] = useState<TaskEntry | null>(null);
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem('pos_dismissed_notifications');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('pos_dismissed_notifications', JSON.stringify(dismissedIds));
-  }, [dismissedIds]);
 
-  useEffect(() => {
-    if (tasksData.length === 0) {
-      setNotifications([]);
-      return;
-    }
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const generated: NotificationItem[] = [];
-
-    tasksData.forEach(task => {
-      if (task.status !== 'Pending') return;
-      if (!task.dueDate) return;
-
-      const overdueId = `overdue-${task.id}-${task.dueDate}`;
-      const dueTodayId = `due-today-${task.id}-${task.dueDate}`;
-
-      if (todayStr > task.dueDate) {
-        if (!dismissedIds.includes(overdueId)) {
-          generated.push({
-            id: overdueId,
-            title: 'Directive Overdue',
-            message: `"${task.title}" is overdue (due: ${task.dueDate})`,
-            type: 'overdue',
-            taskId: task.id
-          });
-        }
-      } else if (todayStr === task.dueDate) {
-        if (!dismissedIds.includes(dueTodayId)) {
-          generated.push({
-            id: dueTodayId,
-            title: 'Directive Due Today',
-            message: `"${task.title}" is due today`,
-            type: 'due-today',
-            taskId: task.id
-          });
-        }
-      }
-    });
-
-    setNotifications(generated);
-
-    if (generated.length > 0 && typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'granted') {
-        generated.forEach(item => {
-          if (!sessionNotifiedIds.has(item.id)) {
-            sessionNotifiedIds.add(item.id);
-            new Notification(item.title, { body: item.message });
-          }
-        });
-      } else if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            generated.forEach(item => {
-              if (!sessionNotifiedIds.has(item.id)) {
-                sessionNotifiedIds.add(item.id);
-                new Notification(item.title, { body: item.message });
-              }
-            });
-          }
-        });
-      }
-    }
-  }, [tasksData, dismissedIds]);
-
-  const handleNotificationClick = (item: NotificationItem) => {
-    setActiveTab('tasks');
-    setShowNotificationsDropdown(false);
-    setDismissedIds(prev => [...prev, item.id]);
-  };
 
   const hasLoaded = useRef(false);
   const fetchData = useCallback(async (silent = false, force = false) => {
@@ -272,19 +173,17 @@ export default function App() {
     setRefreshing(true);
     setErrorHeader(null);
     try {
-      const [inData, outData, ordData, stfData, taskData, setData] = await Promise.all([
+      const [inData, outData, ordData, stfData, setData] = await Promise.all([
         getRegisterData('inward', force),
         getRegisterData('outward', force),
         getRegisterData('orders', force),
         getRegisterData('staff', force),
-        getRegisterData('tasks', force) as unknown as Promise<TaskEntry[]>,
         getSettings(force)
       ]);
       setInwardData(inData);
       setOutwardData(outData);
       setOrdersData(ordData);
       setStaffData(stfData);
-      setTasksData(taskData);
       setSettings(setData);
       hasLoaded.current = true;
     } catch (err: unknown) {
@@ -326,84 +225,7 @@ export default function App() {
     if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
-  const calculateNextDueDate = (currentDueDateStr: string | undefined, interval: RecurrenceInterval): string => {
-    let baseDate: Date;
-    if (currentDueDateStr) {
-      baseDate = new Date(currentDueDateStr);
-    } else {
-      const now = new Date();
-      baseDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-    }
-    if (isNaN(baseDate.getTime())) {
-      const now = new Date();
-      baseDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-    }
 
-    if (interval === 'daily') {
-      baseDate.setUTCDate(baseDate.getUTCDate() + 1);
-    } else if (interval === 'weekly') {
-      baseDate.setUTCDate(baseDate.getUTCDate() + 7);
-    } else if (interval === 'monthly') {
-      const targetDay = baseDate.getUTCDate();
-      baseDate.setUTCMonth(baseDate.getUTCMonth() + 1);
-      if (baseDate.getUTCDate() !== targetDay) {
-        baseDate.setUTCDate(0);
-      }
-    }
-    return baseDate.toISOString().split('T')[0];
-  };
-
-  const handleToggleTaskStatus = async (task: TaskEntry) => {
-    const originalStatus = task.status;
-    const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-
-    setTasksData(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
-
-    try {
-      const ok = await updateTask({ ...task, status: newStatus });
-      if (!ok) throw new Error("Sync failed");
-
-      if (newStatus === 'Completed' && task.isRecurring && task.recurrenceInterval && task.recurrenceInterval !== 'none') {
-        const nextDueDate = calculateNextDueDate(task.dueDate, task.recurrenceInterval);
-        const nextTaskExists = tasksData.some(t => 
-          t.title === task.title && 
-          t.dueDate === nextDueDate &&
-          t.status !== 'Completed'
-        );
-
-        if (!nextTaskExists) {
-          const nextTask: TaskEntry = {
-            id: Date.now().toString(),
-            title: task.title,
-            description: task.description,
-            priority: task.priority,
-            status: 'Pending',
-            dueDate: nextDueDate,
-            assignedTo: task.assignedTo,
-            linkedDocId: task.linkedDocId,
-            linkedDocType: task.linkedDocType,
-            isRecurring: true,
-            recurrenceInterval: task.recurrenceInterval,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          await addTask(nextTask);
-        }
-      }
-
-      fetchData();
-    } catch (err) {
-      console.error("Task status sync failed", err);
-      setTasksData(prev => prev.map(t => t.id === task.id ? { ...t, status: originalStatus } : t));
-      alert("Operational error: Network synchronization failed. Status reverted.");
-    }
-  };
-
-  const handleViewLinkedDoc = (id: string, type: 'inward' | 'orders') => {
-    const dataSource = type === 'inward' ? inwardData : ordersData;
-    const doc = dataSource.find(d => d.id === id);
-    if (doc) setGlobalViewEntry(doc);
-  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -417,13 +239,7 @@ export default function App() {
               loading={loading}
               departments={settings?.departments || []}
               projects={settings?.projects || []}
-              tasks={tasksData}
               onRefresh={fetchData}
-              onLinkTask={(doc) => {
-                setTaskModalDoc(doc);
-                setActiveTab('tasks');
-                setShowTaskForm(true);
-              }}
               staffData={staffData}
               settings={settings || { departments: [], projects: [], posts: [] }}
             />
@@ -466,31 +282,6 @@ export default function App() {
             <StaffTable data={staffData} loading={loading} projects={settings?.projects || []} posts={settings?.posts || []} onRefresh={fetchData} />
           </div>
         );
-      case 'tasks':
-        return (
-          <div className="space-y-6">
-            {showTaskForm && (
-              <TaskForm
-                staffNames={staffData.map(s => s.partyName)}
-                onSuccess={fetchData}
-                editTask={editTask}
-                linkedDoc={taskModalDoc}
-                onClose={() => { setShowTaskForm(false); setEditTask(null); setTaskModalDoc(null); }}
-              />
-            )}
-            <TaskManager
-              tasks={tasksData}
-              loading={loading}
-              onRefresh={fetchData}
-              onEdit={(t) => { setEditTask(t); setShowTaskForm(true); }}
-              onToggleStatus={handleToggleTaskStatus}
-              onViewDoc={handleViewLinkedDoc}
-              onNew={() => { setEditTask(null); setTaskModalDoc(null); setShowTaskForm(true); }}
-              staffData={staffData}
-              settings={settings || { departments: [], projects: [], posts: [] }}
-            />
-          </div>
-        );
       case 'office-drive':
         return <OfficeDrive onRefresh={fetchData} />;
       case 'reports':
@@ -500,7 +291,7 @@ export default function App() {
           ? <Settings settings={settings} onSettingsChange={fetchData} />
           : <div className="flex justify-center p-16"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
       default:
-        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} tasksCount={tasksData.length} tasksData={tasksData} />;
+        return <Dashboard onNavigate={handleNavClick} inwardCount={inwardData.length} outwardCount={outwardData.length} ordersCount={ordersData.length} staffCount={staffData.length} />;
     }
   };
 
@@ -530,88 +321,6 @@ export default function App() {
         <div className="flex items-center gap-6">
           <div className="hidden sm:block">
             <span>{totalEntries} entries on file</span>
-          </div>
-
-          {/* Bell Icon */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-              className="p-1 text-muted hover:text-ink transition-colors flex items-center justify-center relative"
-            >
-              {notifications.length > 0 ? (
-                <>
-                  <BellRing className="w-4 h-4 text-accent animate-pulse" />
-                  <span className="absolute -top-1.5 -right-1.5 bg-accent text-paper font-mono text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold tracking-tight">
-                    {notifications.length}
-                  </span>
-                </>
-              ) : (
-                <Bell className="w-4 h-4" />
-              )}
-            </button>
-
-            {/* Notification Dropdown Panel */}
-            <AnimatePresence>
-              {showNotificationsDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="absolute right-0 mt-3 w-80 bg-paper border border-rule shadow-lg overflow-hidden flex flex-col z-[99999]"
-                >
-                  <div className="px-4 py-3 border-b border-rule bg-panel flex justify-between items-center">
-                    <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink font-bold">Alert Panel</span>
-                    {notifications.length > 0 && (
-                      <button
-                        onClick={() => setDismissedIds(prev => [...prev, ...notifications.map(n => n.id)])}
-                        className="flex items-center gap-1.5 text-muted hover:text-bad transition-colors font-mono text-[9px] tracking-[0.12em] uppercase"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Dismiss All
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="max-h-[300px] overflow-y-auto divide-y divide-rule no-scrollbar">
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center text-muted font-serif-body text-xs">
-                        No active alerts. System operational.
-                      </div>
-                    ) : (
-                      notifications.map(item => (
-                        <div
-                          key={item.id}
-                          className="px-4 py-3 hover:bg-panel transition-colors flex items-start gap-2.5 group cursor-pointer"
-                          onClick={() => handleNotificationClick(item)}
-                        >
-                          <AlertCircle className={cn(
-                            "w-4 h-4 shrink-0 mt-0.5",
-                            item.type === 'overdue' ? "text-bad" : "text-accent"
-                          )} />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-serif-display text-xs text-ink font-medium tracking-tight group-hover:text-accent transition-colors">
-                              {item.title}
-                            </p>
-                            <p className="font-serif-body text-[11px] text-muted mt-0.5 leading-normal">
-                              {item.message}
-                            </p>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDismissedIds(prev => [...prev, item.id]);
-                            }}
-                            className="p-1 border border-transparent hover:border-rule text-muted hover:text-ink transition-all rounded"
-                            title="Dismiss Notification"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -695,12 +404,11 @@ export default function App() {
             <div>
               <h4 className="font-mono text-[11px] text-muted tracking-[0.18em] uppercase mb-2.5">Management</h4>
               <ul className="flex flex-col gap-0.5">
-                {(['staff', 'tasks', 'office-drive'] as Tab[]).map(tab => (
+                {(['staff', 'office-drive'] as Tab[]).map(tab => (
                   <NavItem
                     key={tab}
                     icon={
                       tab === 'staff' ? <Users className="w-4 h-4" /> :
-                      tab === 'tasks' ? <ClipboardList className="w-4 h-4" /> :
                       <HardDrive className="w-4 h-4" />
                     }
                     label={TAB_LABELS[tab]}
@@ -709,7 +417,6 @@ export default function App() {
                     onClick={() => handleNavClick(tab)}
                     badge={
                       tab === 'staff' ? staffData.length :
-                      tab === 'tasks' ? tasksData.filter(t => t.status !== 'Completed').length :
                       null
                     }
                   />
@@ -881,7 +588,6 @@ export default function App() {
               [
                 { tab: 'dashboard', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home' },
                 { tab: 'inward', icon: <Inbox className="w-4 h-4" />, label: 'Inward' },
-                { tab: 'tasks', icon: <ClipboardList className="w-4 h-4" />, label: 'Tasks' },
                 { tab: 'orders', icon: <AlertOctagon className="w-4 h-4" />, label: 'Orders' },
                 { tab: 'office-drive', icon: <HardDrive className="w-4 h-4" />, label: 'Drive' },
               ] as const
@@ -960,16 +666,7 @@ function NavItem({ icon, label, active = false, isOpen, onClick, badge }: { icon
   );
 }
 
-function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount, tasksCount, tasksData }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number; tasksCount: number; tasksData: TaskEntry[] }) {
-  const completedTasks = tasksData.filter(t => t.status === 'Completed').length;
-  const pendingTasks = tasksData.filter(t => t.status === 'Pending').length;
-  const inProgressTasks = tasksData.filter(t => t.status === 'In Progress').length;
-
-  // Build a simple bar chart from task data (last 30 entries by creation date)
-  const recentTasks = [...tasksData]
-    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-    .slice(0, 30);
-
+function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCount }: { onNavigate: (tab: Tab) => void; inwardCount: number; outwardCount: number; ordersCount: number; staffCount: number }) {
   const container: Variants = {
     hidden: { opacity: 0 },
     show: {
@@ -996,53 +693,8 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
         <StatCard label="Outward entries" value={outwardCount} note="dispatches recorded" />
         <StatCard label="Orders on file" value={ordersCount} note="directives and assignments" />
         <StatCard label="Staff members" value={staffCount} note="active personnel directory" />
-        <StatCard label="Pending tasks" value={pendingTasks} note="awaiting action" variant="accent" />
-        <StatCard label="Completed tasks" value={completedTasks} note="resolved and closed" variant="good" />
-        <StatCard label="In progress" value={inProgressTasks} note="actively being worked on" />
         <StatCard label="Total entries" value={inwardCount + outwardCount + ordersCount} note="across all registers" />
       </motion.section>
-
-      {/* Bar Chart Panel */}
-      {recentTasks.length > 0 && (
-        <motion.section variants={item} className="border-t border-ink pt-6 pb-4 border-b border-rule">
-          <div className="flex items-baseline justify-between mb-4">
-            <h3 className="font-serif-display italic text-xl">tasks — <em>recent activity</em></h3>
-            <span className="font-mono text-[10px] text-muted tracking-[0.16em] uppercase">
-              {recentTasks.length} recent entries
-            </span>
-          </div>
-          <svg viewBox="0 0 720 180" preserveAspectRatio="none" className="w-full h-[180px] block" aria-hidden="true">
-            <g fill="#1f1c14">
-              {recentTasks.map((task, i) => {
-                const barWidth = 14;
-                const gap = (720 - recentTasks.length * barWidth) / (recentTasks.length + 1);
-                const x = gap + i * (barWidth + gap);
-                const maxH = 160;
-                // Height based on priority
-                const priorityH: Record<string, number> = { High: maxH, Medium: maxH * 0.65, Low: maxH * 0.35 };
-                const h = priorityH[task.priority] || maxH * 0.5;
-                const y = 180 - h;
-                const isCompleted = task.status === 'Completed';
-                return (
-                  <rect
-                    key={task.id}
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={h}
-                    fill={isCompleted ? '#d6cdb6' : i >= recentTasks.length - 3 ? '#c14a2b' : '#1f1c14'}
-                  />
-                );
-              })}
-            </g>
-          </svg>
-          <div className="flex justify-between font-mono text-[10px] text-muted tracking-[0.1em] uppercase pt-2">
-            <span>Oldest</span>
-            <span>Recent</span>
-            <span>Latest</span>
-          </div>
-        </motion.section>
-      )}
 
       {/* Trend Panel */}
       <motion.section variants={item} className="border-t border-ink pt-6 pb-4">
@@ -1050,9 +702,6 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
           <h3 className="font-serif-display italic text-xl">overview — <em>at a glance</em></h3>
         </div>
         <p className="font-serif-body italic text-muted text-[15px] leading-relaxed max-w-[70ch]">
-          You have <b className="text-ink not-italic font-semibold">{tasksCount} active tasks</b> across {staffCount} staff members.
-          {completedTasks > 0 && <> {completedTasks} tasks completed — keep the momentum.</>}
-          {pendingTasks > 5 && <> <b className="text-accent not-italic font-semibold">{pendingTasks} pending</b> — consider prioritizing.</>}
           {inwardCount > 0 && <> {inwardCount} inward entries on file, {outwardCount} dispatched.</>}
         </p>
       </motion.section>
@@ -1066,7 +715,6 @@ function Dashboard({ onNavigate, inwardCount, outwardCount, ordersCount, staffCo
             { title: 'Outward Register', desc: 'Track dispatches and recipient info.', tab: 'outward' as Tab, icon: <Send className="w-4 h-4" /> },
             { title: 'Important Orders', desc: 'Log urgent assignments & directives.', tab: 'orders' as Tab, icon: <AlertOctagon className="w-4 h-4" /> },
             { title: 'Staff Directory', desc: 'Personnel and project allocations.', tab: 'staff' as Tab, icon: <Users className="w-4 h-4" /> },
-            { title: 'Task Center', desc: 'Manage directives and responses.', tab: 'tasks' as Tab, icon: <ClipboardList className="w-4 h-4" /> },
             { title: 'Office Drive', desc: 'Traverse and manage office files.', tab: 'office-drive' as Tab, icon: <HardDrive className="w-4 h-4" /> },
           ].map(card => (
             <motion.div

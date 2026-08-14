@@ -56,8 +56,11 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
       const uploadWithProgress = async (f: File[]) => {
         setUploadProgress({ current: 0, total: f.length });
         const uploaded = [];
+        const finalRefNumber = type === 'outward' && dispatchTo.trim()
+          ? `${formData.referenceNumber}-${dispatchTo}`
+          : formData.referenceNumber;
         for (let i = 0; i < f.length; i++) {
-          const res = await uploadAttachment(f[i]);
+          const res = await uploadAttachment(f[i], type, formData.project, finalRefNumber, formData.subject);
           if (res) uploaded.push(res);
           setUploadProgress({ current: i + 1, total: f.length });
         }
@@ -70,11 +73,12 @@ export default function EntryForm({ type, existingDepts, existingProjects, onSuc
           const file = files[i];
           setUploadProgress({ current: i + 1, total: files.length });
 
-          const attachment = await uploadAttachment(file);
-          if (!attachment) continue;
-
           const baseRef = parseInt(formData.referenceNumber) || 0;
           const currentRef = baseRef + i;
+          const fileSubject = file.name.split('.')[0];
+
+          const attachment = await uploadAttachment(file, type, formData.project, currentRef.toString(), fileSubject);
+          if (!attachment) continue;
 
           const newEntry: RegisterEntry = {
             id: (Date.now() + i).toString(),

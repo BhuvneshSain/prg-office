@@ -12,7 +12,7 @@ const dbx = new Dropbox({
 
 async function reset() {
   console.log('Connecting to Dropbox to reset factory data...');
-  const files = ['/data/inward.json', '/data/outward.json', '/data/orders.json'];
+  const files = ['/office-drive/Office Letter/inward.json', '/office-drive/Office Letter/outward.json', '/office-drive/Office Letter/orders.json'];
 
   for (const file of files) {
     try {

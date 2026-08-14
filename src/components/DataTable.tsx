@@ -1,7 +1,7 @@
 import { useState, memo } from 'react';
-import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, ClipboardList, MessageSquare } from 'lucide-react';
+import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, MessageSquare } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
-import type { RegisterEntry, TaskEntry, SettingsData } from '../types';
+import type { RegisterEntry, SettingsData } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
@@ -22,14 +22,12 @@ interface Props {
   loading: boolean;
   departments: string[];
   projects: string[];
-  tasks?: TaskEntry[];
   onRefresh: () => void;
-  onLinkTask?: (entry: RegisterEntry) => void;
   staffData?: RegisterEntry[];
   settings?: SettingsData;
 }
 
-const DataTable = memo(function DataTable({ data, type, loading, departments, projects, tasks = [], onRefresh, onLinkTask, staffData = [], settings }: Props) {
+const DataTable = memo(function DataTable({ data, type, loading, departments, projects, onRefresh, staffData = [], settings }: Props) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
@@ -164,9 +162,6 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     <th className="px-6 py-4">{type === 'inward' ? 'Sender' : 'Recipient'}</th>
                     <th className="px-6 py-4">Project</th>
                     <th className="px-6 py-4">Subject</th>
-                    {type === 'inward' && (
-                      <th className="px-6 py-4 text-center">Task Status</th>
-                    )}
                     <th className="px-6 py-4 text-center">Action</th>
                   </tr>
                 </thead>
@@ -202,33 +197,9 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                             {row.subject}
                           </p>
                         </td>
-                        {type === 'inward' && (
-                          <td className="px-6 py-4 text-center">
-                            {(() => {
-                              const linkedTask = tasks.find(t => t.linkedDocId === row.id);
-                              if (!linkedTask) return <span className="font-mono text-[8px] text-muted uppercase tracking-[0.18em]">No Task</span>;
-
-                              const statusColors: Record<string, string> = {
-                                'Completed': 'text-good bg-good/5 border-good/20',
-                                'In Progress': 'text-ink bg-panel border-rule',
-                                'Pending': 'text-accent bg-accent/5 border-accent/20',
-                                'Deferred': 'text-muted bg-panel border-rule',
-                              };
-
-                              return (
-                                <span className={cn("font-mono text-[8px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full border whitespace-nowrap", statusColors[linkedTask.status])}>
-                                  {linkedTask.status}
-                                </span>
-                              );
-                            })()}
-                          </td>
-                        )}
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                             <ActionBtn id={`view-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} label="Quick View" onClick={() => setViewEntry(row)} color="slate" />
-                            {type === 'inward' && onLinkTask && (
-                              <ActionBtn id={`task-${row.id}`} icon={<ClipboardList className="w-3.5 h-3.5" />} label="Link to Task" onClick={() => onLinkTask(row)} color="indigo" />
-                            )}
                             <ActionBtn id={`share-${row.id}`} icon={<MessageSquare className="w-3.5 h-3.5" />} label="Share Alert" onClick={() => setShareEntry(row)} color="teal" />
                             <ActionBtn id={`edit-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} label="Modify" onClick={() => setEditEntry(row)} color="violet" />
                             <ActionBtn id={`delete-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} label="Archive" onClick={() => setDeleteTarget(row)} color="red" />
@@ -252,9 +223,6 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <MobileIconBtn id={`view-mob-${row.id}`} icon={<Maximize2 className="w-3.5 h-3.5" />} onClick={() => setViewEntry(row)} color="slate" />
-                      {type === 'inward' && onLinkTask && (
-                        <MobileIconBtn id={`task-mob-${row.id}`} icon={<ClipboardList className="w-3.5 h-3.5" />} onClick={() => onLinkTask(row)} color="indigo" />
-                      )}
                       <MobileIconBtn id={`share-mob-${row.id}`} icon={<MessageSquare className="w-3.5 h-3.5" />} onClick={() => setShareEntry(row)} color="teal" />
                       <MobileIconBtn id={`edit-mob-${row.id}`} icon={<Pencil className="w-3.5 h-3.5" />} onClick={() => setEditEntry(row)} color="indigo" />
                       <MobileIconBtn id={`delete-mob-${row.id}`} icon={<Trash2 className="w-3.5 h-3.5" />} onClick={() => setDeleteTarget(row)} color="red" />

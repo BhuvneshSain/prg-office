@@ -2,13 +2,13 @@
  * Service for managing Register and settings data (JSON) in Dropbox
  */
 import { dbx, checkConfig, handleDbxError, ensureValidToken } from './serviceUtils';
-import type { RegisterEntry, SettingsData, AuditEntry, AuditAction, TaskEntry } from '../types';
+import type { RegisterEntry, SettingsData, AuditEntry, AuditAction } from '../types';
 import { getCachedData, setCachedData, setSyncNeeded, getAllUnsyncedKeys } from './indexedDb';
 
-export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff' | 'tasks';
+export type RegisterType = 'inward' | 'outward' | 'orders' | 'staff';
 
 // Client-side cache for JSON data files
-const cache: Record<string, RegisterEntry[] | TaskEntry[] | SettingsData | null> = {};
+const cache: Record<string, RegisterEntry[] | SettingsData | AuditEntry[] | null> = {};
 
 export const clearDataCache = () => {
   for (const key in cache) {
@@ -28,7 +28,7 @@ export const getRegisterData = async (type: RegisterType, force = false): Promis
   if (!force && cache[type]) {
     return cache[type] as RegisterEntry[];
   }
-  const path = `/data/${type}.json`;
+  const path = `/office-drive/Office Letter/${type}.json`;
   
   try {
     await ensureValidToken();
@@ -36,7 +36,7 @@ export const getRegisterData = async (type: RegisterType, force = false): Promis
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as RegisterEntry[];
-    const sorted = type === 'staff' || type === 'tasks' ? data : sortEntriesByDate(data);
+    const sorted = type === 'staff' ? data : sortEntriesByDate(data);
     
     // Persist to local IndexedDB cache
     await setCachedData(type, sorted);
@@ -64,7 +64,7 @@ export const saveRegisterData = async (type: RegisterType, data: RegisterEntry[]
     await setSyncNeeded(type, true);
     return false;
   }
-  const path = `/data/${type}.json`;
+  const path = `/office-drive/Office Letter/${type}.json`;
   const content = JSON.stringify(data, null, 2);
   
   try {
@@ -125,11 +125,11 @@ export const getSettings = async (force = false): Promise<SettingsData> => {
     return cached || { departments: [], projects: [], posts: [] };
   }
   if (!force && cache.settings) {
-    return cache.settings;
+    return cache.settings as SettingsData;
   }
   try {
     await ensureValidToken();
-    const response = await dbx.filesDownload({ path: '/data/settings.json' });
+    const response = await dbx.filesDownload({ path: '/office-drive/Office Letter/settings.json' });
     const result = response.result as unknown as { fileBlob: Blob };
     const text = await result.fileBlob.text();
     const data = JSON.parse(text) as SettingsData;
@@ -164,7 +164,7 @@ export const saveSettings = async (settings: SettingsData): Promise<boolean> => 
   try {
     await ensureValidToken();
     await dbx.filesUpload({
-      path: '/data/settings.json',
+      path: '/office-drive/Office Letter/settings.json',
       contents: content,
       mode: { '.tag': 'overwrite' }
     });
@@ -183,9 +183,9 @@ export const getAuditLogs = async (force = false): Promise<AuditEntry[]> => {
     return cached || [];
   }
   if (!force && cache['audit-logs']) {
-    return cache['audit-logs'];
+    return cache['audit-logs'] as AuditEntry[];
   }
-  const path = '/data/audit-logs.json';
+  const path = '/office-drive/Office Letter/audit-logs.json';
   try {
     await ensureValidToken();
     const response = await dbx.filesDownload({ path });
@@ -236,7 +236,7 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
   try {
     await ensureValidToken();
     await dbx.filesUpload({
-      path: '/data/audit-logs.json',
+      path: '/office-drive/Office Letter/audit-logs.json',
       contents: content,
       mode: { '.tag': 'overwrite' }
     });
@@ -247,101 +247,6 @@ export const logAction = async (action: AuditAction, type: RegisterType, targetI
     await setSyncNeeded('audit-logs', true);
     return false;
   }
-};
-
-// Task specific methods
-export const getTasks = async (force = false): Promise<TaskEntry[]> => {
-  if (!checkConfig()) {
-    const cached = await getCachedData<TaskEntry[]>('tasks');
-    return cached || [];
-  }
-  if (!force && cache.tasks) {
-    return cache.tasks;
-  }
-  const path = '/data/tasks.json';
-  try {
-    await ensureValidToken();
-    const response = await dbx.filesDownload({ path });
-    const result = response.result as unknown as { fileBlob: Blob };
-    const text = await result.fileBlob.text();
-    const data = JSON.parse(text) as TaskEntry[];
-    const sorted = data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    
-    await setCachedData('tasks', sorted);
-    
-    cache.tasks = sorted;
-    return sorted;
-  } catch (error) {
-    console.warn("[Dropbox] getTasks failed, loading local cache...");
-    const cached = await getCachedData<TaskEntry[]>('tasks');
-    if (cached) {
-      cache.tasks = cached;
-      return cached;
-    }
-    handleDbxError(error, 'getTasks');
-    cache.tasks = [];
-    return [];
-  }
-};
-
-export const saveTasks = async (tasks: TaskEntry[]): Promise<boolean> => {
-  cache.tasks = tasks;
-  await setCachedData('tasks', tasks);
-  
-  if (!checkConfig()) {
-    await setSyncNeeded('tasks', true);
-    return false;
-  }
-  const content = JSON.stringify(tasks, null, 2);
-  try {
-    await ensureValidToken();
-    await dbx.filesUpload({
-      path: '/data/tasks.json',
-      contents: content,
-      mode: { '.tag': 'overwrite' }
-    });
-    await setSyncNeeded('tasks', false);
-    return true;
-  } catch {
-    console.warn("[Dropbox] saveTasks failed, queued for background sync.");
-    await setSyncNeeded('tasks', true);
-    return false;
-  }
-};
-
-export const addTask = async (task: TaskEntry): Promise<boolean> => {
-  const tasks = await getTasks();
-  tasks.unshift(task);
-  const success = await saveTasks(tasks);
-  if (success) {
-    logAction('ADD', 'tasks', task.id, `Created task: ${task.title}`);
-  }
-  return success;
-};
-
-export const updateTask = async (task: TaskEntry): Promise<boolean> => {
-  const tasks = await getTasks();
-  const idx = tasks.findIndex(t => t.id === task.id);
-  if (idx === -1) return false;
-  tasks[idx] = { ...task, updatedAt: new Date().toISOString() };
-  const sortedTasks = tasks.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  const success = await saveTasks(sortedTasks);
-  if (success) {
-    logAction('UPDATE', 'tasks', task.id, `Updated task: ${task.title}`);
-  }
-  return success;
-};
-
-export const deleteTask = async (id: string): Promise<boolean> => {
-  const tasks = await getTasks();
-  const target = tasks.find(t => t.id === id);
-  const filtered = tasks.filter(t => t.id !== id);
-  if (filtered.length === tasks.length) return false;
-  const success = await saveTasks(filtered);
-  if (success && target) {
-    logAction('DELETE', 'tasks', id, `Deleted task: ${target.title}`);
-  }
-  return success;
 };
 
 // Sync Offline local databases back to Dropbox
@@ -360,23 +265,16 @@ export const syncOfflineData = async (): Promise<boolean> => {
         if (data) {
           const content = JSON.stringify(data, null, 2);
           await ensureValidToken();
-          await dbx.filesUpload({ path: '/data/settings.json', contents: content, mode: { '.tag': 'overwrite' } });
+          await dbx.filesUpload({ path: '/office-drive/Office Letter/settings.json', contents: content, mode: { '.tag': 'overwrite' } });
           await setSyncNeeded(key, false);
         }
-      } else if (key === 'tasks') {
-        const data = await getCachedData<TaskEntry[]>(key);
-        if (data) {
-          const content = JSON.stringify(data, null, 2);
-          await ensureValidToken();
-          await dbx.filesUpload({ path: '/data/tasks.json', contents: content, mode: { '.tag': 'overwrite' } });
-          await setSyncNeeded(key, false);
-        }
+
       } else if (key === 'audit-logs') {
         const data = await getCachedData<AuditEntry[]>(key);
         if (data) {
           const content = JSON.stringify(data, null, 2);
           await ensureValidToken();
-          await dbx.filesUpload({ path: '/data/audit-logs.json', contents: content, mode: { '.tag': 'overwrite' } });
+          await dbx.filesUpload({ path: '/office-drive/Office Letter/audit-logs.json', contents: content, mode: { '.tag': 'overwrite' } });
           await setSyncNeeded(key, false);
         }
       } else {
@@ -385,7 +283,7 @@ export const syncOfflineData = async (): Promise<boolean> => {
         if (data) {
           const content = JSON.stringify(data, null, 2);
           await ensureValidToken();
-          await dbx.filesUpload({ path: `/data/${key}.json`, contents: content, mode: { '.tag': 'overwrite' } });
+          await dbx.filesUpload({ path: `/office-drive/Office Letter/${key}.json`, contents: content, mode: { '.tag': 'overwrite' } });
           await setSyncNeeded(key, false);
         }
       }

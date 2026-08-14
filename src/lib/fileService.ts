@@ -3,12 +3,37 @@
  */
 import { dbx, checkConfig, handleDbxError } from './serviceUtils';
 
-export const uploadAttachment = async (file: File): Promise<{ id: string, name: string } | null> => {
+export const uploadAttachment = async (
+  file: File, 
+  type?: string, 
+  project?: string,
+  referenceNumber?: string,
+  subject?: string
+): Promise<{ id: string, name: string } | null> => {
   if (!checkConfig()) return null;
   
   const uniqueId = Date.now().toString() + '_' + Math.random().toString(36).substring(7);
-  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const path = `/attachments/${uniqueId}_${safeName}`;
+  const ext = file.name.split('.').pop() || '';
+  const cleanExt = ext ? `.${ext}` : '';
+  
+  const refNum = referenceNumber ? referenceNumber.trim() : '';
+  const cleanSubject = subject ? subject.trim() : '';
+  const cleanProject = project ? project.trim() : '';
+  const suffix = type === 'inward' ? '_i' : (type === 'outward' ? '_o' : (type === 'orders' ? '_or' : ''));
+  
+  let filename = '';
+  if (refNum || cleanSubject) {
+    const safeRef = refNum.replace(/[^a-zA-Z0-9\s._-]/g, '_');
+    const safeSubject = cleanSubject.replace(/[^a-zA-Z0-9\s._-]/g, '_');
+    const safeProject = cleanProject ? cleanProject.replace(/[^a-zA-Z0-9\s._-]/g, '_') : '';
+    
+    filename = `Ltr No. ${safeRef} ${safeProject ? safeProject + ' Project ' : ''}regarding ${safeSubject}_${uniqueId}${suffix}${cleanExt}`;
+  } else {
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    filename = `${uniqueId}${suffix}_${safeName}`;
+  }
+  
+  const path = `/office-drive/Office Letter/${filename}`;
   
   try {
     const response = await dbx.filesUpload({
@@ -21,7 +46,7 @@ export const uploadAttachment = async (file: File): Promise<{ id: string, name: 
       name: file.name
     };
   } catch (error) {
-    handleDbxError(error, `uploadAttachment(${file.name})`);
+    handleDbxError(error, `uploadAttachment(${file.name}, type=${type}, project=${project}, ref=${referenceNumber}, subject=${subject})`);
     return null;
   }
 };

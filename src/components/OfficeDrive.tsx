@@ -174,7 +174,7 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
     } catch (err: unknown) {
       const summary = (err as { error?: { error_summary?: string } })?.error?.error_summary || "";
       // Auto-create drive root folder if missing
-      if (path === '/office-drive' && (err?.status === 409 || summary.includes('not_found'))) {
+      if (path === '/office-drive' && ((err as any)?.status === 409 || summary.includes('not_found'))) {
         try {
           await ensureValidToken();
           await dbx.filesCreateFolderV2({ path: '/office-drive' });
@@ -332,7 +332,7 @@ export default function OfficeDrive({ onRefresh }: { onRefresh: () => void }) {
       });
     } catch (err: unknown) {
       const summary = (err as { error?: { error_summary?: string }; status?: number })?.error?.error_summary || "";
-      const status = err?.status;
+      const status = (err as any)?.status;
       
       // Retry on lock contention or rate limits
       if ((status === 429 || status === 409 || summary.includes('too_many_write_operations') || summary.includes('write_conflict')) && retries > 0) {

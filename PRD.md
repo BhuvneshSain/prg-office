@@ -31,14 +31,12 @@ ProgOffice features a custom **"Cyber Light"** design language: a premium editor
 ## 4. Feature Requirements
 
 ### 4.1. The Editorial Dashboard
-- **KPI Metrics Cards**: Displays real-time counts of Inward entries, Outward entries, Orders, Staff, and Pending/Completed tasks.
-- **Task Activity Chart**: Render a dynamic bar chart showcasing recent task priorities and completion statuses.
+- **KPI Metrics Cards**: Displays real-time counts of Inward entries, Outward entries, Orders, Staff, and Total entries.
 - **System status ticker**: UPPERCASE ticker showing online sync state and total file counts.
 
 ### 4.2. Inward & Outward Registers
 - **Data Loggers**: Form fields to register date, sender/recipient party, subject description, official reference numbers, and attachments.
 - **Data Terminal**: Scrollable list view featuring advanced query search fields and department/project-based filtering.
-- **Task Binding**: Quick-action shortcuts to link any inward entry directly to a task in the Task Center.
 
 ### 4.3. Important Orders & Directives
 - **Directives Vault**: Storage portal specifically reserved for high-priority circulars and orders.
@@ -58,15 +56,15 @@ ProgOffice features a custom **"Cyber Light"** design language: a premium editor
 ### 4.5. Staff Directory & Allocations
 - **Staff logs**: Tracks posts, codes, contact terminals, and assigned projects.
 - **Tactile reordering**: Supports drag-and-drop listing reordering with immediate persistence to Dropbox databases.
-
-### 4.6. Task Management Center
-- **Task Cards**: Track titles, descriptions, priorities (Low to Critical), assigned staff, and completion statuses.
-- **Status toggles**: Tick checkbox to mark tasks complete, featuring instant database saves and rollback states if network errors occur.
-
-### 4.7. Client-Side Manual WhatsApp Alerts
-- **100% Serverless alerts**: Generates preformatted notifications containing record details (Inward/Outward registers, Important Orders, Task Assignments).
+### 4.6. Client-Side Manual WhatsApp Alerts
+- **Register Alerts**: Share inward/outward circular metadata or important orders directly with staff.
 - **Interactive Share Modal**: Enables choosing target staff members, auto-populating their registered mobile numbers, and editing/previewing the message contents before redirecting.
 - **Zero Dependency**: Requires no local or cloud background servers, running completely client-side in the browser via native `wa.me` links.
+
+### 4.7. Office Letter Consolidated Storage
+- **Consolidated Storage**: Automatically routes all database JSON files (registers, settings, logs) and all inward, outward, and important order attachments directly to `/office-drive/Office Letter` in Dropbox.
+- **Custom Filename Format**: Renames all uploaded attachments based on their metadata parameters as:
+  `Ltr No. {dispatch_no} {Project Name} Project regarding {subject}_{uniqueId}{indicator}.{extension}` where indicator is `_i` (Inward), `_o` (Outward), or `_or` (Orders).
 
 ---
 

@@ -43,7 +43,7 @@ export default function OrderForm({ existingProjects, onSuccess }: OrderFormProp
     try {
       let attachmentData = null;
       if (file) {
-        attachmentData = await uploadAttachment(file);
+        attachmentData = await uploadAttachment(file, 'orders', formData.project, formData.remarks, formData.subject);
         if (!attachmentData) throw new Error('Failed to upload file to Dropbox.');
       }
 

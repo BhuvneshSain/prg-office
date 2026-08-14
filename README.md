@@ -28,14 +28,12 @@ An advanced, serverless Office Register Management System designed for efficienc
 - **Inward/Outward Registers**: Log incoming and outgoing correspondence with detailed party info, subjects, reference numbers, and attachments.
 - **Important Orders**: A secure storage vault for mission-critical directives and circulars.
 - **Advanced Searching**: Debounced real-time query engine filtering by subjects, dates, and projects.
-- **Task Association**: Link inward documents or orders directly to task cards in the task center.
+- **Office Letter Consolidated Storage**: Automatically routes all database JSON files and all inward, outward, and important order attachments directly to `/office-drive/Office Letter` in Dropbox. Attachments are formatted as: `Ltr No. {dispatch_no} {Project Name} Project regarding {subject}_{uniqueId}{indicator}.{extension}` (where indicator is `_i`, `_o`, or `_or`).
 
-### 👥 Personnel & Task Tracking
-- **Staff Directory**: Maintain records of employee posts, assigned projects, and contact terminals.
-- **Task Center**: Assign tasks, select priorities (Low, Medium, High, Critical), track statuses (Pending, In Progress, Completed), and view progression charts.
+### 👥 Personnel Directory
+- **Staff Directory**: Maintain records of employee posts, assigned projects, and contact terminals with active ordering features.
 
 ### 💬 Client-Side WhatsApp Alert Dispatcher
-- **Task Alerts**: Instantly send preformatted reminders to assigned operators.
 - **Register Alerts**: Share inward/outward circular metadata or important orders directly with staff.
 - **Interactive Previews**: Select staff recipients from a dropdown, auto-populate mobile numbers, and preview/edit the text before opening in WhatsApp.
 - **100% Free & Serverless**: Built using lightweight client-side redirection (`wa.me`) with zero external API dependencies or background servers.

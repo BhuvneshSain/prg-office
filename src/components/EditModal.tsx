@@ -64,15 +64,15 @@ export default function EditModal({ entry, departments, projects, onClose, onSuc
     try {
       let attachments = entry.attachments ?? [];
 
-      if (newFile) {
-        const uploaded = await uploadAttachment(newFile);
-        if (!uploaded) throw new Error('Failed to upload new attachment.');
-        attachments = [uploaded];
-      }
-
       let refNum = form.referenceNumber;
       if (entry.type === 'outward') {
         refNum = dispatchTo.trim() ? `${dispatchFrom}-${dispatchTo}` : dispatchFrom;
+      }
+
+      if (newFile) {
+        const uploaded = await uploadAttachment(newFile, entry.type, form.project, refNum, form.subject);
+        if (!uploaded) throw new Error('Failed to upload new attachment.');
+        attachments = [uploaded];
       }
 
       const updated: RegisterEntry = {

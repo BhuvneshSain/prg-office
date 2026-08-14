@@ -241,7 +241,6 @@ export default function App() {
               projects={settings?.projects || []}
               onRefresh={fetchData}
               staffData={staffData}
-              settings={settings || { departments: [], projects: [], posts: [] }}
             />
           </div>
         );
@@ -257,7 +256,6 @@ export default function App() {
               projects={settings?.projects || []} 
               onRefresh={fetchData}
               staffData={staffData}
-              settings={settings || { departments: [], projects: [], posts: [] }}
             />
           </div>
         );
@@ -271,7 +269,6 @@ export default function App() {
               projects={settings?.projects || []} 
               onRefresh={fetchData}
               staffData={staffData}
-              settings={settings || { departments: [], projects: [], posts: [] }}
             />
           </div>
         );

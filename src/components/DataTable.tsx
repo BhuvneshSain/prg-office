@@ -1,7 +1,7 @@
 import { useState, memo } from 'react';
 import { Loader2, Search, FileText, Maximize2, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileDown, MessageSquare } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
-import type { RegisterEntry, SettingsData } from '../types';
+import type { RegisterEntry } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import DocumentModal from './DocumentModal';
 import EditModal from './EditModal';
@@ -24,10 +24,9 @@ interface Props {
   projects: string[];
   onRefresh: () => void;
   staffData?: RegisterEntry[];
-  settings?: SettingsData;
 }
 
-const DataTable = memo(function DataTable({ data, type, loading, departments, projects, onRefresh, staffData = [], settings }: Props) {
+const DataTable = memo(function DataTable({ data, type, loading, departments, projects, onRefresh, staffData = [] }: Props) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [viewEntry, setViewEntry] = useState<RegisterEntry | null>(null);
@@ -247,7 +246,6 @@ const DataTable = memo(function DataTable({ data, type, loading, departments, pr
           entry={shareEntry}
           type={type}
           staffData={staffData}
-          settings={settings}
           onClose={() => setShareEntry(null)}
         />
       )}

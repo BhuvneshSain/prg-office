@@ -1,20 +1,19 @@
 import { useState } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { RegisterEntry, SettingsData } from '../types';
+import type { RegisterEntry } from '../types';
 import { formatDate } from '../utils/dateUtils';
 
 interface ShareWhatsAppModalProps {
   entry: RegisterEntry;
   type: 'inward' | 'outward' | 'orders';
   staffData: RegisterEntry[];
-  settings?: SettingsData;
   onClose: () => void;
 }
 
-export default function ShareWhatsAppModal({ entry, type, staffData, settings, onClose }: ShareWhatsAppModalProps) {
+export default function ShareWhatsAppModal({ entry, type, staffData, onClose }: ShareWhatsAppModalProps) {
   const [selectedStaff, setSelectedStaff] = useState('');
-  const [customPhone, setCustomPhone] = useState(settings?.whatsappRecipientPhone || '');
+  const [customPhone, setCustomPhone] = useState('');
   
   const getInitialMessage = () => {
     const formattedDate = formatDate(entry.date);

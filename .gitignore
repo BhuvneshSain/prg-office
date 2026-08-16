@@ -24,10 +24,9 @@ dist-ssr
 *.sw?
 
 # Environment variables
-# .env files are included as the repo is private.
-#! .env
-#! .env.local
-#! .env.*.local
+.env
+.env.local
+.env.*.local
 
 # Build outputs
 dist
